@@ -1,7 +1,18 @@
-// src/screens/LoginScreen.tsx (snippets)
+// src/screens/LoginScreen.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, KeyboardAvoidingView, Platform, Text, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  Alert,
+  Platform,
+  Text,
+  TouchableOpacity,
+  Keyboard,
+  StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { apiPost } from '../api/api';
 import { useConfig } from '../config/ConfigContext';
 import { useNavigation } from '@react-navigation/native';
@@ -20,7 +31,6 @@ export default function LoginScreen({ onLogin }: { onLogin: (code: string) => vo
     }
     setLoading(true);
     try {
-      // use wrapper
       const res = await apiPost('/login', { customer_code: trimmed }, { timeout: 7000 });
       if (res.data?.customer) {
         await AsyncStorage.setItem('customer_code', trimmed);
@@ -37,20 +47,65 @@ export default function LoginScreen({ onLogin }: { onLogin: (code: string) => vo
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
+    <KeyboardAwareScrollView
+      contentContainerStyle={styles.content}
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'android' ? 120 : 20}
+      keyboardOpeningTime={250}
+      keyboardShouldPersistTaps="handled"
+    >
       {/* settings button visible on login */}
-      <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
+      <View style={styles.settingsRow}>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Text style={{ color: '#007bff' }}>Settings</Text>
+          <Text style={styles.settingsText}>Settings</Text>
         </TouchableOpacity>
       </View>
 
-      {/* existing login UI */}
-      <View style={{ marginBottom: 12 }}>
-        <Text>Enter Customer Code</Text>
-        <TextInput value={code} onChangeText={setCode} placeholder="e.g. 1001" />
+      {/* login card */}
+      <View style={styles.card}>
+        <Text style={styles.label}>Enter Customer Code</Text>
+
+        <TextInput
+          value={code}
+          onChangeText={setCode}
+          placeholder="e.g. 1001"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="default"
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            tryLogin();
+          }}
+          style={styles.input}
+        />
+
+        <View style={styles.buttonWrap}>
+          <Button title={loading ? 'Checking...' : 'Login'} onPress={tryLogin} disabled={loading} />
+        </View>
       </View>
-      <Button title={loading ? 'Checking...' : 'Login'} onPress={tryLogin} disabled={loading} />
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  settingsRow: { alignItems: 'flex-end', marginBottom: 12 },
+  settingsText: { color: '#007bff', fontSize: 14 },
+  card: { marginBottom: 12 },
+  label: { fontSize: 18, marginBottom: 8 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+  buttonWrap: { marginTop: 4 },
+});

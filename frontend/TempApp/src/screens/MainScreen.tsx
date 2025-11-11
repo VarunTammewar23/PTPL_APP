@@ -9,8 +9,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   Button,
+  Modal,
+  FlatList,
+  Pressable,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import RecipeTable from '../components/RecipeTable';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -43,10 +45,14 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const isDark = theme === 'dark';
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
+  // -1 sentinel means "no selection"
+  const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
+
+  // dropdown modal visibility
+  const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
 
   // useCallback ensures stable function identity so useEffect deps are safe
   const fetchRecipes = useCallback(async () => {
@@ -56,10 +62,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         params: { customer_code: customerCode },
         timeout: 7000,
       });
-      setRecipes(res.data.recipes || []);
+      const list: Recipe[] = res.data.recipes || [];
+      setRecipes(list);
     } catch (err: any) {
       console.warn('fetchRecipes error', err);
       Alert.alert('Error fetching recipes', err?.message || 'Network error');
+      setRecipes([]);
     } finally {
       setLoadingRecipes(false);
     }
@@ -89,22 +97,58 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // watch selectedRecipeId and the stable fetchRecipeParams function
   useEffect(() => {
-    if (selectedRecipeId) fetchRecipeParams(selectedRecipeId);
+    if (selectedRecipeId !== -1) fetchRecipeParams(selectedRecipeId);
     else setRecipeParams([]);
   }, [selectedRecipeId, fetchRecipeParams]);
 
   // Helper to open Machine screen
   const openMachineView = () => {
-    if (!selectedRecipeId) {
+    if (selectedRecipeId === -1) {
       Alert.alert('Select a recipe first');
       return;
     }
     const recipeName = recipes.find((r) => r.recipe_id === selectedRecipeId)?.recipe_name;
     navigation.navigate('Machine', {
       recipeId: selectedRecipeId,
-      recipeName: recipeName,
+      recipeName,
       // imageUri: optional - pass here if you have a per-recipe image URL
     });
+  };
+
+  // ---- Custom Dropdown UI ----
+  const selectedRecipeName =
+    selectedRecipeId === -1 ? null : recipes.find((r) => r.recipe_id === selectedRecipeId)?.recipe_name ?? null;
+
+  const openDropdown = () => {
+    // if there are no recipes, give feedback
+    if (recipes.length === 0) {
+      Alert.alert('No recipes available');
+      return;
+    }
+    setDropdownVisible(true);
+  };
+
+  const onSelectRecipe = (id: number) => {
+    setSelectedRecipeId(id);
+    setDropdownVisible(false);
+  };
+
+  const renderDropdownItem = ({ item }: { item: Recipe }) => {
+    const isSelected = item.recipe_id === selectedRecipeId;
+    return (
+      <Pressable
+        onPress={() => onSelectRecipe(item.recipe_id)}
+        style={({ pressed }) => [
+          styles.dropdownItem,
+          isSelected && styles.dropdownItemSelected,
+          pressed && styles.dropdownItemPressed,
+        ]}
+      >
+        <Text style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
+          {item.recipe_name}
+        </Text>
+      </Pressable>
+    );
   };
 
   return (
@@ -124,47 +168,55 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       </View>
 
       <View style={{ marginBottom: 12 }}>
-        <Text style={[{ marginBottom: 6 }, isDark ? styles.textLight : styles.textDark]}>Select recipe</Text>
         {loadingRecipes ? (
           <ActivityIndicator />
         ) : (
-          <View
-            style={[
-              {
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 6,
-              },
-              isDark ? styles.darkCard : styles.lightCard,
-            ]}
-          >
-            <Picker
-              selectedValue={selectedRecipeId}
-              onValueChange={(val) => {
-                if (val === null || val === undefined) setSelectedRecipeId(null);
-                else setSelectedRecipeId(Number(val));
-              }}
+          <>
+            {/* Visible pressable dropdown box: always shows placeholder or selected recipe + arrow */}
+            <TouchableOpacity
+              style={[
+                styles.dropdownBox,
+                { borderColor: '#ccc', borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 14 },
+                isDark ? styles.darkCard : styles.lightCard,
+              ]}
+              onPress={openDropdown}
+              activeOpacity={0.8}
             >
-              <Picker.Item label="-- select recipe --" value={null} />
-              {recipes.map((r) => (
-                <Picker.Item key={r.recipe_id} label={r.recipe_name} value={r.recipe_id} />
-              ))}
-            </Picker>
-          </View>
-        )}
+              <Text style={[styles.dropdownText, isDark ? styles.textLight : styles.textDark]}>
+                {selectedRecipeName ?? 'Select recipe'}
+              </Text>
+              <Text style={[styles.chevron, isDark ? styles.textLight : styles.textDark]}>▾</Text>
+            </TouchableOpacity>
 
-        {/* Open Machine View button (visible when a recipe is selected) */}
-        {selectedRecipeId ? (
-          <View style={{ marginTop: 10 }}>
-            <Button title="Open Machine View" onPress={openMachineView} />
-          </View>
-        ) : null}
+            {/* Machine button */}
+            {selectedRecipeId !== -1 ? (
+              <View style={{ marginTop: 10 }}>
+                <Button title="Open Machine View" onPress={openMachineView} />
+              </View>
+            ) : null}
+
+            {/* Dropdown modal */}
+            <Modal visible={dropdownVisible} animationType="fade" transparent onRequestClose={() => setDropdownVisible(false)}>
+              <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
+                <View style={[styles.modalContent, isDark ? styles.darkCard : styles.lightCard]}>
+                  <Text style={[styles.modalTitle, isDark ? styles.textLight : styles.textDark]}>Select recipe</Text>
+                  <FlatList
+                    data={recipes}
+                    keyExtractor={(it) => String(it.recipe_id)}
+                    renderItem={renderDropdownItem}
+                    showsVerticalScrollIndicator={true}
+                  />
+                </View>
+              </Pressable>
+            </Modal>
+          </>
+        )}
       </View>
 
       <View style={{ flex: 1 }}>
         {loadingParams ? (
           <ActivityIndicator />
-        ) : selectedRecipeId ? (
+        ) : selectedRecipeId !== -1 ? (
           recipeParams.length === 0 ? (
             <Text style={isDark ? styles.textLight : styles.textDark}>No parameters for this recipe.</Text>
           ) : (
@@ -189,6 +241,60 @@ const styles = StyleSheet.create({
   loggedText: { fontSize: 16 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   settingsBtn: { padding: 8 },
+
+  // dropdown box (closed state)
+  dropdownBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  chevron: {
+    marginLeft: 12,
+    fontSize: 18,
+  },
+
+  // modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    maxHeight: '70%',
+    borderRadius: 8,
+    padding: 8,
+  },
+  modalTitle: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dropdownItemPressed: {
+    opacity: 0.6,
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#e6f0ff',
+  },
+  dropdownItemText: {
+    fontSize: 15,
+  },
+  dropdownItemTextSelected: {
+    fontWeight: '700',
+  },
+
+  // theme
   lightBg: { backgroundColor: '#fff' },
   darkBg: { backgroundColor: '#111' },
   lightCard: { backgroundColor: '#fff' },

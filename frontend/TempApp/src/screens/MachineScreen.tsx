@@ -7,10 +7,10 @@ import {
   ActivityIndicator,
   ImageBackground,
   Dimensions,
-  TouchableOpacity,
   SafeAreaView,
-  ScrollView,
   Alert,
+  Image,
+  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { apiGet } from '../api/api';
@@ -26,35 +26,121 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Machine'>;
 
 interface RecipeParam {
   parameter_no: number;
-  section?: string;
   parameter: string;
   value_01: number | string;
   unit?: string;
 }
 
-const DEFAULT_POSITIONS = [
-  { x: 8, y: 12 },
-  { x: 70, y: 10 },
-  { x: 10, y: 55 },
-  { x: 55, y: 50 },
-  { x: 75, y: 70 },
-];
+/** Edit these percentage coords in code to reposition overlays (x = % from left, y = % from top) */
+const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
+  1: { x: 20, y: 25 },
+  2: { x: 70, y: 25 },
+  3: { x: 20, y: 70 },
+  4: { x: 70, y: 70 },
+};
 
+const SR_LIST = [ 1, 2 , 3, 4];
 const POLL_MS = 2000;
 
 export default function MachineScreen({ route }: Props) {
-  const { recipeId, recipeName, imageUri } = route.params;
-  const [loading, setLoading] = useState<boolean>(true);
-  const [params, setParams] = useState<RecipeParam[]>([]);
+  const { recipeId, imageUri } = route.params;
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const window = Dimensions.get('window');
-  const imageWidth = window.width - 24;
-  const imageHeight = Math.round((imageWidth * 9) / 16);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [params, setParams] = useState<RecipeParam[]>([]);
 
+  // natural image size (pixels)
+  const [natW, setNatW] = useState<number | null>(null);
+  const [natH, setNatH] = useState<number | null>(null);
+  // container size (available screen)
+  const [contW, setContW] = useState<number>(Dimensions.get('window').width);
+  const [contH, setContH] = useState<number>(Dimensions.get('window').height);
+
+  // derived displayed image size (calculated to mimic `contain`)
+  const [dispW, setDispW] = useState<number>(contW);
+  const [dispH, setDispH] = useState<number>(contH);
+
+  // image source (uri or local asset)
   const imageSource = imageUri ? { uri: imageUri } : require('../assets/machine-placeholder.jpg');
 
+  // fetch natural image size
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveLocal = (src: any) => {
+      try {
+        // get size for local require
+        const resolved = Image.resolveAssetSource(src);
+        if (mounted) {
+          setNatW(resolved.width);
+          setNatH(resolved.height);
+        }
+      } catch (e) {
+        // fallback to container size
+        if (mounted) {
+          setNatW(contW);
+          setNatH(contH);
+        }
+      }
+    };
+
+    if (imageUri) {
+      Image.getSize(
+        imageUri,
+        (w, h) => {
+          if (!mounted) return;
+          setNatW(w);
+          setNatH(h);
+        },
+        (err) => {
+          // couldn't get remote size — fallback
+          if (mounted) {
+            setNatW(contW);
+            setNatH(contH);
+          }
+        }
+      );
+    } else {
+      resolveLocal(imageSource);
+    }
+
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageUri]);
+
+  // recalc displayed image size whenever natural or container sizes change
+  useEffect(() => {
+    if (!natW || !natH) {
+      // not ready yet — use container fill
+      setDispW(contW);
+      setDispH(contH);
+      return;
+    }
+    // compute scale to fit whole image inside container (contain)
+    const scale = Math.min(contW / natW, contH / natH);
+    const w = Math.round(natW * scale);
+    const h = Math.round(natH * scale);
+    setDispW(w);
+    setDispH(h);
+  }, [natW, natH, contW, contH]);
+
+  // handle orientation / window size changes
+  useEffect(() => {
+    const onChange = ({ window }: { window: { width: number; height: number } }) => {
+      setContW(window.width);
+      setContH(window.height);
+    };
+    const sub = Dimensions.addEventListener ? Dimensions.addEventListener('change', onChange) : null;
+    return () => {
+      if (sub && typeof sub.remove === 'function') sub.remove();
+      else if (Dimensions.removeEventListener) Dimensions.removeEventListener('change', onChange as any);
+    };
+  }, []);
+
+  // fetch params from backend
   const fetchParams = async () => {
     try {
       const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
@@ -68,6 +154,10 @@ export default function MachineScreen({ route }: Props) {
   };
 
   useEffect(() => {
+    if (!recipeId) {
+      Alert.alert('No recipe selected', 'Open a recipe first');
+      return;
+    }
     let alive = true;
     setLoading(true);
     (async () => {
@@ -81,118 +171,92 @@ export default function MachineScreen({ route }: Props) {
         clearInterval(id);
       };
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipeId]);
 
-  const displayedParams = useMemo(() => {
-    if (!params || params.length === 0) return [];
-    const sorted = [...params].sort((a, b) => (a.parameter_no ?? 0) - (b.parameter_no ?? 0));
-    return sorted.slice(0, 5);
+  // map SR -> value param
+  const valuesBySr = useMemo(() => {
+    const map: Record<number, RecipeParam | null> = {};
+    SR_LIST.forEach((sr) => {
+      map[sr] = params.find((p) => Number(p.parameter_no) === sr) ?? null;
+    });
+    return map;
   }, [params]);
 
-  const overlays = DEFAULT_POSITIONS.map((pos, idx) => ({ pos, param: displayedParams[idx] ?? null }));
-
-  const onOverlayPress = (param: RecipeParam | null) => {
-    if (!param) return;
-    Alert.alert(param.parameter, `Value: ${param.value_01} ${param.unit ?? ''}`);
-  };
+  // displayed image top-left coordinates inside container (centered)
+  const offsetX = Math.round((contW - dispW) / 2);
+  const offsetY = Math.round((contH - dispH) / 2);
 
   return (
-    <SafeAreaView style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
-      <ScrollView contentContainerStyle={{ padding: 12 }}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, isDark ? styles.textLight : styles.textDark]}>
-            {recipeName ? `${recipeName}` : `Recipe ${recipeId}`}
-          </Text>
-          <Text style={[styles.subtitle, isDark ? styles.textLight : styles.textDark]}>
-            (Tap overlays for details)
-          </Text>
-        </View>
-
-        <View style={{ alignItems: 'center' }}>
+    <SafeAreaView style={styles.fullscreen}>
+      {/* Container fills the whole screen */}
+      <View style={styles.flexFill} onLayout={(e) => { setContW(e.nativeEvent.layout.width); setContH(e.nativeEvent.layout.height); }}>
+        {/* Image centered, sized to dispW x dispH, resizeMode contain (we emulate with exact size) */}
+        <View style={{ width: contW, height: contH, alignItems: 'center', justifyContent: 'center' }}>
           <ImageBackground
             source={imageSource}
-            style={[styles.image, { width: imageWidth, height: imageHeight }]}
+            style={{ width: dispW, height: dispH }}
             resizeMode="contain"
           >
-            {overlays.map((o, i) => {
-              const left = `${o.pos.x}%`;
-              const top = `${o.pos.y}%`;
-              const param = o.param;
+            {/* Loading overlay on image */}
+            {loading && (
+              <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
+                <ActivityIndicator size="large" color="#007bff" />
+              </View>
+            )}
+
+            {/* Render overlays positioned relative to displayed image */}
+            {SR_LIST.map((sr) => {
+              const pos = POSITIONS_BY_SR[sr];
+              if (!pos) return null;
+              const param = valuesBySr[sr];
+              const display = param ? String(param.value_01) : '';
+
+              // Convert percent position -> px within the displayed image
+              const leftPx = Math.round((pos.x / 100) * dispW);
+              const topPx = Math.round((pos.y / 100) * dispH);
+
               return (
-                <TouchableOpacity
-                  key={`ov-${i}`}
-                  onPress={() => onOverlayPress(param)}
-                  activeOpacity={param ? 0.7 : 1}
+                <View
+                  key={`ov-${sr}`}
                   style={[
                     styles.overlay,
                     {
-                      left,
-                      top,
-                      backgroundColor: param ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.12)',
+                      left: leftPx,
+                      top: topPx,
+                      transform: [{ translateX: -40 }, { translateY: -12 }],
+                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)',
                     },
                   ]}
                 >
-                  {param ? (
-                    <>
-                      <Text style={[styles.overlayTitle, styles.overlayText]}>{param.parameter}</Text>
-                      <Text style={[styles.overlayValue, styles.overlayText]}>
-                        {String(param.value_01)} {param.unit ?? ''}
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={[styles.overlayText, { fontStyle: 'italic', fontSize: 12 }]}>—</Text>
-                  )}
-                </TouchableOpacity>
+                  <Text style={[styles.overlayValue, isDark ? styles.textDark : styles.textDark]}>{display}</Text>
+                </View>
               );
             })}
           </ImageBackground>
         </View>
-
-        <View style={{ height: 18 }} />
-
-        <View style={styles.infoBox}>
-          <Text style={isDark ? styles.textLight : styles.textDark}>Showing {displayedParams.length} parameter(s)</Text>
-          <Text style={[{ marginTop: 8 }, isDark ? styles.textLight : styles.textDark]}>
-            Values update automatically from the server.
-          </Text>
-        </View>
-      </ScrollView>
-
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#007bff" />
-        </View>
-      )}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  headerRow: { paddingBottom: 12 },
-  title: { fontSize: 20, fontWeight: '700' },
-  subtitle: { fontSize: 12, color: '#666' },
-  image: { justifyContent: 'flex-start' },
-  overlay: {
-    position: 'absolute',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    minWidth: 80,
-    maxWidth: 160,
-    transform: [{ translateX: -40 }, { translateY: -12 }],
-  },
-  overlayText: { color: '#fff', textAlign: 'center' },
-  overlayTitle: { fontSize: 11, opacity: 0.9 },
-  overlayValue: { fontSize: 14, fontWeight: '700', marginTop: 4 },
-  infoBox: { padding: 12 },
+  fullscreen: { flex: 1, backgroundColor: '#000' },
+  flexFill: { flex: 1 },
   loadingOverlay: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  darkBg: { backgroundColor: '#0b0b0b' },
-  lightBg: { backgroundColor: '#fff' },
-  textLight: { color: '#fff' },
+  overlay: {
+    position: 'absolute',
+    minWidth: 70,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayValue: { fontSize: 18, fontWeight: '700', color: '#000' },
   textDark: { color: '#000' },
 });
