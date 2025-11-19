@@ -17,6 +17,11 @@ import RecipeTable from '../components/RecipeTable';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api'; // <-- use wrapper that reads current API base
+import RNFS from 'react-native-fs';
+import FileViewer from 'react-native-file-viewer';
+import { ToastAndroid } from 'react-native';
+import { API_BASE } from "@env";
+
 
 // --- Props Type ---
 interface MainScreenProps {
@@ -72,6 +77,32 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       setLoadingRecipes(false);
     }
   }, [customerCode]);
+  const downloadRecipeExcel = async () => {
+    if (selectedRecipeId === -1) {
+      Alert.alert("Select recipe first");
+      return;
+    }
+
+    try {
+      const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
+      const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+
+      const result = await RNFS.downloadFile({
+        fromUrl: url,
+        toFile: filePath,
+      }).promise;
+
+      if (result.statusCode === 200) {
+        ToastAndroid.show("Download complete!", ToastAndroid.SHORT);
+        await FileViewer.open(filePath);
+      } else {
+        Alert.alert("Download failed", "Server error");
+      }
+    } catch (err: any) {
+      console.log(err);
+      Alert.alert("Error downloading", err.message);
+    }
+  };
 
   const fetchRecipeParams = useCallback(
     async (id: number) => {
@@ -103,6 +134,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // Helper to open Machine screen
   const openMachineView = () => {
+      
+
     if (selectedRecipeId === -1) {
       Alert.alert('Select a recipe first');
       return;
@@ -173,20 +206,46 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         ) : (
           <>
             {/* Visible pressable dropdown box: always shows placeholder or selected recipe + arrow */}
-            <TouchableOpacity
-              style={[
-                styles.dropdownBox,
-                { borderColor: '#ccc', borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 14 },
-                isDark ? styles.darkCard : styles.lightCard,
-              ]}
-              onPress={openDropdown}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.dropdownText, isDark ? styles.textLight : styles.textDark]}>
-                {selectedRecipeName ?? 'Select recipe'}
-              </Text>
-              <Text style={[styles.chevron, isDark ? styles.textLight : styles.textDark]}>▾</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+  {/* Dropdown input */}
+  <TouchableOpacity
+    style={[
+      styles.dropdownBox,
+      {
+        flex: 1,
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 14,
+        marginRight: 8,
+      },
+      isDark ? styles.darkCard : styles.lightCard,
+    ]}
+    onPress={openDropdown}
+    activeOpacity={0.8}
+  >
+    <Text style={[styles.dropdownText, isDark ? styles.textLight : styles.textDark]}>
+      {selectedRecipeName ?? "Select recipe"}
+    </Text>
+    <Text style={[styles.chevron, isDark ? styles.textLight : styles.textDark]}>▾</Text>
+  </TouchableOpacity>
+
+  {/* Download Button */}
+  <TouchableOpacity
+    onPress={downloadRecipeExcel}
+    disabled={selectedRecipeId === -1}
+    style={{
+      backgroundColor: selectedRecipeId === -1 ? "#aaa" : "#007bff",
+      paddingVertical: 14,
+      paddingHorizontal: 10,
+      borderRadius: 6,
+    }}
+  >
+    <Text style={{ color: "white", fontWeight: "600" }}>⬇</Text>
+  </TouchableOpacity>
+</View>
+
 
             {/* Machine button */}
             {selectedRecipeId !== -1 ? (

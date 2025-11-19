@@ -16,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { apiGet } from '../api/api';
 import { useTheme } from '../theme/ThemeProvider';
 
+
 type RootStackParamList = {
   Main: undefined;
   Settings: undefined;

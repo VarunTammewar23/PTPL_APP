@@ -199,6 +199,70 @@ app.get('/customers', async (req, res) => {
   }
 });
 
+app.get('/recipes/:id/download', async (req, res) => {
+  const recipeId = Number(req.params.id);
+  if (!recipeId) {
+    return res.status(400).json({ error: 'Invalid recipe id' });
+  }
+
+  try {
+    // 1️⃣ Fetch recipe details
+    const [recipeRows] = await pool.query(
+      'SELECT recipe_name, customer_code FROM recipe_list WHERE sr_no = ? LIMIT 1',
+      [recipeId]
+    );
+
+    if (!recipeRows.length) {
+      return res.status(404).json({ error: 'Recipe not found' });
+    }
+
+    const recipeName = recipeRows[0].recipe_name;
+
+    // 2️⃣ Fetch recipe parameters
+    const [params] = await pool.query(
+      'SELECT parameter_no, section, parameter, value_01, unit FROM recipe_master WHERE recipe_name = ? ORDER BY parameter_no',
+      [recipeName]
+    );
+
+    // 3️⃣ Create Excel workbook
+    const Excel = require('exceljs');
+    const workbook = new Excel.Workbook();
+    const sheet = workbook.addWorksheet('Recipe Parameters');
+
+    // 4️⃣ Add header row
+    sheet.addRow(['Parameter No', 'Section', 'Parameter', 'Value', 'Unit']);
+
+    // 5️⃣ Add data rows
+    params.forEach(row => {
+      sheet.addRow([
+        row.parameter_no,
+        row.section,
+        row.parameter,
+        row.value_01,
+        row.unit
+      ]);
+    });
+
+    // 6️⃣ Set header formatting
+    sheet.getRow(1).font = { bold: true };
+
+    // 7️⃣ Prepare file for download
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${recipeName.replace(/ /g, '_')}.xlsx"`
+    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // 8️⃣ Write workbook to response
+    await workbook.xlsx.write(res);
+
+    res.end();
+
+  } catch (err) {
+    console.error('Excel download error:', err);
+    res.status(500).json({ error: 'Failed to generate Excel' });
+  }
+});
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
