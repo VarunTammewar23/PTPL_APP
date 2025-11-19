@@ -77,7 +77,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       setLoadingRecipes(false);
     }
   }, [customerCode]);
-  const downloadRecipeExcel = async () => {
+ const downloadRecipeExcel = async () => {
   if (selectedRecipeId === -1) {
     Alert.alert("Select recipe first");
     return;
@@ -86,26 +86,31 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   try {
     const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
 
-    // Path where file will be saved
     const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
 
     console.log("Downloading to:", filePath);
 
-    // Fetch as BASE64
-    const response = await fetch(url);
-    const base64Data = await response.arrayBuffer();
+    // Download raw binary file directly
+    const download = RNFS.downloadFile({
+      fromUrl: url,
+      toFile: filePath,
+      background: true,
+      discretionary: true,
+      cacheable: true,
+    });
 
-    const b64 = Buffer.from(base64Data).toString('base64');
+    const result = await download.promise;
 
-    // Save base64 → file
-    await RNFS.writeFile(filePath, b64, "base64");
+    if (result.statusCode !== 200) {
+      throw new Error(`HTTP ${result.statusCode}`);
+    }
 
     ToastAndroid.show("File saved to Downloads!", ToastAndroid.LONG);
 
     // Open the file
     await FileViewer.open(filePath, {
       showOpenWithDialog: true,
-      showAppsSuggestions: true
+      showAppsSuggestions: true,
     });
 
   } catch (err: any) {
