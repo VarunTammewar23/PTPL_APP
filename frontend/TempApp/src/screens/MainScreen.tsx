@@ -21,6 +21,9 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
+import DocumentPicker from 'react-native-document-picker';
+import XLSX from 'xlsx';
+
 
 
 // --- Props Type ---
@@ -118,6 +121,68 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     Alert.alert("Error downloading", err.message);
   }
 };
+
+const mapExcelRow = (row: any) => ({
+  parameter_no: row["Parameter No"] || row["Parameter"] || 0,
+  section: row["Section"] || "",
+  parameter: row["Parameter"] || "",
+  value_01: row["Value"] || 0,
+  unit: row["Unit"] || "",
+});
+
+
+const importRecipeExcel = async () => {
+  try {
+    const result = await DocumentPicker.pickSingle({
+      type: [DocumentPicker.types.allFiles],
+    });
+
+    const filePath = result.uri.replace("file://", "");
+
+    const fileData = await RNFS.readFile(filePath, "base64");
+
+    const workbook = XLSX.read(fileData, { type: "base64" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    console.log("Imported Excel:", jsonData);
+
+    const mapped = jsonData.map(mapExcelRow);
+
+setRecipeParams(mapped);        // show in app
+await uploadImportedRecipe(mapped); // send correctly to backend
+
+
+    Alert.alert("Success", "Excel imported successfully!");
+  } catch (err: any) {
+    console.log("Import Error:", err);
+    Alert.alert("Import failed", err.message);
+  }
+};
+
+
+const uploadImportedRecipe = async (jsonData: any[]) => {
+  try {
+    const response = await fetch(`${API_BASE}/recipes/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_code: customerCode,
+        recipe_data: jsonData,
+      }),
+    });
+
+    const res = await response.json();
+    if (!response.ok) throw new Error(res.message);
+
+    Alert.alert("Uploaded", "Recipe saved to database!");
+  } catch (error: any) {
+    Alert.alert("Upload failed", error.message);
+  }
+};
+
 
 
 
@@ -261,6 +326,21 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   >
     <Text style={{ color: "white", fontWeight: "600" }}>⬇</Text>
   </TouchableOpacity>
+
+  {/* Import Button */}
+<TouchableOpacity
+  onPress={importRecipeExcel}
+  style={{
+    backgroundColor: "#28a745",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: 8,
+  }}
+>
+  <Text style={{ color: "white", fontWeight: "600" }}>⬆</Text>
+</TouchableOpacity>
+
 </View>
 
 
