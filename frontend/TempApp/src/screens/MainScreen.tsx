@@ -223,8 +223,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         ) : (
           <>
             {/* Visible pressable dropdown box: always shows placeholder or selected recipe + arrow */}
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-  {/* Dropdown input */}
+<View style={{ flexDirection: "row", alignItems: "center" }}>
+  
+  {/* Select Recipe Box */}
   <TouchableOpacity
     style={[
       styles.dropdownBox,
@@ -236,6 +237,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         paddingHorizontal: 12,
         paddingVertical: 14,
         marginRight: 8,
+        height: 50,  
+        justifyContent: "center",
       },
       isDark ? styles.darkCard : styles.lightCard,
     ]}
@@ -253,14 +256,21 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     onPress={downloadRecipeExcel}
     disabled={selectedRecipeId === -1}
     style={{
+      width: 120,   
+      height: 50,   
       backgroundColor: selectedRecipeId === -1 ? "#aaa" : "#007bff",
-      paddingVertical: 14,
-      paddingHorizontal: 10,
       borderRadius: 6,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
     }}
   >
-    <Text style={{ color: "white", fontWeight: "600" }}>⬇</Text>
+    <Text style={{ color: "white", fontWeight: "600" }}>
+      Download
+    </Text>
+    <Text style={{ color: "white", fontSize: 18, marginLeft: 6 }}>⬇</Text>
   </TouchableOpacity>
+
 </View>
 
 
