@@ -264,6 +264,58 @@ app.get('/recipes/:id/download', async (req, res) => {
   }
 });
 
+// ✅ Import Excel and save to DB
+app.post('/recipes/import', async (req, res) => {
+  try {
+    const { customer_code, recipe_data } = req.body;
+
+    if (!recipe_data || !Array.isArray(recipe_data)) {
+      return res.status(400).json({ error: 'Invalid Excel data' });
+    }
+
+    // 1️⃣ Create new recipe entry in recipe_list (auto recipe id)
+    const recipeName = `Imported_${Date.now()}`;
+
+    const [result] = await pool.query(
+      "INSERT INTO recipe_list (recipe_name, customer_code) VALUES (?, ?)",
+      [recipeName, customer_code]
+    );
+
+    const recipeId = result.insertId;
+
+    // 2️⃣ Insert each parameter
+    for (let row of recipe_data) {
+      await pool.query(
+        `
+          INSERT INTO recipe_master
+          (recipe_name, parameter_no, section, parameter, value_01, unit)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          recipeName,
+          row.parameter_no,
+          row.section,
+          row.parameter,
+          row.value_01,
+          row.unit,
+        ]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Recipe imported successfully",
+      recipe_id: recipeId,
+      recipe_name: recipeName,
+    });
+
+  } catch (err) {
+    console.error('Import error:', err);
+    res.status(500).json({ error: 'Failed to import recipe' });
+  }
+});
+
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
