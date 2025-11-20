@@ -1,5 +1,6 @@
 // src/screens/MainScreen.tsx
-import React, { useEffect, useState, useCallback } from 'react';
+// src/screens/MainScreen.tsx
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -12,15 +13,19 @@ import {
   Modal,
   FlatList,
   Pressable,
+  Animated,   // ✅ Correct import
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api'; // <-- use wrapper that reads current API base
+import { apiGet } from '../api/api';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
+
+
+
 
 
 // --- Props Type ---
@@ -48,6 +53,30 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  
+
+  // --- Bottom Panel State + Animation ---
+const [activePanel, setActivePanel] = useState<string | null>(null);
+const panelAnim = useRef(new Animated.Value(300)).current;
+
+const openPanel = (name: string) => {
+  setActivePanel(name);
+  Animated.timing(panelAnim, {
+    toValue: 0,
+    duration: 250,
+    useNativeDriver: true,
+  }).start();
+};
+
+const closePanel = () => {
+  Animated.timing(panelAnim, {
+    toValue: 300,
+    duration: 250,
+    useNativeDriver: true,
+  }).start(() => setActivePanel(null));
+};
+
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   // -1 sentinel means "no selection"
@@ -312,6 +341,75 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           <Text style={[{ color: '#666' }, isDark ? styles.textLight : styles.textDark]}>Select a recipe to view its parameters.</Text>
         )}
       </View>
+      {/* --- Bottom Machine Control Bar --- */}
+<View style={styles.bottomNav}>
+  {["RPF", "RT Angle", "Knife 1", "Knife 2", "Tray"].map((label) => (
+    <TouchableOpacity
+      key={label}
+      onPress={() => openPanel(label)}
+      style={styles.navButton}
+    >
+      <Text style={{ color: "white", fontWeight: "600", fontSize: 12 }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
+
+{/* --- Slide Up Panel --- */}
+<Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}>
+  <View style={styles.panelHeader}>
+    <Text style={styles.panelTitle}>{activePanel} Controls</Text>
+    <TouchableOpacity onPress={closePanel}>
+      <Text style={styles.panelClose}>✕</Text>
+    </TouchableOpacity>
+  </View>
+
+  {/* RPF */}
+  {activePanel === "RPF" && (
+    <>
+      <Text style={styles.panelItem}>RPF1</Text>
+      <Text style={styles.panelItem}>RPF2</Text>
+      <Text style={styles.panelItem}>RPF Gap Setting</Text>
+      <Text style={styles.panelItem}>RPF Speed Setting</Text>
+    </>
+  )}
+
+  {/* RT Angle */}
+  {activePanel === "RT Angle" && (
+    <>
+      <Text style={styles.panelItem}>Rotate Left</Text>
+      <Text style={styles.panelItem}>Rotate Right</Text>
+      <Text style={styles.panelItem}>Reset Angle</Text>
+    </>
+  )}
+
+  {/* Knife 1 */}
+  {activePanel === "Knife 1" && (
+    <>
+      <Text style={styles.panelItem}>Knife 1 Width</Text>
+      <Text style={styles.panelItem}>Knife 1 Speed</Text>
+    </>
+  )}
+
+  {/* Knife 2 */}
+  {activePanel === "Knife 2" && (
+    <>
+      <Text style={styles.panelItem}>Knife 2 Width</Text>
+      <Text style={styles.panelItem}>Knife 2 Pressure</Text>
+    </>
+  )}
+
+  {/* Tray */}
+  {activePanel === "Tray" && (
+    <>
+      <Text style={styles.panelItem}>Tray Up</Text>
+      <Text style={styles.panelItem}>Tray Down</Text>
+      <Text style={styles.panelItem}>Tray Reset</Text>
+    </>
+  )}
+</Animated.View>
+
     </SafeAreaView>
   );
 }
@@ -387,4 +485,57 @@ const styles = StyleSheet.create({
   darkCard: { backgroundColor: '#222' },
   textLight: { color: '#fff' },
   textDark: { color: '#000' },
+
+  bottomNav: {
+  flexDirection: "row",
+  justifyContent: "space-between",   // 🔥 less gap, full width
+  backgroundColor: "#1f1f1f",
+  paddingVertical: 17,
+  paddingHorizontal: 10,             // 🔥 add padding to stretch bar
+  borderTopWidth: 1,
+  borderColor: "#444",
+},
+
+navButton: {
+  paddingHorizontal: 13,              // 🔥 reduced button width
+  paddingVertical: 13,
+  backgroundColor: "#007bff",
+  borderRadius: 6,
+},
+
+panel: {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "#fff",
+  borderTopLeftRadius: 14,
+  borderTopRightRadius: 14,
+  padding: 15,
+  elevation: 20,
+},
+
+panelHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 10,
+},
+
+panelTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+},
+
+panelClose: {
+  fontSize: 22,
+  fontWeight: "bold",
+},
+
+panelItem: {
+  paddingVertical: 12,
+  fontSize: 16,
+  borderBottomWidth: 1,
+  borderColor: "#ddd",
+},
+
 });
