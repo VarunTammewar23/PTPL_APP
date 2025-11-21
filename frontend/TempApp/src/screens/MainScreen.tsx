@@ -23,7 +23,7 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
-import { Share } from "react-native";
+
 
 
 
@@ -49,8 +49,6 @@ interface RecipeParam {
   value_01: number;
   unit: string;
 }
-
-
 
 
 // --- Component ---
@@ -120,34 +118,36 @@ const closePanel = () => {
   try {
     const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
 
-    // First download to app's temp directory
-    const localPath = `${RNFS.DocumentDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+    // Save inside internal app folder (SAFE, no permission required)
+    const filePath = `${RNFS.DocumentDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+
+    console.log("Downloading to:", filePath);
 
     const download = RNFS.downloadFile({
       fromUrl: url,
-      toFile: localPath,
+      toFile: filePath,
     });
 
     const result = await download.promise;
 
     if (result.statusCode !== 200) {
-      Alert.alert("Error", "Failed to download file");
-      return;
+      throw new Error(`HTTP ${result.statusCode}`);
     }
 
-    // Now share => user chooses where to save
-    await Share.share({
-      url: "file://" + localPath,
-      title: "Save Excel",
-      message: "Choose where to save the Excel file",
+    ToastAndroid.show("File downloaded successfully!", ToastAndroid.LONG);
+
+    // Open the file
+    await FileViewer.open(filePath, {
+      showOpenWithDialog: true,
+      showAppsSuggestions: true,
     });
 
-    ToastAndroid.show("Download ready!", ToastAndroid.SHORT);
-
   } catch (err: any) {
-    Alert.alert("Error", err.message || "Unknown error");
+    console.log("Download error:", err);
+    Alert.alert("Error downloading", err.message);
   }
 };
+
 
 
 
