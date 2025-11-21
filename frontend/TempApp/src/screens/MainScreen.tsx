@@ -118,25 +118,25 @@ const closePanel = () => {
   try {
     const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
 
-    // Save inside internal app folder (SAFE, no permission required)
-    const filePath = `${RNFS.DocumentDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+    // File will be saved to Downloads
+    const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
 
     console.log("Downloading to:", filePath);
 
-    const download = RNFS.downloadFile({
+    const result = await RNFS.downloadFile({
       fromUrl: url,
       toFile: filePath,
-    });
-
-    const result = await download.promise;
+      background: true,
+      discretionary: true,
+    }).promise;
 
     if (result.statusCode !== 200) {
       throw new Error(`HTTP ${result.statusCode}`);
     }
 
-    ToastAndroid.show("File downloaded successfully!", ToastAndroid.LONG);
+    ToastAndroid.show("Saved to Downloads!", ToastAndroid.LONG);
 
-    // Open the file
+    // Open the file using FileProvider compatible URI
     await FileViewer.open(filePath, {
       showOpenWithDialog: true,
       showAppsSuggestions: true,
