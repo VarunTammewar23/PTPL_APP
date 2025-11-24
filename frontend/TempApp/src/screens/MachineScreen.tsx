@@ -10,11 +10,12 @@ import {
   SafeAreaView,
   Alert,
   Image,
-  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { apiGet } from '../api/api';
 import { useTheme } from '../theme/ThemeProvider';
+import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
+
 
 
 type RootStackParamList = {
@@ -130,16 +131,17 @@ export default function MachineScreen({ route }: Props) {
 
   // handle orientation / window size changes
   useEffect(() => {
-    const onChange = ({ window }: { window: { width: number; height: number } }) => {
-      setContW(window.width);
-      setContH(window.height);
-    };
-    const sub = Dimensions.addEventListener ? Dimensions.addEventListener('change', onChange) : null;
-    return () => {
-      if (sub && typeof sub.remove === 'function') sub.remove();
-      else if (Dimensions.removeEventListener) Dimensions.removeEventListener('change', onChange as any);
-    };
-  }, []);
+  const onChange = ({ window }: { window: { width: number; height: number } }) => {
+    setContW(window.width);
+    setContH(window.height);
+  };
+
+  const subscription = Dimensions.addEventListener('change', onChange);
+
+  return () => {
+    subscription?.remove();
+  };
+}, []);
 
   // fetch params from backend
   const fetchParams = async () => {
@@ -184,9 +186,7 @@ export default function MachineScreen({ route }: Props) {
     return map;
   }, [params]);
 
-  // displayed image top-left coordinates inside container (centered)
-  const offsetX = Math.round((contW - dispW) / 2);
-  const offsetY = Math.round((contH - dispH) / 2);
+
 
   return (
     <SafeAreaView style={styles.fullscreen}>
@@ -194,47 +194,53 @@ export default function MachineScreen({ route }: Props) {
       <View style={styles.flexFill} onLayout={(e) => { setContW(e.nativeEvent.layout.width); setContH(e.nativeEvent.layout.height); }}>
         {/* Image centered, sized to dispW x dispH, resizeMode contain (we emulate with exact size) */}
         <View style={{ width: contW, height: contH, alignItems: 'center', justifyContent: 'center' }}>
-          <ImageBackground
-            source={imageSource}
-            style={{ width: dispW, height: dispH }}
-            resizeMode="contain"
-          >
-            {/* Loading overlay on image */}
-            {loading && (
-              <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
-                <ActivityIndicator size="large" color="#007bff" />
-              </View>
-            )}
+          <ZoomableView
+  minScale={1}
+  maxScale={4}
+  doubleTapScale={2}
+  style={{ width: dispW, height: dispH }}
+>
+  <ImageBackground
+    source={imageSource}
+    style={{ width: dispW, height: dispH }}
+    resizeMode="contain"
+  >
+    {loading && (
+      <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
+        <ActivityIndicator size="large" color="#007bff" />
+      </View>
+    )}
 
-            {/* Render overlays positioned relative to displayed image */}
-            {SR_LIST.map((sr) => {
-              const pos = POSITIONS_BY_SR[sr];
-              if (!pos) return null;
-              const param = valuesBySr[sr];
-              const display = param ? String(param.value_01) : '';
+    {SR_LIST.map((sr) => {
+      const pos = POSITIONS_BY_SR[sr];
+      const param = valuesBySr[sr];
+      const display = param ? String(param.value_01) : '';
 
-              // Convert percent position -> px within the displayed image
-              const leftPx = Math.round((pos.x / 100) * dispW);
-              const topPx = Math.round((pos.y / 100) * dispH);
+      const leftPx = Math.round((pos.x / 100) * dispW);
+      const topPx = Math.round((pos.y / 100) * dispH);
 
-              return (
-                <View
-                  key={`ov-${sr}`}
-                  style={[
-                    styles.overlay,
-                    {
-                      left: leftPx,
-                      top: topPx,
-                      transform: [{ translateX: -40 }, { translateY: -12 }],
-                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)',
-                    },
-                  ]}
-                >
-                  <Text style={[styles.overlayValue, isDark ? styles.textDark : styles.textDark]}>{display}</Text>
-                </View>
-              );
-            })}
-          </ImageBackground>
+      return (
+        <View
+          key={`ov-${sr}`}
+          style={[
+            styles.overlay,
+            {
+              left: leftPx,
+              top: topPx,
+              transform: [{ translateX: -40 }, { translateY: -12 }],
+              backgroundColor: isDark
+                ? 'rgba(0,0,0,0.6)'
+                : 'rgba(255,255,255,0.8)',
+            },
+          ]}
+        >
+          <Text style={styles.overlayValue}>{display}</Text>
+        </View>
+      );
+    })}
+  </ImageBackground>
+</ZoomableView>
+
         </View>
       </View>
     </SafeAreaView>

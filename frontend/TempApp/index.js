@@ -1,6 +1,7 @@
 /**
  * @format
  */
+import 'react-native-gesture-handler';
 import { Buffer } from 'buffer';
 
 global.Buffer = Buffer;
