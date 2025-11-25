@@ -13,7 +13,8 @@ import {
   Modal,
   FlatList,
   Pressable,
-  Animated,   // ✅ Correct import
+  Animated, 
+  NativeModules  // ✅ Correct import
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
 import { useNavigation } from '@react-navigation/native';
@@ -23,10 +24,8 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
-
-
-
-
+import * as XLSX from 'xlsx';
+const { FilePickerModule } = NativeModules;
 
 
 
@@ -87,6 +86,8 @@ const closePanel = () => {
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
+  const [_importedData, _setImportedData] = useState<any[]>([]);
+
 
   // dropdown modal visibility
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
@@ -148,7 +149,46 @@ const closePanel = () => {
   }
 };
 
+const sendToBackend = async (rows: any[]) => {
+  try {
+    const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows }),
+    });
 
+    const res = await response.json();
+    console.log("Backend Insert Status:", res);
+
+    if (res.success) {
+      Alert.alert("Success", "Excel uploaded successfully");
+    } else {
+      Alert.alert("Error", "Upload failed");
+    }
+  } catch (error) {
+    console.log("Error uploading:", error);
+  }
+};
+
+
+const openPicker = async () => {
+  try {
+    const uri = await FilePickerModule.openFilePicker();
+    console.log("URI:", uri);
+
+    // direct read without stat
+    const base64 = await RNFS.readFile(uri, "base64");
+
+    const workbook = XLSX.read(base64, { type: "base64" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    console.log("Excel:", sheet);
+    sendToBackend(sheet);
+  } catch (err) {
+    console.log("Picker error:", err);
+  }
+};
 
 
 
@@ -301,6 +341,24 @@ const closePanel = () => {
     </Text>
     <Text style={{ color: "white", fontSize: 18, marginLeft: 6 }}>⬇</Text>
   </TouchableOpacity>
+
+  <TouchableOpacity
+  onPress={openPicker}
+  style={{
+    width: 120,
+    height: 50,
+    backgroundColor: "#28a745",
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8
+  }}
+>
+  <Text style={{ color: "white", fontWeight: "600" }}>
+    Import
+  </Text>
+</TouchableOpacity>
+
 
 </View>
 

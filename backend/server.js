@@ -264,6 +264,26 @@ app.get('/recipes/:id/download', async (req, res) => {
   }
 });
 
+// 📌 Upload Excel and insert rows into MySQL
+app.post("/api/upload-excel", async (req, res) => {
+  const rows = req.body.rows;
+
+  try {
+    for (const r of rows) {
+      await pool.query(
+        "INSERT INTO recipe_master (section, parameter_no, parameter, value_01, unit, recipe_name) VALUES (?, ?, ?, ?, ?, ?)",
+        [r.section, r.parameter_no, r.parameter, r.value_01, r.unit, r.recipe_name]
+      );
+    }
+
+    res.json({ success: true, message: "Excel imported successfully" });
+  } catch (e) {
+    console.error(e);
+    res.json({ success: false, error: e });
+  }
+});
+
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
