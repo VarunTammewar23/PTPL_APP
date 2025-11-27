@@ -267,21 +267,58 @@ app.get('/recipes/:id/download', async (req, res) => {
 // 📌 Upload Excel and insert rows into MySQL
 app.post("/api/upload-excel", async (req, res) => {
   const rows = req.body.rows;
+  if (!rows || rows.length === 0) {
+    return res.json({ success: false, message: "No rows to insert" });
+  }
+
+  const recipeName = rows[0].recipe_name;
+  const customerCode = "1001"; // If customer code exists in Excel, extract it
 
   try {
+    // 1️⃣ Check if recipe already exists
+    const [existing] = await pool.query(
+      "SELECT sr_no FROM recipe_list WHERE recipe_name = ? LIMIT 1",
+      [recipeName]
+    );
+
+    let recipeId;
+
+    if (existing.length === 0) {
+      // 2️⃣ Insert into recipe_list
+      const [result] = await pool.query(
+        "INSERT INTO recipe_list (recipe_name, customer_code) VALUES (?, ?)",
+        [recipeName, customerCode]
+      );
+      recipeId = result.insertId;
+    } else {
+      recipeId = existing[0].sr_no;
+
+      // 3️⃣ Clear old recipe params before inserting new ones
+      await pool.query("DELETE FROM recipe_master WHERE recipe_name = ?", [recipeName]);
+    }
+
+    // 4️⃣ Insert parameters
     for (const r of rows) {
       await pool.query(
-        "INSERT INTO recipe_master (section, parameter_no, parameter, value_01, unit, recipe_name) VALUES (?, ?, ?, ?, ?, ?)",
-        [r.section, r.parameter_no, r.parameter, r.value_01, r.unit, r.recipe_name]
+        `INSERT INTO recipe_master 
+         (recipe_name, parameter_no, section, parameter, value_01, unit)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [recipeName, r.parameter_no, r.section, r.parameter, r.value_01, r.unit]
       );
     }
 
-    res.json({ success: true, message: "Excel imported successfully" });
+    res.json({
+      success: true,
+      message: "Excel imported successfully",
+      newRecipeId: recipeId, // 🔥 RETURN to frontend
+    });
+
   } catch (e) {
     console.error(e);
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
+
 
 
 // Start server

@@ -162,6 +162,16 @@ const sendToBackend = async (rows: any[]) => {
 
     if (res.success) {
       Alert.alert("Success", "Excel uploaded successfully");
+
+      // 🔥 Refresh the recipes list
+      await fetchRecipes();
+
+      // 🔥 Auto-select the newly uploaded recipe
+      const newRecipe = res.newRecipeId; // backend must send inserted recipe_id
+      if (newRecipe) {
+        setSelectedRecipeId(newRecipe);
+        fetchRecipeParams(newRecipe);
+      }
     } else {
       Alert.alert("Error", "Upload failed");
     }
@@ -171,24 +181,40 @@ const sendToBackend = async (rows: any[]) => {
 };
 
 
+
+
 const openPicker = async () => {
   try {
+    console.log("STEP 1: openPicker() CALLED");
+
     const uri = await FilePickerModule.openFilePicker();
-    console.log("URI:", uri);
+    console.log("STEP 2: File URI =", uri);
+    Alert.alert("Picker Result", uri);
 
-    // direct read without stat
     const base64 = await RNFS.readFile(uri, "base64");
+    console.log("STEP 3: BASE64 LENGTH =", base64.length);
 
+    // STEP 4: Parse Excel to workbook
     const workbook = XLSX.read(base64, { type: "base64" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    console.log("STEP 4: Sheets =", workbook.SheetNames);
+    Alert.alert("Sheets", workbook.SheetNames.join(", "));
 
-    console.log("Excel:", sheet);
-    sendToBackend(sheet);
+    // STEP 5: Convert first sheet to JSON
+    const sheetName = workbook.SheetNames[0];
+    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    console.log("STEP 5: Parsed JSON =", jsonData);
+    Alert.alert("Rows Parsed", JSON.stringify(jsonData).slice(0, 100) + "...");
+
+    // STEP 6: Send to backend
+    sendToBackend(jsonData);
+
   } catch (err) {
-    console.log("Picker error:", err);
+    console.log("Excel Parse Error:", err);
+    Alert.alert("Excel Parse Error", JSON.stringify(err));
   }
 };
+
+
 
 
 
