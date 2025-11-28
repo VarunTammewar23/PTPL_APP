@@ -265,59 +265,66 @@ app.get('/recipes/:id/download', async (req, res) => {
 });
 
 // 📌 Upload Excel and insert rows into MySQL
+// 📌 Upload Excel and insert rows into MySQL
 app.post("/api/upload-excel", async (req, res) => {
   const rows = req.body.rows;
+
   if (!rows || rows.length === 0) {
-    return res.json({ success: false, message: "No rows to insert" });
+    return res.json({ success: false, message: "Excel is empty" });
   }
 
   const recipeName = rows[0].recipe_name;
-  const customerCode = "1001"; // If customer code exists in Excel, extract it
+  const customerCode = rows[0].customer_code || null; // Make sure Excel has this
 
   try {
     // 1️⃣ Check if recipe already exists
     const [existing] = await pool.query(
-      "SELECT sr_no FROM recipe_list WHERE recipe_name = ? LIMIT 1",
+      "SELECT COUNT(*) AS count FROM recipe_master WHERE recipe_name = ?",
       [recipeName]
     );
 
-    let recipeId;
-
-    if (existing.length === 0) {
-      // 2️⃣ Insert into recipe_list
-      const [result] = await pool.query(
-        "INSERT INTO recipe_list (recipe_name, customer_code) VALUES (?, ?)",
-        [recipeName, customerCode]
-      );
-      recipeId = result.insertId;
-    } else {
-      recipeId = existing[0].sr_no;
-
-      // 3️⃣ Clear old recipe params before inserting new ones
-      await pool.query("DELETE FROM recipe_master WHERE recipe_name = ?", [recipeName]);
+    if (existing[0].count > 0) {
+      return res.json({
+        success: false,
+        exists: true,
+        message: `Recipe '${recipeName}' already exists`
+      });
     }
 
-    // 4️⃣ Insert parameters
+    // 2️⃣ Insert into recipe_list (MAIN RECIPE TABLE)
+    const [recipeInsert] = await pool.query(
+      "INSERT INTO recipe_list (recipe_name, customer_code) VALUES (?, ?)",
+      [recipeName, customerCode]
+    );
+
+    const newRecipeId = recipeInsert.insertId;
+
+    // 3️⃣ Insert all recipe parameters into recipe_master
     for (const r of rows) {
       await pool.query(
-        `INSERT INTO recipe_master 
-         (recipe_name, parameter_no, section, parameter, value_01, unit)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [recipeName, r.parameter_no, r.section, r.parameter, r.value_01, r.unit]
+        "INSERT INTO recipe_master (section, parameter_no, parameter, value_01, unit, recipe_name) VALUES (?, ?, ?, ?, ?, ?)",
+        [r.section, r.parameter_no, r.parameter, r.value_01, r.unit, recipeName]
       );
     }
 
-    res.json({
+    // 4️⃣ Clear recipe cache so frontend gets updated list
+    cache.recipesByCustomer = {}; // important
+
+    // 5️⃣ Success response
+    return res.json({
       success: true,
       message: "Excel imported successfully",
-      newRecipeId: recipeId, // 🔥 RETURN to frontend
+      newRecipeId
     });
 
   } catch (e) {
-    console.error(e);
-    res.json({ success: false, error: e.message });
+    console.error("UPLOAD ERROR:", e);
+    return res.json({ success: false, error: e });
   }
 });
+
+
+
 
 
 
