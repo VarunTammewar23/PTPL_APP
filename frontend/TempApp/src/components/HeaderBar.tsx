@@ -1,3 +1,4 @@
+// src/components/HeaderBar.tsx
 import React from 'react';
 import {
   View,
@@ -16,66 +17,93 @@ interface Props {
   onUpload: () => void;
 }
 
-export default function HeaderBar({ recipeId, recipeName, onSave, onUpload }: Props) {
+export default function HeaderBar({
+  recipeId,
+  recipeName,
+  onSave,
+  onUpload,
+}: Props) {
   const navigation = useNavigation<any>();
 
   return (
     <View style={styles.wrapper}>
-      {/* ROW 1 */}
-      <View style={styles.row1}>
+      {/* --- inner content --- */}
+      <View style={styles.content}>
+        
+        {/* ROW 1 */}
+        <View style={styles.row1}>
+          {/* Logo */}
+          <Image
+            source={require('../assets/company_logo.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
-        {/* Logo */}
-        <Image
-          source={require('../assets/company_logo.jpeg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        {/* Recipe No */}
-        <Text style={styles.label}>Recipe No:</Text>
-        <Text style={styles.inputBox}>
-          {recipeId !== -1 ? recipeId : "--"}
-        </Text>
-
-        {/* Recipe Name */}
-        <Text style={[styles.label, { marginLeft: 10 }]}>Recipe Name:</Text>
-        <Text style={[styles.inputBox, { minWidth: 120 }]}>
-          {recipeName ?? "--"}
-        </Text>
-
-        {/* DATE + SETTINGS ICON */}
-        <View style={styles.rightSide}>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString()} {new Date().toLocaleTimeString().slice(0, 5)}
+          {/* Recipe No */}
+          <Text style={styles.label}>Recipe No:</Text>
+          <Text style={styles.inputBox}>
+            {recipeId !== -1 ? recipeId : '--'}
           </Text>
 
-          <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
-            <Icon name="settings" size={26} color="#000" />
+          {/* Recipe Name */}
+          <Text style={[styles.label, { marginLeft: 10 }]}>
+            Recipe Name:
+          </Text>
+          <Text style={[styles.inputBox, { minWidth: 120 }]}>
+            {recipeName ?? '--'}
+          </Text>
+
+          {/* DATE + SETTINGS */}
+          <View style={styles.rightSide}>
+            <Text style={styles.date}>
+              {new Date().toLocaleDateString()}{' '}
+              {new Date().toLocaleTimeString().slice(0, 5)}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <Icon name="settings" size={26} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ROW 2 BUTTONS */}
+        <View style={styles.row2}>
+          <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
+            <Text style={styles.btnText}>Save Current Data</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
+            <Text style={styles.btnText}>Upload Recipe</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* ROW 2 BUTTONS */}
-      <View style={styles.row2}>
-        <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
-          <Text style={styles.btnText}>Save Current Data</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
-          <Text style={styles.btnText}>Upload Recipe</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  /** 
+   * OUTER WRAPPER
+   * - backgroundColor fills 100% width
+   * - no horizontal padding so it touches edges
+   */
   wrapper: {
     width: '100%',
-    backgroundColor: '#d6e4f0',
+    backgroundColor: '#d6e4f0', // <-- your original color
     paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,       // <-- IMPORTANT for edge-to-edge
     elevation: 5,
+  },
+
+  /**
+   * INNER CONTENT
+   * - keeps padding so items don't touch edges
+   */
+  content: {
+    paddingHorizontal: 12,
   },
 
   row1: {
@@ -86,25 +114,26 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 100,
-    height: 100,
+    width: 72,
+    height: 48,
     marginRight: 10,
   },
 
   label: {
     fontSize: 16,
     fontWeight: '700',
+    color: '#000',
   },
 
   inputBox: {
     backgroundColor: '#fff',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderWidth: 1,
     borderRadius: 4,
     marginHorizontal: 6,
     fontWeight: '700',
     textAlign: 'center',
+    color: '#000',
   },
 
   rightSide: {
@@ -116,12 +145,14 @@ const styles = StyleSheet.create({
   date: {
     marginRight: 10,
     fontWeight: '700',
+    color: '#000',
   },
 
   row2: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 10,
+    paddingBottom: 6,
   },
 
   saveBtn: {

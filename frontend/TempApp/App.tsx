@@ -75,7 +75,9 @@ export default function App() {
               <>
                 <Stack.Screen
                   name="Main"
+                  // hide the default header for Main screen
                   children={() => <MainScreen customerCode={customerCode} />}
+                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="Settings"
