@@ -17,7 +17,6 @@ import {
   ScrollView,
   Dimensions,
   TouchableWithoutFeedback,
-  LayoutRectangle,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import RecipeTable from '../components/RecipeTable';
@@ -32,7 +31,7 @@ import * as XLSX from 'xlsx';
 import HeaderBar from '../components/HeaderBar';
 
 const { FilePickerModule } = NativeModules;
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 interface MainScreenProps {
   customerCode: string;
@@ -60,6 +59,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
+
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
 
@@ -67,15 +67,15 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // BOTTOM PANEL
   const [activePanel, setActivePanel] = useState<string | null>(null);
-  const panelAnim = useRef(new Animated.Value(300)).current;
+  const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
 
-  // Side-menu (RPF) state
+  // Side-menu (RPF) state (fixed-left menu)
   const [showSideMenu, setShowSideMenu] = useState(false);
-  const [sideMenuTop, setSideMenuTop] = useState<number>(120);
-  const [sideMenuLeft, setSideMenuLeft] = useState<number>(12);
+  const [sideMenuLeft, setSideMenuLeft] = useState<number>(8);
+  const [sideMenuTop, setSideMenuTop] = useState<number>(100);
 
-  // Store layout for each pill using onLayout (more reliable)
-  const [pillLayouts, setPillLayouts] = useState<Record<string, LayoutRectangle>>({});
+  // ref for the RPF pill so we can measure it
+  const rpfRef = useRef<any>(null);
 
   const ITEM_H = 54;
   const MENU_W = 140;
@@ -85,43 +85,51 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     'ALL SPEED','SIDE LAY','BLOWER SETTINGS','ROLLER GAP','FOLDING TRAY'
   ];
 
-  const openSideMenuForPill = (label: string) => {
-    const layout = pillLayouts[label];
-    // fallback default if layout not available
-    if (!layout) {
-      setSideMenuLeft(12);
-      setSideMenuTop(110);
-      setShowSideMenu(true);
-      setActivePanel('RPF');
-      return;
-    }
-
-    const menuHeight = RPF_ITEMS.length * (ITEM_H + 8) - 8 + MENU_PADDING * 2;
-    // compute left so menu centers on pill if possible
-    let left = Math.round(layout.x + layout.width / 2 - MENU_W / 2);
-    left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
-    // place above the pill
-    let top = Math.round(layout.y - menuHeight - 8);
-    if (top < 12) top = 12; // clamp top
-    setSideMenuLeft(left);
-    setSideMenuTop(top);
-    setShowSideMenu(true);
-    setActivePanel('RPF');
-  };
-
+  // simplified open/close: RPF uses measured anchored side menu; other panels use bottom sheet
   const openPanel = (name: string) => {
     if (name === 'RPF') {
-      openSideMenuForPill(name);
+      // toggle side menu. When opening, measure the RPF pill and position menu directly above it.
+      if (showSideMenu) {
+        setShowSideMenu(false);
+        setActivePanel(null);
+        return;
+      }
+
+      // measure the RPF pill (px, py are absolute screen coords)
+      rpfRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
+        // compute menu height
+        const menuHeight = RPF_ITEMS.length * (ITEM_H + 8) - 8 + MENU_PADDING * 2; // spacing accounted
+        // left should align to pill left (clamped to screen)
+        let left = Math.round(px);
+        left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
+        // top should be directly above pill (py is top of pill)
+        let top = Math.round(py - menuHeight);
+        if (top < 8) top = 8; // clamp so not off-screen
+        setSideMenuLeft(left);
+        setSideMenuTop(top);
+
+        setShowSideMenu(true);
+        setActivePanel('RPF');
+
+        // ensure bottom sheet is fully hidden
+        panelAnim.setValue(SCREEN_H);
+      });
+
+      // If measure isn't available or fails, fallback to fixed position
+      // (we still rely on the async measure above)
       return;
     }
+
+    // non-RPF panels: close side menu and open bottom sheet
     setShowSideMenu(false);
     setActivePanel(name);
     Animated.timing(panelAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start();
   };
 
   const closePanel = () => {
+    // close both
     setShowSideMenu(false);
-    Animated.timing(panelAnim, { toValue: 300, duration: 250, useNativeDriver: true }).start(() =>
+    Animated.timing(panelAnim, { toValue: SCREEN_H, duration: 250, useNativeDriver: true }).start(() =>
       setActivePanel(null)
     );
   };
@@ -279,13 +287,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         </TouchableOpacity>
       </View>
 
-      {/* MACHINE VIEW BUTTON */}
-      {selectedRecipeId !== -1 && (
-        <View style={{ marginTop: 10 }}>
-          <Button title="Open Machine View" onPress={openMachineView} />
-        </View>
-      )}
-
       {/* DROPDOWN MODAL */}
       <Modal visible={dropdownVisible} animationType="fade" transparent onRequestClose={() => setDropdownVisible(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
@@ -309,15 +310,39 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         }
       </View>
 
-      {/* Side menu overlay + anchored menu (RPF) */}
+      {/* Anchored RPF side menu (appears above measured RPF pill) */}
       {showSideMenu && activePanel === 'RPF' && (
         <TouchableWithoutFeedback onPress={() => { setShowSideMenu(false); setActivePanel(null); }}>
           <View style={styles.sideMenuOverlay}>
             <TouchableWithoutFeedback>
-              <View style={[styles.sideMenu, { top: sideMenuTop, left: sideMenuLeft, width: MENU_W }]}>
+              <View style={[styles.sideMenuFixed, { left: sideMenuLeft, top: sideMenuTop }]}>
                 <View style={styles.sideMenuInner}>
                   {RPF_ITEMS.map((it, i) => (
-                    <TouchableOpacity key={it + i} style={styles.sideMenuButton} activeOpacity={0.9}>
+                    <TouchableOpacity
+                      key={it + i}
+                      style={styles.sideMenuButton}
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        // PAPER SIZES opens the Machine screen (old "Open Machine View" behaviour)
+                        if (it === "PAPER SIZES") {
+                          if (selectedRecipeId === -1) {
+                            Alert.alert("Select a recipe first");
+                            return;
+                          }
+                          setShowSideMenu(false);
+                          setActivePanel(null);
+                          navigation.navigate("Machine", {
+                            recipeId: selectedRecipeId,
+                            recipeName: selectedRecipeName,
+                          });
+                          return;
+                        }
+
+                        // default: close the menu for other items
+                        setShowSideMenu(false);
+                        setActivePanel(null);
+                      }}
+                    >
                       <View style={styles.sideMenuGloss} />
                       <Text style={styles.sideMenuText}>{it}</Text>
                     </TouchableOpacity>
@@ -340,28 +365,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             const isActive = activePanel === label;
             return (
               <TouchableOpacity
-                // capture layout for each pill so we can position menu above it
-                onLayout={(e) => {
-                  const { x, y, width, height } = e.nativeEvent.layout;
-                  // note: layout.x/y are relative to parent ScrollView; we want absolute
-                  // compute absolute X by summing scrollview offset: simpler approach:
-                  // use measure? but measure is flaky inside scroll; instead get window coords by using onLayout of top container...
-                  // however for most cases layout.x is sufficient to approximate; store it
-                  setPillLayouts(prev => ({ ...prev, [label]: { x, y, width, height } }));
-                }}
                 key={label + idx}
+                ref={label === "RPF" ? rpfRef : undefined}
                 activeOpacity={0.9}
                 onPress={() => {
-                  if (label === 'RPF') {
-                    if (showSideMenu) {
-                      setShowSideMenu(false);
-                      setActivePanel(null);
-                    } else {
-                      openSideMenuForPill(label);
-                    }
-                    return;
-                  }
-                  if (isActive) {
+                  // RPF handled by openPanel which toggles anchored menu
+                  if (isActive && label !== 'RPF') {
                     closePanel();
                   } else {
                     openPanel(label);
@@ -383,10 +392,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           {/* Exit button */}
           <TouchableOpacity
             activeOpacity={0.9}
-            onLayout={(e) => {
-              const { x, y, width, height } = e.nativeEvent.layout;
-              setPillLayouts(prev => ({ ...prev, EXIT: { x, y, width, height } }));
-            }}
             onPress={() => {
               Alert.alert('Exit', 'Do you want to exit?', [
                 { text: 'Cancel', style: 'cancel' },
@@ -545,25 +550,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /* SIDE (LEFT) RPF SUBMENU */
+  /* SIDE (LEFT) RPF SUBMENU - anchored by inline styles */
   sideMenuOverlay: {
     position: 'absolute',
     left: 0, right: 0, top: 0, bottom: 0,
     zIndex: 9998,
   },
-  sideMenu: {
+
+  sideMenuFixed: {
     position: 'absolute',
     zIndex: 9999,
+    width: 140,
   },
+
   sideMenuInner: {
     backgroundColor: '#eef0fb',
-    padding: MENU_PADDING,
+    padding: 6,
     borderWidth: 2,
     borderColor: '#bfbfbf',
     borderRadius: 4,
   },
+
   sideMenuButton: {
-    height: ITEM_H,
+    height: 54,
     marginBottom: 8,
     backgroundColor: '#e9e5f6',
     justifyContent: 'center',
@@ -575,6 +584,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
   },
+
   sideMenuGloss: {
     position: 'absolute',
     left: 0,
@@ -583,6 +593,7 @@ const styles = StyleSheet.create({
     height: 14,
     backgroundColor: 'rgba(255,255,255,0.55)',
   },
+
   sideMenuText: {
     fontSize: 12,
     fontWeight: '700',
