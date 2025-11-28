@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import RecipeTable from '../components/RecipeTable';
+import MachinePanel from '../components/MachinePanel';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api';
@@ -64,6 +65,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
 
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
+
+  // show embedded machine UI inside main content
+  const [showMachine, setShowMachine] = useState<boolean>(false);
 
   // BOTTOM PANEL
   const [activePanel, setActivePanel] = useState<string | null>(null);
@@ -159,8 +163,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   }, []);
 
   useEffect(() => { fetchRecipes(); }, [fetchRecipes]);
-  useEffect(() => { selectedRecipeId !== -1 ? fetchRecipeParams(selectedRecipeId) : setRecipeParams([]); },
-    [selectedRecipeId, fetchRecipeParams]
+  useEffect(() => { 
+    if (selectedRecipeId !== -1) {
+      fetchRecipeParams(selectedRecipeId);
+    } else {
+      setRecipeParams([]);
+    }
+  }, [selectedRecipeId, fetchRecipeParams]
   );
 
   const selectedRecipeName =
@@ -174,6 +183,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const onSelectRecipe = (id: number) => {
     setSelectedRecipeId(id);
     setDropdownVisible(false);
+    // ensure embedded machine closes when switching recipes (optional)
+    setShowMachine(false);
   };
 
   const renderDropdownItem = ({ item }: { item: Recipe }) => {
@@ -297,17 +308,29 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         </Pressable>
       </Modal>
 
-      {/* PARAMETER TABLE */}
+      {/* PARAMETER TABLE / MACHINE PANEL (embedded) */}
       <View style={{ flex: 1 }}>
-        {loadingParams ? <ActivityIndicator /> :
-          selectedRecipeId !== -1 ?
-            recipeParams.length === 0 ?
-              <Text style={isDark ? styles.textLight : styles.textDark}>No parameters for this recipe.</Text>
-              : <RecipeTable data={recipeParams} darkMode={isDark} />
-            : <Text style={[{ color: '#666' }, isDark ? styles.textLight : styles.textDark]}>
-                Select a recipe to view its parameters.
-              </Text>
-        }
+        {loadingParams ? (
+          <ActivityIndicator />
+        ) : selectedRecipeId === -1 ? (
+          <Text style={[{ color: '#666' }, isDark ? styles.textLight : styles.textDark]}>
+            Select a recipe to view its parameters.
+          </Text>
+        ) : showMachine ? (
+          // Embedded MachinePanel — it will use initialParams to avoid re-fetching immediately
+          <MachinePanel
+            recipeId={selectedRecipeId}
+            recipeName={selectedRecipeName ?? undefined}
+            initialParams={recipeParams}
+            onClose={() => setShowMachine(false)}
+            // optional: imageUri={...}
+            // optional: pollMs={2000}
+          />
+        ) : recipeParams.length === 0 ? (
+          <Text style={isDark ? styles.textLight : styles.textDark}>No parameters for this recipe.</Text>
+        ) : (
+          <RecipeTable data={recipeParams} darkMode={isDark} />
+        )}
       </View>
 
       {/* Anchored RPF side menu (appears above measured RPF pill) */}
@@ -323,7 +346,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                       style={styles.sideMenuButton}
                       activeOpacity={0.9}
                       onPress={() => {
-                        // PAPER SIZES opens the Machine screen (old "Open Machine View" behaviour)
+                        // PAPER SIZES now opens the embedded MachinePanel (inline)
                         if (it === "PAPER SIZES") {
                           if (selectedRecipeId === -1) {
                             Alert.alert("Select a recipe first");
@@ -331,10 +354,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                           }
                           setShowSideMenu(false);
                           setActivePanel(null);
-                          navigation.navigate("Machine", {
-                            recipeId: selectedRecipeId,
-                            recipeName: selectedRecipeName,
-                          });
+
+                          // SHOW MACHINE PANEL INLINE (keeps header, dropdown, download and bottom bar)
+                          setShowMachine(true);
                           return;
                         }
 

@@ -49,7 +49,7 @@ export default function HeaderBar({
           <Text style={[styles.label, { marginLeft: 10 }]}>
             Recipe Name:
           </Text>
-          <Text style={[styles.inputBox, { minWidth: 120 }]}>
+          <Text style={[styles.inputBox, { minWidth: 170 }]}>
             {recipeName ?? '--'}
           </Text>
 
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   inputBox: {
     backgroundColor: '#fff',
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 25,
     borderRadius: 4,
     marginHorizontal: 6,
     fontWeight: '700',
