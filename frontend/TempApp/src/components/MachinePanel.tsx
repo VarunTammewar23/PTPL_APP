@@ -22,6 +22,8 @@ type Props = {
   onClose?: () => void; // optional: MainScreen will hide panel when called
   initialParams?: any[]; // optional: pass already-fetched params to avoid a re-fetch
   pollMs?: number;
+  // Note: you asked to change sizes programmatically in the code.
+  // Change the constants OVERLAY_WIDTH, OVERLAY_HEIGHT and OVERLAY_FONT_SIZE below to resize overlays.
 };
 
 interface RecipeParam {
@@ -31,14 +33,36 @@ interface RecipeParam {
   unit?: string;
 }
 
-/** coordinates as percentage of displayed image */
+/**
+ * === CONFIGURE THESE CONSTANTS TO CHANGE TEXT-BOX (overlay) SIZE / STYLE PROGRAMMATICALLY ===
+ *
+ * OVERLAY_WIDTH         => width of the value box in pixels
+ * OVERLAY_HEIGHT        => height of the value box in pixels
+ * OVERLAY_FONT_SIZE     => font size for the displayed value
+ * OVERLAY_BORDER_RADIUS => corner radius
+ *
+ * Change these values in code (this file) and rebuild / reload the app to see the size change.
+ */
+const OVERLAY_WIDTH = 30; // px — change this to increase/decrease box width
+const OVERLAY_HEIGHT = 24; // px — change this to increase/decrease box height
+const OVERLAY_FONT_SIZE = 10; // change font size
+const OVERLAY_BORDER_RADIUS = 8;
+
+////////////////////////////////////////////////////////////////////////////////
+// coordinates as percentage of displayed image
+// Add or tweak positions here — x = percent from left, y = percent from top
+// We expanded SR_LIST to include two more parameters: 5 and 6.
+////////////////////////////////////////////////////////////////////////////////
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
-  1: { x: 20, y: 4 },
-  2: { x: 12, y: 55 },
+  1: { x: 18, y: 7 },
+  2: { x: 10, y: 56 },
   3: { x: 20, y: 20 },
-  4: { x: 65, y: 60 },
+  4: { x: 63, y: 63 },
+  5: { x: 90, y: 58 }, // new parameter SR 5 — adjust as needed
+  6: { x: 90, y: 90 }, // new parameter SR 6 — adjust as needed
 };
-const SR_LIST = [1, 2, 3, 4];
+
+const SR_LIST = [1, 2, 3, 4, 5, 6];
 
 export default function MachinePanel({
   recipeId,
@@ -122,7 +146,6 @@ export default function MachinePanel({
       // remove listener safely depending on RN version
       try {
         if (sub && typeof sub.remove === 'function') sub.remove();
-        // newer RN versions return an EmitterSubscription with remove(); older versions need removeEventListener
         else if ((Dimensions as any).removeEventListener) (Dimensions as any).removeEventListener('change', onChange);
       } catch {
         // ignore removal errors
@@ -198,6 +221,7 @@ export default function MachinePanel({
               const param = valuesBySr[sr];
               const display = param ? String(param.value_01) : '';
 
+              // position in pixels based on the displayed image dimensions
               const leftPx = Math.round((pos.x / 100) * dispW);
               const topPx = Math.round((pos.y / 100) * dispH);
 
@@ -209,12 +233,16 @@ export default function MachinePanel({
                     {
                       left: leftPx,
                       top: topPx,
-                      transform: [{ translateX: -40 }, { translateY: -12 }],
-                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.9)',
+                      // center the box at the computed coordinate
+                      transform: [{ translateX: -(OVERLAY_WIDTH / 2) }, { translateY: -(OVERLAY_HEIGHT / 2) }],
+                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.1)',
+                      width: OVERLAY_WIDTH,
+                      height: OVERLAY_HEIGHT,
+                      borderRadius: OVERLAY_BORDER_RADIUS,
                     },
                   ]}
                 >
-                  <Text style={[styles.overlayValue, isDark ? { color: '#fff' } : { color: '#000' }]}>
+                  <Text style={[styles.overlayValue, isDark ? { color: '#fff' } : { color: '#000' }, { fontSize: OVERLAY_FONT_SIZE }]}>
                     {display}
                   </Text>
                 </View>
@@ -230,7 +258,7 @@ export default function MachinePanel({
           {params.length === 0 ? (
             <Text style={{ padding: 8, color: '#666' }}>No params</Text>
           ) : (
-            params.slice(0, 8).map((p) => (
+            params.slice(0, 12).map((p) => ( // now allow previewing more params
               <View key={String(p.parameter_no)} style={styles.paramChip}>
                 <Text style={styles.paramChipText}>{p.parameter}: {p.value_01}{p.unit ? ` ${p.unit}` : ''}</Text>
               </View>
@@ -243,14 +271,14 @@ export default function MachinePanel({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, minHeight: 220, maxHeight: 520, marginVertical: 8, backgroundColor: '#f9fafb', borderRadius: 8, padding: 8 },
+  container: { flex: 1, minHeight: 220, maxHeight: 620, marginVertical: 8, backgroundColor: '#f9fafb', borderRadius: 8, padding: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   title: { fontSize: 16, fontWeight: '700' },
   closeText: { color: '#007bff', fontWeight: '700' },
   loadingOverlay: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  overlay: { position: 'absolute', minWidth: 70, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  overlayValue: { fontSize: 18, fontWeight: '700' },
-  paramsPreview: { marginTop: 8, height: 46 },
+  overlay: { position: 'absolute', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  overlayValue: { fontWeight: '700', textAlign: 'center' },
+  paramsPreview: { marginTop: 8, height: 56 },
   paramChip: { backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8, marginRight: 8, borderRadius: 6, borderWidth: 1, borderColor: '#eee' },
   paramChipText: { fontSize: 13, fontWeight: '600' },
 });
