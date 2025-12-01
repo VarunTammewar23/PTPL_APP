@@ -1,5 +1,5 @@
 // src/components/MachinePanel.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   ImageBackground,
   Dimensions,
   Image,
+  TouchableOpacity,
+  Modal,
+  TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
 import { useTheme } from '../theme/ThemeProvider';
@@ -24,8 +27,9 @@ type Props = {
 
 interface RecipeParam {
   parameter_no: number;
-  parameter: string;
-  value_01: number | string;
+  section?: string;
+  parameter?: string;
+  value_01?: number | string;
   unit?: string;
 }
 
@@ -45,14 +49,17 @@ const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
 
 const SR_LIST = [1, 2, 3, 4, 5, 6];
 
-export default function MachinePanel({
-  recipeId,
-  recipeName,
-  imageUri,
-  onClose,
-  initialParams,
-  pollMs = 2000,
-}: Props) {
+function MachinePanelInner(
+  {
+    recipeId,
+    recipeName,
+    imageUri,
+    onClose,
+    initialParams,
+    pollMs = 2000,
+  }: Props,
+  ref: any
+) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -62,14 +69,18 @@ export default function MachinePanel({
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
   const [contW, setContW] = useState<number>(Dimensions.get('window').width);
-  const [contH, setContH] = useState<number>(
-    Math.round(Dimensions.get('window').height * 0.45)
-  );
+  const [contH, setContH] = useState<number>(Math.round(Dimensions.get('window').height * 0.45));
 
   const [dispW, setDispW] = useState<number>(contW);
   const [dispH, setDispH] = useState<number>(contH);
 
   const imageSource = imageUri ? { uri: imageUri } : require('../assets/Paper_size.jpg');
+
+  // Edited values state (keyed by parameter_no)
+  const [editedValues, setEditedValues] = useState<Record<number, string>>({});
+  // editing modal state
+  const [editingSr, setEditingSr] = useState<number | null>(null);
+  const [tempValue, setTempValue] = useState<string>('');
 
   useEffect(() => {
     let mounted = true;
@@ -125,13 +136,13 @@ export default function MachinePanel({
   }, [natW, natH, contW, contH]);
 
   useEffect(() => {
-    const onChange = ({ window }: { window: { width: number } }) => {
+    const onChange = ({ window }: { window: { width: number; height: number } }) => {
       setContW(window.width);
+      setContH(Math.round(window.height * 0.45));
     };
 
     const sub: any =
-      (Dimensions as any).addEventListener &&
-      Dimensions.addEventListener('change', onChange);
+      (Dimensions as any).addEventListener && Dimensions.addEventListener('change', onChange);
 
     return () => {
       try {
@@ -170,17 +181,49 @@ export default function MachinePanel({
         alive = false;
         clearInterval(id);
       };
+    } else {
+      // if initialParams provided, ensure local params are initialized
+      setParams(initialParams);
+      setLoading(false);
     }
   }, [recipeId, initialParams, pollMs]);
 
   const valuesBySr = useMemo(() => {
     const map: Record<number, RecipeParam | null> = {};
     SR_LIST.forEach((sr) => {
-      map[sr] =
-        params.find((p) => Number(p.parameter_no) === sr) ?? null;
+      map[sr] = params.find((p) => Number(p.parameter_no) === sr) ?? null;
     });
     return map;
   }, [params]);
+
+  // Expose getFinalParams to parent via ref
+  useImperativeHandle(ref, () => ({
+    getFinalParams: () => {
+      return SR_LIST.map((sr) => {
+        const original = valuesBySr[sr];
+        const edited = editedValues[sr];
+        return {
+          parameter_no: sr,
+          section: original?.section ?? '',
+          parameter: original?.parameter ?? '',
+          value_01: edited !== undefined ? edited : original?.value_01 ?? '',
+          unit: original?.unit ?? '',
+        };
+      });
+    },
+  }));
+
+  const openEditor = (sr: number, current: string) => {
+    setEditingSr(sr);
+    setTempValue(String(current ?? ''));
+  };
+
+  const saveEditor = () => {
+    if (editingSr === null) return;
+    setEditedValues((prev) => ({ ...prev, [editingSr]: tempValue }));
+    setEditingSr(null);
+    setTempValue('');
+  };
 
   return (
     <View
@@ -188,7 +231,7 @@ export default function MachinePanel({
       onLayout={(e) => {
         const { width, height } = e.nativeEvent.layout;
         if (width) setContW(width);
-        if (height) setContH(height);
+        if (height) setContH(Math.round(height));
       }}
     >
       <View style={styles.headerRow}>
@@ -204,17 +247,8 @@ export default function MachinePanel({
       </View>
 
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ZoomableView
-          minScale={1}
-          maxScale={4}
-          doubleTapScale={2}
-          style={{ width: dispW, height: dispH }}
-        >
-          <ImageBackground
-            source={imageSource}
-            style={{ width: dispW, height: dispH }}
-            resizeMode="contain"
-          >
+        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
+          <ImageBackground source={imageSource} style={{ width: dispW, height: dispH }} resizeMode="contain">
             {loading && (
               <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
                 <ActivityIndicator size="large" />
@@ -224,14 +258,16 @@ export default function MachinePanel({
             {SR_LIST.map((sr) => {
               const pos = POSITIONS_BY_SR[sr];
               const param = valuesBySr[sr];
-              const display = param ? String(param.value_01) : '';
+              const display = editedValues[sr] !== undefined ? String(editedValues[sr]) : (param ? String(param.value_01 ?? '') : '');
 
               const leftPx = Math.round((pos.x / 100) * dispW);
               const topPx = Math.round((pos.y / 100) * dispH);
 
               return (
-                <View
+                <TouchableOpacity
                   key={`ov-${sr}`}
+                  activeOpacity={0.8}
+                  onPress={() => openEditor(sr, display)}
                   style={[
                     styles.overlay,
                     {
@@ -241,9 +277,7 @@ export default function MachinePanel({
                         { translateX: -(OVERLAY_WIDTH / 2) },
                         { translateY: -(OVERLAY_HEIGHT / 2) },
                       ],
-                      backgroundColor: isDark
-                        ? 'rgba(0,0,0,0.6)'
-                        : 'rgba(255,255,255,0.1)',
+                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.1)',
                       width: OVERLAY_WIDTH,
                       height: OVERLAY_HEIGHT,
                       borderRadius: OVERLAY_BORDER_RADIUS,
@@ -259,16 +293,71 @@ export default function MachinePanel({
                   >
                     {display}
                   </Text>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </ImageBackground>
         </ZoomableView>
       </View>
-    </View>
-  ); // END return
-} // END component
 
+      {/* Editor modal */}
+      <Modal visible={editingSr !== null} animationType="fade" transparent onRequestClose={() => setEditingSr(null)}>
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.box}>
+            <Text style={modalStyles.title}>Edit Value (SR {editingSr})</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={tempValue}
+              onChangeText={setTempValue}
+              keyboardType="numeric"
+              placeholder="Enter value"
+            />
+            <View style={modalStyles.row}>
+              <TouchableOpacity onPress={() => { setEditingSr(null); setTempValue(''); }}>
+                <Text style={modalStyles.cancel}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={saveEditor}>
+                <Text style={modalStyles.save}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  box: {
+    backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 420,
+    padding: 14,
+    borderRadius: 10,
+    elevation: 8,
+  },
+  title: { fontWeight: '700', fontSize: 16, marginBottom: 8 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  row: { flexDirection: 'row', justifyContent: 'flex-end' },
+  cancel: { marginRight: 20, color: '#666' },
+  save: { fontWeight: '700', color: '#007bff' },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -316,3 +405,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default React.forwardRef(MachinePanelInner);

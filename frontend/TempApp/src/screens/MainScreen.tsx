@@ -44,7 +44,7 @@ interface RecipeParam {
   parameter_no: number;
   section: string;
   parameter: string;
-  value_01: number;
+  value_01: number | string;
   unit: string;
 }
 
@@ -62,6 +62,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // show embedded machine UI inside main content
   const [showMachine, setShowMachine] = useState<boolean>(false);
+
+  // ref to MachinePanel
+  const machineRef = useRef<any>(null);
 
   // BOTTOM PANEL
   const [activePanel, setActivePanel] = useState<string | null>(null);
@@ -86,46 +89,36 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   // simplified open/close: RPF uses measured anchored side menu; other panels use bottom sheet
   const openPanel = (name: string) => {
     if (name === 'RPF') {
-      // toggle side menu. When opening, measure the RPF pill and position menu directly above it.
       if (showSideMenu) {
         setShowSideMenu(false);
         setActivePanel(null);
         return;
       }
 
-      // measure the RPF pill (px, py are absolute screen coords)
       rpfRef.current?.measure((fx: number, fy: number, width: number, height: number, px: number, py: number) => {
-        // compute menu height
-        const menuHeight = RPF_ITEMS.length * (ITEM_H + 8) - 8 + MENU_PADDING * 2; // spacing accounted
-        // left should align to pill left (clamped to screen)
+        const menuHeight = RPF_ITEMS.length * (ITEM_H + 8) - 8 + MENU_PADDING * 2;
         let left = Math.round(px);
         left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
-        // top should be directly above pill (py is top of pill)
         let top = Math.round(py - menuHeight);
-        if (top < 8) top = 8; // clamp so not off-screen
+        if (top < 8) top = 8;
         setSideMenuLeft(left);
         setSideMenuTop(top);
 
         setShowSideMenu(true);
         setActivePanel('RPF');
 
-        // ensure bottom sheet is fully hidden
         panelAnim.setValue(SCREEN_H);
       });
 
-      // If measure isn't available or fails, fallback to fixed position
-      // (we still rely on the async measure above)
       return;
     }
 
-    // non-RPF panels: close side menu and open bottom sheet
     setShowSideMenu(false);
     setActivePanel(name);
     Animated.timing(panelAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start();
   };
 
   const closePanel = () => {
-    // close both
     setShowSideMenu(false);
     Animated.timing(panelAnim, { toValue: SCREEN_H, duration: 250, useNativeDriver: true }).start(() =>
       setActivePanel(null)
@@ -157,14 +150,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   }, []);
 
   useEffect(() => { fetchRecipes(); }, [fetchRecipes]);
-  useEffect(() => { 
+  useEffect(() => {
     if (selectedRecipeId !== -1) {
       fetchRecipeParams(selectedRecipeId);
     } else {
       setRecipeParams([]);
     }
-  }, [selectedRecipeId, fetchRecipeParams]
-  );
+  }, [selectedRecipeId, fetchRecipeParams]);
 
   const selectedRecipeName =
     selectedRecipeId === -1 ? null : recipes.find(r => r.recipe_id === selectedRecipeId)?.recipe_name ?? null;
@@ -221,20 +213,118 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   };
 
+  // versioning utility - placed inside file
+  function getNextVersionName(baseName: string | null, allNames: string[]) {
+    if (!baseName) {
+      // fallback if no base name
+      const fallback = `recipe_${Date.now()}`;
+      return fallback;
+    }
+
+    // We want to find names that start with baseName + '_'
+    // For example: baseName = 'rcp_1' -> match 'rcp_1_01', 'rcp_1_01_02', etc.
+    // But the rule: when editing a recipe named X, we look for siblings that are exactly X_<num>
+    // If editing base 'rcp_1', pick the highest rcp_1_\d+ and increment it.
+    // If editing 'rcp_1_01', pick highest rcp_1_01_\d+ and increment it.
+
+    // Escape regex special chars in baseName
+    const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // We want to match exactly: ^escaped_(\d+)$  -> names that are immediate children
+    // But when baseName already ends with _NN we still treat the entire string as baseName.
+    const regex = new RegExp(`^${escaped}_(\\d+)$`);
+
+    let max = 0;
+    allNames.forEach((n) => {
+      const m = n.match(regex);
+      if (m && m[1]) {
+        const num = parseInt(m[1], 10);
+        if (!isNaN(num) && num > max) max = num;
+      }
+    });
+
+    const next = (max + 1).toString().padStart(2, '0');
+    return `${baseName}_${next}`;
+  }
+
+  // Save current machine data -> create versioned recipe
+  const saveCurrentMachineData = async () => {
+    // only allowed when machine panel inline is visible
+    if (!showMachine) {
+      return Alert.alert('Open PAPER SIZES (MachinePanel) first before saving.');
+    }
+
+    if (!machineRef.current || typeof machineRef.current.getFinalParams !== 'function') {
+      return Alert.alert('Machine data not ready');
+    }
+
+    // get final params (array of { parameter_no, section, parameter, value_01, unit })
+    const finalParams = machineRef.current.getFinalParams();
+
+    if (!finalParams || finalParams.length === 0) {
+      return Alert.alert('No parameters to save');
+    }
+
+    // build new recipe name using versioning
+    const allNames = recipes.map(r => r.recipe_name);
+    const baseName = selectedRecipeName ?? `recipe_${Date.now()}`;
+    const newRecipeName = getNextVersionName(baseName, allNames);
+
+    // build rows payload exactly matching backend expectation
+    const rows = finalParams.map(p => ({
+      recipe_name: newRecipeName,
+      customer_code: customerCode,
+      section: p.section ?? '',
+      parameter_no: p.parameter_no,
+      parameter: p.parameter ?? '',
+      value_01: p.value_01 ?? '',
+      unit: p.unit ?? '',
+    }));
+
+    try {
+      const response = await fetch(`${API_BASE}/api/upload-excel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+
+      const res = await response.json();
+
+      if (res.exists) {
+        Alert.alert('Duplicate', res.message || 'Recipe already exists');
+        return;
+      }
+
+      if (res.success) {
+        Alert.alert('Saved', `Created new recipe: ${newRecipeName}`);
+        // refresh recipes and select the new recipe if backend returned id
+        await fetchRecipes();
+        if (res.newRecipeId) {
+          setSelectedRecipeId(res.newRecipeId);
+          setShowMachine(false); // optional: close machine or keep open
+        } else {
+          // fallback: try to find id by name in refreshed list
+          const found = (recipes || []).find(r => r.recipe_name === newRecipeName);
+          if (found) setSelectedRecipeId(found.recipe_id);
+        }
+      } else {
+        Alert.alert('Error', res.message || 'Failed to save recipe');
+      }
+    } catch (err: any) {
+      Alert.alert('Network error', err?.message ?? 'Failed to save');
+    }
+  };
+
   // labels used by bottom bar
   const labels = ["HOME/LOGIN","RECIPE","RPF","RT ANGLE","KNIFE 1","KNIFE 2","KNIFE 3","STP TRAY","CREASING"];
 
   return (
     <SafeAreaView style={[styles.safe, isDark ? styles.darkBg : styles.lightBg]}>
-
-      {/* HeaderBar now owns the recipe dropdown + Download button */}
       <HeaderBar
         recipeId={selectedRecipeId}
         recipeName={selectedRecipeName}
-        onSave={() => Alert.alert("Data Saved!")}
+        onSave={saveCurrentMachineData}
         onUpload={openPicker}
-
-        /* new props moved into header */
         recipes={recipes}
         selectedRecipeId={selectedRecipeId}
         selectedRecipeName={selectedRecipeName}
@@ -242,7 +332,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         onDownload={downloadRecipeExcel}
       />
 
-      {/* PARAMETER TABLE / MACHINE PANEL (embedded) */}
       <View style={{ flex: 1 }}>
         {loadingParams ? (
           <ActivityIndicator />
@@ -251,14 +340,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             Select a recipe to view its parameters.
           </Text>
         ) : showMachine ? (
-          // Embedded MachinePanel — it will use initialParams to avoid re-fetching immediately
           <MachinePanel
+            ref={machineRef}
             recipeId={selectedRecipeId}
             recipeName={selectedRecipeName ?? undefined}
             initialParams={recipeParams}
             onClose={() => setShowMachine(false)}
-            // optional: imageUri={...}
-            // optional: pollMs={2000}
           />
         ) : recipeParams.length === 0 ? (
           <Text style={isDark ? styles.textLight : styles.textDark}>No parameters for this recipe.</Text>
@@ -280,7 +367,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                       style={styles.sideMenuButton}
                       activeOpacity={0.9}
                       onPress={() => {
-                        // PAPER SIZES now opens the embedded MachinePanel (inline)
                         if (it === "PAPER SIZES") {
                           if (selectedRecipeId === -1) {
                             Alert.alert("Select a recipe first");
@@ -289,12 +375,10 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                           setShowSideMenu(false);
                           setActivePanel(null);
 
-                          // SHOW MACHINE PANEL INLINE (keeps header, dropdown, download and bottom bar)
                           setShowMachine(true);
                           return;
                         }
 
-                        // default: close the menu for other items
                         setShowSideMenu(false);
                         setActivePanel(null);
                       }}
@@ -310,13 +394,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         </TouchableWithoutFeedback>
       )}
 
-      {/* ===== CUSTOM BOTTOM BAR ===== */}
+      {/* bottom bar and slide panel unchanged from your original code */}
       <View style={styles.bottomBarContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.bottomBarScroll}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bottomBarScroll}>
           {labels.map((label, idx) => {
             const isActive = activePanel === label;
             return (
@@ -325,18 +405,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 ref={label === "RPF" ? rpfRef : undefined}
                 activeOpacity={0.9}
                 onPress={() => {
-                  // RPF handled by openPanel which toggles anchored menu
                   if (isActive && label !== 'RPF') {
                     closePanel();
                   } else {
                     openPanel(label);
                   }
                 }}
-                style={[
-                  styles.pillButton,
-                  isActive && styles.pillButtonActive,
-                  idx === labels.length - 1 && styles.lastPill,
-                ]}
+                style={[styles.pillButton, isActive && styles.pillButtonActive, idx === labels.length - 1 && styles.lastPill]}
               >
                 <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
                   {label}
@@ -345,7 +420,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             );
           })}
 
-          {/* Exit button */}
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => {
@@ -362,7 +436,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         </ScrollView>
       </View>
 
-      {/* SLIDE PANEL (unchanged for non-RPF) */}
       <Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}>
         <View style={styles.panelHeader}>
           <Text style={styles.panelTitle}>{activePanel} Controls</Text>
@@ -408,7 +481,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           </>
         )}
       </Animated.View>
-
     </SafeAreaView>
   );
 }
