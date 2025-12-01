@@ -48,6 +48,15 @@ const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
 };
 
 const SR_LIST = [1, 2, 3, 4, 5, 6];
+const SERIAL_POSITIONS = [
+  { id: 1, x: 28, y: 7 },
+  { id: 2, x: 10,  y: 65 },
+  { id: 3, x: 30, y: 20 },
+  { id: 4, x: 55, y: 65 },
+  { id: 5, x: 88, y: 50 },
+  { id: 6, x: 93, y: 81 },
+];
+
 
 function MachinePanelInner(
   {
@@ -296,6 +305,34 @@ function MachinePanelInner(
                 </TouchableOpacity>
               );
             })}
+{/* SERIAL_POSITIONS box  */}
+            {SERIAL_POSITIONS.map(item => {
+            const leftPx = Math.round((item.x / 100) * dispW);
+  const topPx = Math.round((item.y / 100) * dispH);
+
+  return (
+    <View
+      key={`serial-${item.id}`}
+      pointerEvents="none" // 🔒 disable any touch
+      style={[
+        styles.serialOverlay,
+        {
+          left: leftPx,
+          top: topPx,
+          width: OVERLAY_WIDTH,
+          height: OVERLAY_HEIGHT,
+          transform: [
+            { translateX: -(OVERLAY_WIDTH / 2) },
+            { translateY: -(OVERLAY_HEIGHT / 2) },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.serialText}>{item.id}</Text>
+    </View>
+  );
+})}
+
           </ImageBackground>
         </ZoomableView>
       </View>
@@ -360,6 +397,25 @@ const modalStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+
+serialOverlay: {
+  position: 'absolute',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#000',  // black box
+  borderColor: '#fff',      // white border
+  borderWidth: 1.5,
+  borderRadius: 6,
+  paddingHorizontal: 6,
+},
+
+serialText: {
+  color: '#fff',            // white text
+  fontSize: 10,
+  fontWeight: '700',
+  textAlign: 'center',
+},
+
   container: {
     flex: 1,
     minHeight: 220,
@@ -368,6 +424,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderRadius: 8,
     padding: 8,
+    overflow: 'hidden',
   },
 
   headerRow: {

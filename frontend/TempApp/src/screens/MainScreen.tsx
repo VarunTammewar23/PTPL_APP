@@ -14,7 +14,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
-import MachinePanel from '../components/MachinePanel';
+import MachinePanel from '../components/PaperSizes';
 import HeaderBar from '../components/HeaderBar';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -24,6 +24,13 @@ import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';import BottomBar from '../components/BottomBar';
+import Folds from '../components/Folds'; // path as per your folder
+import Offset from '../components/Offset';
+import GlueTap from '../components/GlueTap';
+import SuctionGap from '../components/SuctionGap';
+import AllSpeed from '../components/AllSpeed';
+
+
 
 
 const { FilePickerModule } = NativeModules;
@@ -61,6 +68,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // show embedded machine UI inside main content
   const [showMachine, setShowMachine] = useState<boolean>(false);
+  const [showFolds, setShowFolds] = useState(false);
+  const [showOffset, setShowOffset] = useState(false);
+const [showGlueTap, setShowGlueTap] = useState(false);
+const [showSuctionGap, setShowSuctionGap] = useState(false);
+const [showAllSpeed, setShowAllSpeed] = useState(false);
+
 
   // ref to MachinePanel
   const machineRef = useRef<any>(null);
@@ -339,18 +352,32 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             Select a recipe to view its parameters.
           </Text>
         ) : showMachine ? (
-          <MachinePanel
-            ref={machineRef}
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            initialParams={recipeParams}
-            onClose={() => setShowMachine(false)}
-          />
-        ) : recipeParams.length === 0 ? (
-          <Text style={isDark ? styles.textLight : styles.textDark}>No parameters for this recipe.</Text>
-        ) : (
-          <RecipeTable data={recipeParams} darkMode={isDark} />
-        )}
+  <MachinePanel
+    ref={machineRef}
+    recipeId={selectedRecipeId}
+    recipeName={selectedRecipeName ?? undefined}
+    initialParams={recipeParams}
+    onClose={() => setShowMachine(false)}
+  />
+) : showFolds ? (
+  <Folds
+    recipeId={selectedRecipeId}
+    recipeName={selectedRecipeName ?? undefined}
+    onClose={() => setShowFolds(false)}
+  />
+    ) : showOffset ? (
+    <Offset recipeId={selectedRecipeId} recipeName={selectedRecipeName} onClose={() => setShowOffset(false)} />
+  ) : showGlueTap ? (
+    <GlueTap recipeId={selectedRecipeId} recipeName={selectedRecipeName} onClose={() => setShowGlueTap(false)} />
+  ) : showSuctionGap ? (
+    <SuctionGap recipeId={selectedRecipeId} recipeName={selectedRecipeName} onClose={() => setShowSuctionGap(false)} />
+  ) : showAllSpeed ? (
+    <AllSpeed recipeId={selectedRecipeId} recipeName={selectedRecipeName} onClose={() => setShowAllSpeed(false)} />
+  ) : recipeParams.length === 0 ? (
+    <Text>No parameters for this recipe.</Text>
+  ) : (
+  <RecipeTable data={recipeParams} darkMode={isDark} />
+)}
       </View>
 
       {/* Anchored RPF side menu (appears above measured RPF pill) */}
@@ -366,21 +393,31 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                       style={styles.sideMenuButton}
                       activeOpacity={0.9}
                       onPress={() => {
-                        if (it === "PAPER SIZES") {
-                          if (selectedRecipeId === -1) {
-                            Alert.alert("Select a recipe first");
-                            return;
-                          }
-                          setShowSideMenu(false);
-                          setActivePanel(null);
+  if (selectedRecipeId === -1) {
+    Alert.alert("Select a recipe first");
+    return;
+  }
 
-                          setShowMachine(true);
-                          return;
-                        }
+  // Close side menu + deactivate panel
+  setShowSideMenu(false);
+  setActivePanel(null);
 
-                        setShowSideMenu(false);
-                        setActivePanel(null);
-                      }}
+  // RESET ALL SCREENS FIRST
+  setShowMachine(false);
+  setShowFolds(false);
+  setShowOffset(false);
+  setShowGlueTap(false);
+  setShowSuctionGap(false);
+  setShowAllSpeed(false);
+
+  if (it === "PAPER SIZES") return setShowMachine(true);
+  if (it === "NO OF FOLDS") return setShowFolds(true);
+  if (it === "OFFSET SETTINGS") return setShowOffset(true);
+  if (it === "GLUE/TAP QTY") return setShowGlueTap(true);
+  if (it === "SUCTION / GAP SET") return setShowSuctionGap(true);
+  if (it === "ALL SPEED") return setShowAllSpeed(true);
+}}
+
                     >
                       <View style={styles.sideMenuGloss} />
                       <Text style={styles.sideMenuText}>{it}</Text>
