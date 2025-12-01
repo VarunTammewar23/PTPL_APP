@@ -9,7 +9,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
 import MainScreen from './src/screens/MainScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import MachineScreen from './src/screens/MachineScreen'; // <-- new
+
 
 // Central navigation type used by App and screens
 export type RootStackParamList = {
@@ -85,10 +85,7 @@ export default function App() {
                     <SettingsScreen navigation={navigation} route={route} onLogout={handleLogout} />
                   )}
                 />
-                <Stack.Screen
-                  name="Machine"
-                  component={MachineScreen}
-                />
+                
               </>
             ) : (
               <>
@@ -102,10 +99,7 @@ export default function App() {
                     <SettingsScreen navigation={navigation} route={route} />
                   )}
                 />
-                <Stack.Screen
-                  name="Machine"
-                  component={MachineScreen}
-                />
+                
               </>
             )}
           </Stack.Navigator>
