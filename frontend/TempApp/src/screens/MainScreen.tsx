@@ -8,10 +8,6 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
-  Button,
-  Modal,
-  FlatList,
-  Pressable,
   Animated,
   NativeModules,
   ScrollView,
@@ -21,6 +17,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import RecipeTable from '../components/RecipeTable';
 import MachinePanel from '../components/MachinePanel';
+import HeaderBar from '../components/HeaderBar';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api';
@@ -29,7 +26,6 @@ import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';
-import HeaderBar from '../components/HeaderBar';
 
 const { FilePickerModule } = NativeModules;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -63,8 +59,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
-
-  const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
 
   // show embedded machine UI inside main content
   const [showMachine, setShowMachine] = useState<boolean>(false);
@@ -175,33 +169,10 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const selectedRecipeName =
     selectedRecipeId === -1 ? null : recipes.find(r => r.recipe_id === selectedRecipeId)?.recipe_name ?? null;
 
-  const openDropdown = () => {
-    if (recipes.length === 0) return Alert.alert('No recipes available');
-    setDropdownVisible(true);
-  };
-
   const onSelectRecipe = (id: number) => {
     setSelectedRecipeId(id);
-    setDropdownVisible(false);
-    // ensure embedded machine closes when switching recipes (optional)
+    // close inline machine if it was open (keeps UX consistent)
     setShowMachine(false);
-  };
-
-  const renderDropdownItem = ({ item }: { item: Recipe }) => {
-    const isSelected = item.recipe_id === selectedRecipeId;
-    return (
-      <Pressable
-        onPress={() => onSelectRecipe(item.recipe_id)}
-        style={[
-          styles.dropdownItem,
-          isSelected && styles.dropdownItemSelected,
-        ]}
-      >
-        <Text style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
-          {item.recipe_name}
-        </Text>
-      </Pressable>
-    );
   };
 
   const downloadRecipeExcel = async () => {
@@ -250,63 +221,26 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   };
 
-  const openMachineView = () => {
-    if (selectedRecipeId === -1) return Alert.alert("Select a recipe first");
-    navigation.navigate("Machine", {
-      recipeId: selectedRecipeId,
-      recipeName: selectedRecipeName,
-    });
-  };
-
   // labels used by bottom bar
   const labels = ["HOME/LOGIN","RECIPE","RPF","RT ANGLE","KNIFE 1","KNIFE 2","KNIFE 3","STP TRAY","CREASING"];
 
   return (
     <SafeAreaView style={[styles.safe, isDark ? styles.darkBg : styles.lightBg]}>
 
+      {/* HeaderBar now owns the recipe dropdown + Download button */}
       <HeaderBar
         recipeId={selectedRecipeId}
         recipeName={selectedRecipeName}
         onSave={() => Alert.alert("Data Saved!")}
         onUpload={openPicker}
+
+        /* new props moved into header */
+        recipes={recipes}
+        selectedRecipeId={selectedRecipeId}
+        selectedRecipeName={selectedRecipeName}
+        onSelectRecipe={onSelectRecipe}
+        onDownload={downloadRecipeExcel}
       />
-
-      {/* RECIPE SELECTION */}
-      <View style={{ flexDirection: "row", marginTop: 12 }}>
-        <TouchableOpacity
-          style={[styles.dropdownBox, isDark ? styles.darkCard : styles.lightCard]}
-          onPress={openDropdown}
-        >
-          <Text style={[styles.dropdownText, isDark ? styles.textLight : styles.textDark]}>
-            {selectedRecipeName ?? "Select recipe"}
-          </Text>
-          <Text style={[styles.chevron, isDark ? styles.textLight : styles.textDark]}>▾</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={downloadRecipeExcel}
-          disabled={selectedRecipeId === -1}
-          style={{
-            width: 120, height: 50,
-            backgroundColor: selectedRecipeId === -1 ? "#aaa" : "#007bff",
-            borderRadius: 6, alignItems: "center", justifyContent: "center",
-            flexDirection: "row", marginLeft: 8
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "600" }}>Download</Text>
-          <Text style={{ color: "white", fontSize: 18, marginLeft: 6 }}>⬇</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* DROPDOWN MODAL */}
-      <Modal visible={dropdownVisible} animationType="fade" transparent onRequestClose={() => setDropdownVisible(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
-          <View style={[styles.modalContent, isDark ? styles.darkCard : styles.lightCard]}>
-            <Text style={[styles.modalTitle, isDark ? styles.textLight : styles.textDark]}>Select recipe</Text>
-            <FlatList data={recipes} keyExtractor={i => String(i.recipe_id)} renderItem={renderDropdownItem} />
-          </View>
-        </Pressable>
-      </Modal>
 
       {/* PARAMETER TABLE / MACHINE PANEL (embedded) */}
       <View style={{ flex: 1 }}>
@@ -481,16 +415,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingVertical: 12, paddingHorizontal: 0 },
-  dropdownBox: { flex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  dropdownText: { fontSize: 16, flex: 1 },
-  chevron: { marginLeft: 12, fontSize: 18 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 },
-  modalContent: { maxHeight: '70%', borderRadius: 8, padding: 8 },
-  modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },
-  dropdownItem: { paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  dropdownItemSelected: { backgroundColor: '#e6f0ff' },
-  dropdownItemText: { fontSize: 15 },
-  dropdownItemTextSelected: { fontWeight: '700' },
   lightBg: { backgroundColor: '#fff' },
   darkBg: { backgroundColor: '#111' },
   lightCard: { backgroundColor: '#fff' },

@@ -1,20 +1,35 @@
 // src/components/HeaderBar.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
+  Modal,
+  FlatList,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+
+interface Recipe {
+  recipe_id: number;
+  recipe_name: string;
+}
 
 interface Props {
   recipeId: number;
   recipeName: string | null;
   onSave: () => void;
   onUpload: () => void;
+
+  // newly added props for dropdown + download
+  recipes?: Recipe[]; // list of available recipes
+  selectedRecipeId?: number;
+  selectedRecipeName?: string | null;
+  onSelectRecipe?: (id: number) => void;
+  onDownload?: () => void;
 }
 
 export default function HeaderBar({
@@ -22,47 +37,69 @@ export default function HeaderBar({
   recipeName,
   onSave,
   onUpload,
+  recipes = [],
+  selectedRecipeId = -1,
+  selectedRecipeName = null,
+  onSelectRecipe,
+  onDownload,
 }: Props) {
   const navigation = useNavigation<any>();
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+
+  const openDropdown = () => {
+    if (!recipes || recipes.length === 0) {
+      return alert('No recipes available');
+    }
+    setDropdownVisible(true);
+  };
+
+  const handleSelect = (id: number) => {
+    setDropdownVisible(false);
+    onSelectRecipe && onSelectRecipe(id);
+  };
+
+  const renderDropdownItem = ({ item }: { item: Recipe }) => {
+    const isSelected = item.recipe_id === selectedRecipeId;
+    return (
+      <Pressable
+        onPress={() => handleSelect(item.recipe_id)}
+        style={[styles.dropdownItem, isSelected && styles.dropdownItemSelected]}
+      >
+        <Text style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
+          {item.recipe_name}
+        </Text>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.wrapper}>
-      {/* --- inner content --- */}
       <View style={styles.content}>
-        
         {/* ROW 1 */}
         <View style={styles.row1}>
-          {/* Logo */}
           <Image
             source={require('../assets/company_logo.jpeg')}
             style={styles.logo}
             resizeMode="contain"
           />
 
-          {/* Recipe No */}
           <Text style={styles.label}>Recipe No:</Text>
           <Text style={styles.inputBox}>
             {recipeId !== -1 ? recipeId : '--'}
           </Text>
 
-          {/* Recipe Name */}
-          <Text style={[styles.label, { marginLeft: 10 }]}>
-            Recipe Name:
-          </Text>
+          <Text style={[styles.label, { marginLeft: 10 }]}>Recipe Name:</Text>
           <Text style={[styles.inputBox, { minWidth: 170 }]}>
             {recipeName ?? '--'}
           </Text>
 
-          {/* DATE + SETTINGS */}
           <View style={styles.rightSide}>
             <Text style={styles.date}>
               {new Date().toLocaleDateString()}{' '}
               {new Date().toLocaleTimeString().slice(0, 5)}
             </Text>
 
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Settings')}
-            >
+            <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
               <Icon name="settings" size={26} color="#000" />
             </TouchableOpacity>
           </View>
@@ -77,34 +114,51 @@ export default function HeaderBar({
           <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
             <Text style={styles.btnText}>Upload Recipe</Text>
           </TouchableOpacity>
-        </View>
 
+          {/* DROPDOWN + DOWNLOAD moved here */}
+          <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
+            <Text style={[styles.btnText, { color: '#000' }]}>
+              {selectedRecipeName ?? 'Select recipe'} ▾
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.downloadBtn, selectedRecipeId === -1 && styles.downloadDisabled]}
+            onPress={() => onDownload && onDownload()}
+            disabled={selectedRecipeId === -1}
+          >
+            <Text style={styles.btnText}>Download ⬇</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* DROPDOWN MODAL */}
+      <Modal visible={dropdownVisible} animationType="fade" transparent onRequestClose={() => setDropdownVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
+          <View style={[styles.modalContent]}>
+            <Text style={styles.modalTitle}>Select recipe</Text>
+            <FlatList
+              data={recipes}
+              keyExtractor={(i) => String(i.recipe_id)}
+              renderItem={renderDropdownItem}
+              style={{ maxHeight: '70%' }}
+            />
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  /** 
-   * OUTER WRAPPER
-   * - backgroundColor fills 100% width
-   * - no horizontal padding so it touches edges
-   */
   wrapper: {
     width: '100%',
-    backgroundColor: '#d6e4f0', // <-- your original color
+    backgroundColor: '#d6e4f0',
     paddingVertical: 10,
-    paddingHorizontal: 0,       // <-- IMPORTANT for edge-to-edge
+    paddingHorizontal: 0,
     elevation: 5,
   },
-
-  /**
-   * INNER CONTENT
-   * - keeps padding so items don't touch edges
-   */
-  content: {
-    paddingHorizontal: 12,
-  },
+  content: { paddingHorizontal: 12 },
 
   row1: {
     flexDirection: 'row',
@@ -112,18 +166,9 @@ const styles = StyleSheet.create({
     width: '100%',
     flexWrap: 'nowrap',
   },
+  logo: { width: 72, height: 48, marginRight: 10 },
 
-  logo: {
-    width: 72,
-    height: 48,
-    marginRight: 10,
-  },
-
-  label: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000',
-  },
+  label: { fontSize: 16, fontWeight: '700', color: '#000' },
 
   inputBox: {
     backgroundColor: '#fff',
@@ -136,42 +181,40 @@ const styles = StyleSheet.create({
     color: '#000',
   },
 
-  rightSide: {
-    marginLeft: 'auto',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  date: {
-    marginRight: 10,
-    fontWeight: '700',
-    color: '#000',
-  },
+  rightSide: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' },
+  date: { marginRight: 10, fontWeight: '700', color: '#000' },
 
   row2: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 10,
     paddingBottom: 6,
   },
 
-  saveBtn: {
-    backgroundColor: '#006edc',
-    paddingHorizontal: 16,
+  saveBtn: { backgroundColor: '#006edc', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, marginRight: 10 },
+  uploadBtn: { backgroundColor: '#008a3e', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, marginRight: 10 },
+  downloadBtn: { backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 6 },
+  downloadDisabled: { backgroundColor: '#999' },
+
+  dropdownTrigger: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
-    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginLeft: 6,
   },
 
-  uploadBtn: {
-    backgroundColor: '#008a3e',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
+  btnText: { color: '#fff', fontWeight: '700' },
 
-  btnText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
+  /* Modal styles */
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 },
+  modalContent: { maxHeight: '70%', borderRadius: 8, padding: 8, backgroundColor: '#fff' },
+  modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },
+
+  dropdownItem: { paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  dropdownItemSelected: { backgroundColor: '#e6f0ff' },
+  dropdownItemText: { fontSize: 15 },
+  dropdownItemTextSelected: { fontWeight: '700' },
 });
