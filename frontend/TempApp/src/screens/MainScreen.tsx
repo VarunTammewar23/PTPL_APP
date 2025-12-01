@@ -10,11 +10,9 @@ import {
   TouchableOpacity,
   Animated,
   NativeModules,
-  ScrollView,
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import RecipeTable from '../components/RecipeTable';
 import MachinePanel from '../components/MachinePanel';
 import HeaderBar from '../components/HeaderBar';
@@ -25,7 +23,8 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';import BottomBar from '../components/BottomBar';
+
 
 const { FilePickerModule } = NativeModules;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -393,48 +392,22 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           </View>
         </TouchableWithoutFeedback>
       )}
-
-      {/* bottom bar and slide panel unchanged from your original code */}
-      <View style={styles.bottomBarContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bottomBarScroll}>
-          {labels.map((label, idx) => {
-            const isActive = activePanel === label;
-            return (
-              <TouchableOpacity
-                key={label + idx}
-                ref={label === "RPF" ? rpfRef : undefined}
-                activeOpacity={0.9}
-                onPress={() => {
-                  if (isActive && label !== 'RPF') {
-                    closePanel();
-                  } else {
-                    openPanel(label);
-                  }
-                }}
-                style={[styles.pillButton, isActive && styles.pillButtonActive, idx === labels.length - 1 && styles.lastPill]}
-              >
-                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => {
-              Alert.alert('Exit', 'Do you want to exit?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Exit', style: 'destructive', onPress: () => { /* TODO: exit handler */ } }
-              ]);
-            }}
-            style={[styles.exitPill, activePanel === 'EXIT' && styles.pillButtonActive]}
-          >
-            <Icon name="logout" size={18} color="#6b0f1a" style={{ marginRight: 8 }} />
-            <Text style={styles.exitText}>EXIT</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+<BottomBar
+  labels={labels}
+  activePanel={activePanel}
+  rpfRef={rpfRef}
+  onPressItem={(label) => {
+    const isActive = activePanel === label;
+    if (isActive && label !== 'RPF') closePanel();
+    else openPanel(label);
+  }}
+  onExit={() =>
+    Alert.alert('Exit', 'Do you want to exit?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Exit', style: 'destructive', onPress: () => {/* exit */} }
+    ])
+  }
+/>
 
       <Animated.View style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}>
         <View style={styles.panelHeader}>
@@ -494,79 +467,6 @@ const styles = StyleSheet.create({
   textLight: { color: '#fff' },
   textDark: { color: '#000' },
 
-  bottomBarContainer: {
-    borderTopWidth: 1,
-    borderTopColor: '#cfcfcf',
-    backgroundColor: '#e6e6e8',
-    paddingVertical: 10,
-  },
-  bottomBarScroll: {
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-
-  pillButton: {
-    backgroundColor: '#e9e5f6',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 0,
-    marginRight: 0,
-    borderTopColor: '#ffffff',
-    borderLeftColor: '#ffffff',
-    borderBottomColor: '#bdb6d9',
-    borderRightColor: '#bdb6d9',
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 110,
-    height: 48,
-  },
-
-  lastPill: {
-    borderRightWidth: 0,
-  },
-
-  pillButtonActive: {
-    backgroundColor: '#d6d6d8',
-    borderTopColor: '#bdbdbf',
-    borderLeftColor: '#bdbdbf',
-    borderBottomColor: '#ffffff',
-    borderRightColor: '#ffffff',
-  },
-
-  pillText: {
-    color: '#211f2e',
-    fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-
-  pillTextActive: {
-    color: '#000',
-  },
-
-  exitPill: {
-    backgroundColor: '#ffd0d6',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 0,
-    marginLeft: 0,
-    marginRight: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopColor: '#fff',
-    borderLeftColor: '#fff',
-    borderBottomColor: '#df9aa6',
-    borderRightColor: '#df9aa6',
-    borderWidth: 1,
-    height: 48,
-  },
-  exitText: {
-    color: '#6b0f1a',
-    fontWeight: '800',
-    fontSize: 14,
-  },
 
   /* SIDE (LEFT) RPF SUBMENU - anchored by inline styles */
   sideMenuOverlay: {
