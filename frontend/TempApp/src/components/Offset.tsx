@@ -137,16 +137,34 @@ function OffsetInner(
   }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.title, dark && { color: '#fff' }]}>
-          {recipeName ?? 'Offset Settings'}
-        </Text>
-        <Text style={styles.close} onPress={onClose}>Close</Text>
-      </View>
+  <View
+    style={styles.container}
+    onLayout={(e) => {
+      const { width, height } = e.nativeEvent.layout;
+      if (width) setContW(width);
+      if (height) setContH(height);
+    }}
+  >
+    <View style={styles.header}>
+      <Text style={[styles.title, dark && { color: '#fff' }]}>
+        {recipeName ?? 'Offset Settings'}
+      </Text>
+      <Text style={styles.close} onPress={onClose}>Close</Text>
+    </View>
 
-      <ZoomableView minScale={1} maxScale={4} style={{ width: dispW, height: dispH }}>
-        <ImageBackground source={imgSrc} resizeMode="contain" style={{ width: dispW, height: dispH }}>
+    {/* CENTER FIX — prevents image from shrinking */}
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <ZoomableView
+        minScale={1}
+        maxScale={4}
+        doubleTapScale={2}
+        style={{ width: dispW, height: dispH }}
+      >
+        <ImageBackground
+          source={imgSrc}
+          resizeMode="contain"
+          style={{ width: dispW, height: dispH }}
+        >
 
           {loading && (
             <View style={[styles.loading, { width: dispW, height: dispH }]}>
@@ -166,28 +184,49 @@ function OffsetInner(
               <TouchableOpacity
                 key={`p-${sr}`}
                 onPress={() => { setEditingSr(sr); setTempVal(String(display)); }}
-                style={[styles.paramBox,
-                  { left, top, width: BOX_W, height: BOX_H,
-                    transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }],
-                  }]}
+                style={[
+                  styles.paramBox,
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 }
+                    ]
+                  }
+                ]}
               >
-                <Text style={[styles.paramText, dark && { color: '#fff' }]}>{display}</Text>
+                <Text style={[styles.paramText, dark && { color: '#fff' }]}>
+                  {display}
+                </Text>
               </TouchableOpacity>
             );
           })}
 
-          {/* Serial Number Boxes (LOCKED) */}
+          {/* Serial Numbers */}
           {SERIAL_POS.map(p => {
             const left = Math.round((p.x / 100) * dispW);
             const top = Math.round((p.y / 100) * dispH);
+
             return (
               <View
                 key={`s-${p.id}`}
                 pointerEvents="none"
-                style={[styles.serialBox,
-                  { left, top, width: BOX_W, height: BOX_H,
-                    transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }],
-                  }]}
+                style={[
+                  styles.serialBox,
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 }
+                    ]
+                  }
+                ]}
               >
                 <Text style={styles.serialText}>{p.id}</Text>
               </View>
@@ -196,29 +235,41 @@ function OffsetInner(
 
         </ImageBackground>
       </ZoomableView>
+    </View>
 
-      {/* Modal editor */}
-      <Modal visible={editingSr !== null} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Value</Text>
-            <TextInput value={tempVal} onChangeText={setTempVal} keyboardType="numeric" style={styles.input} />
-            <View style={styles.row}>
-              <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
-              <Text
-                style={styles.save}
-                onPress={() => {
-                  if (editingSr !== null) setEdited({ ...edited, [editingSr]: tempVal });
-                  setEditingSr(null);
-                }}
-              >Save</Text>
-            </View>
+    {/* Edit Modal */}
+    <Modal visible={editingSr !== null} transparent animationType="fade">
+      <View style={styles.modalBg}>
+        <View style={styles.modal}>
+          <Text style={styles.modalTitle}>Edit Value</Text>
+
+          <TextInput
+            value={tempVal}
+            onChangeText={setTempVal}
+            keyboardType="numeric"
+            style={styles.input}
+          />
+
+          <View style={styles.row}>
+            <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
+            <Text
+              style={styles.save}
+              onPress={() => {
+                if (editingSr !== null) {
+                  setEdited({ ...edited, [editingSr]: tempVal });
+                }
+                setEditingSr(null);
+              }}
+            >
+              Save
+            </Text>
           </View>
         </View>
-      </Modal>
+      </View>
+    </Modal>
 
-    </View>
-  );
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

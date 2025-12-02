@@ -81,35 +81,96 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
   }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}><Text style={[styles.title, dark && { color: '#fff' }]}>
+  <View
+    style={styles.container}
+    onLayout={(e) => {
+      const { width, height } = e.nativeEvent.layout;
+      if (width) setContW(width);
+      if (height) setContH(height);
+    }}
+  >
+    <View style={styles.header}>
+      <Text style={[styles.title, dark && { color: '#fff' }]}>
         {recipeName ?? 'Suction / Gap Set'}
-      </Text><Text style={styles.close} onPress={onClose}>Close</Text></View>
+      </Text>
+      <Text style={styles.close} onPress={onClose}>Close</Text>
+    </View>
 
-      <ZoomableView minScale={1} maxScale={4} style={{ width: dispW, height: dispH }}>
-        <ImageBackground source={imgSrc} style={{ width: dispW, height: dispH }} resizeMode="contain">
+    {/* Center wrapper to prevent image shrinking */}
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <ZoomableView
+        minScale={1}
+        maxScale={4}
+        doubleTapScale={2}
+        style={{ width: dispW, height: dispH }}
+      >
+        <ImageBackground
+          source={imgSrc}
+          style={{ width: dispW, height: dispH }}
+          resizeMode="contain"
+        >
 
-          {loading && <View style={[styles.loading, { width: dispW, height: dispH }]}><ActivityIndicator /></View>}
+          {loading && (
+            <View style={[styles.loading, { width: dispW, height: dispH }]}>
+              <ActivityIndicator size="large" />
+            </View>
+          )}
 
+          {/* Editable Values */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
             const val = edited[sr] ?? values[sr]?.value_01 ?? '';
             const left = (pos.x / 100) * dispW;
             const top = (pos.y / 100) * dispH;
+
             return (
-              <TouchableOpacity key={sr} onPress={() => { setEditingSr(sr); setTempVal(String(val)); }}
-                style={[styles.paramBox, { left, top, width: BOX_W, height: BOX_H,
-                  transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }] }]}>
-                <Text style={[styles.paramText, dark && { color: '#fff' }]}>{val}</Text>
+              <TouchableOpacity
+                key={sr}
+                onPress={() => { setEditingSr(sr); setTempVal(String(val)); }}
+                style={[
+                  styles.paramBox,
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 }
+                    ]
+                  }
+                ]}
+              >
+                <Text style={[styles.paramText, dark && { color: '#fff' }]}>
+                  {val}
+                </Text>
               </TouchableOpacity>
             );
           })}
 
+          {/* Serial Number Labels */}
           {SERIAL_POS.map(s => {
-            const left = (s.x / 100) * dispW; const top = (s.y / 100) * dispH;
+            const left = (s.x / 100) * dispW;
+            const top = (s.y / 100) * dispH;
+
             return (
-              <View key={s.id} pointerEvents="none" style={[styles.serialBox, { left, top, width: BOX_W, height: BOX_H,
-                transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }] }]}>
+              <View
+                key={`s-${s.id}`}
+                pointerEvents="none"
+                style={[
+                  styles.serialBox,
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 }
+                    ]
+                  }
+                ]}
+              >
                 <Text style={styles.serialText}>{s.id}</Text>
               </View>
             );
@@ -117,21 +178,42 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
 
         </ImageBackground>
       </ZoomableView>
+    </View>
 
-      {/* Modal */}
-      <Modal visible={editingSr !== null} transparent animationType="fade">
-        <View style={styles.modalBg}><View style={styles.modal}>
+    {/* Value Edit Modal */}
+    <Modal visible={editingSr !== null} transparent animationType="fade">
+      <View style={styles.modalBg}>
+        <View style={styles.modal}>
           <Text style={styles.modalTitle}>Edit Value</Text>
-          <TextInput value={tempVal} onChangeText={setTempVal} style={styles.input} keyboardType="numeric" />
+
+          <TextInput
+            value={tempVal}
+            onChangeText={setTempVal}
+            keyboardType="numeric"
+            style={styles.input}
+          />
+
           <View style={styles.row}>
             <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
-            <Text style={styles.save} onPress={() => { setEdited({ ...edited, [editingSr]: tempVal }); setEditingSr(null); }}>Save</Text>
-          </View>
-        </View></View>
-      </Modal>
 
-    </View>
-  );
+            <Text
+              style={styles.save}
+              onPress={() => {
+                if (editingSr !== null) {
+                  setEdited({ ...edited, [editingSr]: tempVal });
+                }
+                setEditingSr(null);
+              }}
+            >
+              Save
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

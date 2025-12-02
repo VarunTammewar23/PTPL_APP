@@ -132,16 +132,34 @@ function FoldsInner(
   }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.title, dark && { color: '#fff' }]}>
-          {recipeName ?? 'Folds'}
-        </Text>
-        <Text style={styles.close} onPress={onClose}>Close</Text>
-      </View>
+  <View
+    style={styles.container}
+    onLayout={(e) => {
+      const { width, height } = e.nativeEvent.layout;
+      if (width) setContW(width);
+      if (height) setContH(height);
+    }}
+  >
+    <View style={styles.header}>
+      <Text style={[styles.title, dark && { color: '#fff' }]}>
+        {recipeName ?? 'Folds'}
+      </Text>
+      <Text style={styles.close} onPress={onClose}>Close</Text>
+    </View>
 
-      <ZoomableView minScale={1} maxScale={4} style={{ width: dispW, height: dispH }}>
-        <ImageBackground source={imgSrc} style={{ width: dispW, height: dispH }} resizeMode="contain">
+    {/* CENTER WRAPPER — FIXES WHITE SPACE ISSUE */}
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <ZoomableView
+        minScale={1}
+        maxScale={4}
+        doubleTapScale={2}
+        style={{ width: dispW, height: dispH }}
+      >
+        <ImageBackground
+          source={imgSrc}
+          style={{ width: dispW, height: dispH }}
+          resizeMode="contain"
+        >
 
           {loading && (
             <View style={[styles.loading, { width: dispW, height: dispH }]}>
@@ -149,7 +167,7 @@ function FoldsInner(
             </View>
           )}
 
-          {/* PARAM BOXES */}
+          {/* PARAMETER BOXES */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
             const orig = values[sr];
@@ -164,9 +182,16 @@ function FoldsInner(
                 onPress={() => { setEditingSr(sr); setTempVal(String(display)); }}
                 style={[
                   styles.paramBox,
-                  { left, top, width: BOX_W, height: BOX_H,
-                    transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }],
-                  }
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 },
+                    ],
+                  },
                 ]}
               >
                 <Text style={[styles.paramText, dark && { color: '#fff' }]}>
@@ -176,7 +201,7 @@ function FoldsInner(
             );
           })}
 
-          {/* SERIAL NUMBER BOXES */}
+          {/* SERIAL NUMBER LABELS */}
           {SERIAL_POS.map(p => {
             const left = Math.round((p.x / 100) * dispW);
             const top = Math.round((p.y / 100) * dispH);
@@ -187,42 +212,58 @@ function FoldsInner(
                 pointerEvents="none"
                 style={[
                   styles.serialBox,
-                  { left, top, width: BOX_W, height: BOX_H,
-                    transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }],
-                  }
+                  {
+                    left,
+                    top,
+                    width: BOX_W,
+                    height: BOX_H,
+                    transform: [
+                      { translateX: -BOX_W / 2 },
+                      { translateY: -BOX_H / 2 },
+                    ],
+                  },
                 ]}
               >
                 <Text style={styles.serialText}>{p.id}</Text>
               </View>
             );
           })}
+
         </ImageBackground>
       </ZoomableView>
+    </View>
 
-      {/* VALUE EDITOR */}
-      <Modal visible={editingSr !== null} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Fold</Text>
-            <TextInput
-              style={styles.input}
-              value={tempVal}
-              onChangeText={setTempVal}
-              keyboardType="numeric"
-            />
-            <View style={styles.row}>
-              <Text onPress={() => setEditingSr(null)} style={styles.cancel}>Cancel</Text>
-              <Text onPress={() => {
-                if (editingSr !== null) setEdited({ ...edited, [editingSr]: tempVal });
+    {/* VALUE EDITOR */}
+    <Modal visible={editingSr !== null} transparent animationType="fade">
+      <View style={styles.modalBg}>
+        <View style={styles.modal}>
+          <Text style={styles.modalTitle}>Edit Fold</Text>
+          <TextInput
+            style={styles.input}
+            value={tempVal}
+            onChangeText={setTempVal}
+            keyboardType="numeric"
+          />
+          <View style={styles.row}>
+            <Text onPress={() => setEditingSr(null)} style={styles.cancel}>Cancel</Text>
+            <Text
+              onPress={() => {
+                if (editingSr !== null) {
+                  setEdited({ ...edited, [editingSr]: tempVal });
+                }
                 setEditingSr(null);
-              }} style={styles.save}>Save</Text>
-            </View>
+              }}
+              style={styles.save}
+            >
+              Save
+            </Text>
           </View>
         </View>
-      </Modal>
+      </View>
+    </Modal>
 
-    </View>
-  );
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
