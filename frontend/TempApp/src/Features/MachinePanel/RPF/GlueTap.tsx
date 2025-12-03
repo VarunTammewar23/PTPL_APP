@@ -1,71 +1,28 @@
+// src/components/GlueTap.tsx
 import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ImageBackground,
-  Dimensions,
-  Image,
-  TouchableOpacity,
-  Modal,
-  TextInput,
+  View, Text, StyleSheet, ActivityIndicator, ImageBackground,
+  Dimensions, Image, TouchableOpacity, Modal, TextInput
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { apiGet } from '../../../api/api';
 
-type Props = {
-  recipeId: number;
-  recipeName?: string;
-  imageUri?: string;
-  onClose?: () => void;
-  initialParams?: any[];
-  pollMs?: number;
+const PARAM_SR = [12];  // 🔁 CHANGE SERIALS
+const POSITIONS = {
+  12: { x: 30, y: 55 },
 };
-
-interface RecipeParam {
-  parameter_no: number;
-  section?: string;
-  parameter?: string;
-  value_01?: number | string;
-  unit?: string;
-}
-
-/** YOU CAN EDIT THESE */
-
-/** Editable parameter serials */
-const PARAM_SR = [2, 6, 10, 11]; // 🔁 CHANGE AS REQUIRED
-
-/** Parameter box positions */
-const POSITIONS: Record<number, { x: number; y: number }> = {
-  2: { x: 58, y: 50 },
-  6: { x: 31, y: 90 },
-  10: { x: 90, y: 75 },
-  11: { x: 55, y: 90 },
-};
-
-/** Serial number box positions */
 const SERIAL_POS = [
-  { id: 2, x: 58, y: 57 },
-  { id: 6, x: 31, y: 82 },
-  { id: 10, x: 90, y: 82 },
-  { id: 11, x: 55, y: 84 },
+  { id: 12, x: 30, y: 45 },
 ];
 
-/** BOX SIZE */
-const BOX_W = 30;
-const BOX_H = 24;
+const BOX_W = 30, BOX_H = 24;
 
-function OffsetInner(
-  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
-  ref: any
-) {
+function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
   const { theme } = useTheme();
   const dark = theme === 'dark';
-
+  const [params, setParams] = useState(initialParams ?? []);
   const [loading, setLoading] = useState(!initialParams);
-  const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
@@ -74,33 +31,28 @@ function OffsetInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/offset.jpeg'); // 🔁 CHANGE IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/gluetap.jpeg'); // 🔁 CHANGE IMAGE
 
-  const [edited, setEdited] = useState<Record<number, string>>({});
-  const [editingSr, setEditingSr] = useState<number | null>(null);
+  const [edited, setEdited] = useState({});
+  const [editingSr, setEditingSr] = useState(null);
   const [tempVal, setTempVal] = useState('');
-
-  // --- Load parameters from backend ---
-  const fetchParams = async () => {
-    try {
-      const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
-      setParams(res.data?.params ?? []);
-    } catch {}
-    setLoading(false);
-  };
 
   useEffect(() => {
     if (!initialParams) {
-      fetchParams();
-      const id = setInterval(fetchParams, pollMs);
+      const load = async () => {
+        try {
+          const res = await apiGet(`/recipes/${recipeId}`);
+          setParams(res.data?.params ?? []);
+        } finally {
+          setLoading(false);
+        }
+      };
+      load();
+      const id = setInterval(load, pollMs);
       return () => clearInterval(id);
-    } else {
-      setParams(initialParams);
-      setLoading(false);
     }
-  }, [recipeId, initialParams, pollMs]);
+  }, [recipeId, initialParams]);
 
-  // --- Resize ---
   useEffect(() => {
     const uri = imgSrc.uri ?? Image.resolveAssetSource(imgSrc).uri;
     Image.getSize(uri, (w, h) => { setNatW(w); setNatH(h); });
@@ -108,32 +60,25 @@ function OffsetInner(
 
   useEffect(() => {
     if (!natW || !natH) return;
-    const scale = Math.min(contW / natW, contH / natH);
-    setDispW(Math.round(natW * scale));
-    setDispH(Math.round(natH * scale));
+    const sc = Math.min(contW / natW, contH / natH);
+    setDispW(natW * sc); setDispH(natH * sc);
   }, [natW, natH, contW, contH]);
 
-  // --- Bind param values to serial numbers ---
   const values = useMemo(() => {
-    const map: Record<number, RecipeParam | null> = {};
-    PARAM_SR.forEach(sr => (map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null));
+    const map = {};
+    PARAM_SR.forEach(sr => map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null);
     return map;
   }, [params]);
 
-  // --- Expose save data to backend ---
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
-      PARAM_SR.map(sr => {
-        const orig = values[sr];
-        const edit = edited[sr];
-        return {
-          parameter_no: sr,
-          section: orig?.section ?? 'OFFSET SETTINGS',
-          parameter: orig?.parameter ?? '',
-          value_01: edit ?? orig?.value_01 ?? '',
-          unit: orig?.unit ?? '',
-        };
-      }),
+      PARAM_SR.map(sr => ({
+        parameter_no: sr,
+        section: values[sr]?.section ?? 'GLUE / TAP QTY',
+        parameter: values[sr]?.parameter ?? '',
+        value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
+        unit: values[sr]?.unit ?? '',
+      })),
   }));
 
   return (
@@ -147,12 +92,12 @@ function OffsetInner(
   >
     <View style={styles.header}>
       <Text style={[styles.title, dark && { color: '#fff' }]}>
-        {recipeName ?? 'Offset Settings'}
+        {recipeName ?? 'Glue / Tap Qty'}
       </Text>
       <Text style={styles.close} onPress={onClose}>Close</Text>
     </View>
 
-    {/* CENTER FIX — prevents image from shrinking */}
+    {/* CENTER WRAPPER — FIXES WHITE SPACE */}
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ZoomableView
         minScale={1}
@@ -162,8 +107,8 @@ function OffsetInner(
       >
         <ImageBackground
           source={imgSrc}
-          resizeMode="contain"
           style={{ width: dispW, height: dispH }}
+          resizeMode="contain"
         >
 
           {loading && (
@@ -172,18 +117,16 @@ function OffsetInner(
             </View>
           )}
 
-          {/* Editable PARAM Boxes */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
-            const left = Math.round((pos.x / 100) * dispW);
-            const top = Math.round((pos.y / 100) * dispH);
-            const orig = values[sr];
-            const display = edited[sr] ?? orig?.value_01 ?? '';
+            const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+            const left = (pos.x / 100) * dispW;
+            const top = (pos.y / 100) * dispH;
 
             return (
               <TouchableOpacity
-                key={`p-${sr}`}
-                onPress={() => { setEditingSr(sr); setTempVal(String(display)); }}
+                key={sr}
+                onPress={() => { setEditingSr(sr); setTempVal(String(val)); }}
                 style={[
                   styles.paramBox,
                   {
@@ -199,20 +142,19 @@ function OffsetInner(
                 ]}
               >
                 <Text style={[styles.paramText, dark && { color: '#fff' }]}>
-                  {display}
+                  {val}
                 </Text>
               </TouchableOpacity>
             );
           })}
 
-          {/* Serial Numbers */}
-          {SERIAL_POS.map(p => {
-            const left = Math.round((p.x / 100) * dispW);
-            const top = Math.round((p.y / 100) * dispH);
+          {SERIAL_POS.map(s => {
+            const left = (s.x / 100) * dispW;
+            const top = (s.y / 100) * dispH;
 
             return (
               <View
-                key={`s-${p.id}`}
+                key={s.id}
                 pointerEvents="none"
                 style={[
                   styles.serialBox,
@@ -228,7 +170,7 @@ function OffsetInner(
                   }
                 ]}
               >
-                <Text style={styles.serialText}>{p.id}</Text>
+                <Text style={styles.serialText}>{s.id}</Text>
               </View>
             );
           })}
@@ -237,7 +179,7 @@ function OffsetInner(
       </ZoomableView>
     </View>
 
-    {/* Edit Modal */}
+    {/* EDIT MODAL */}
     <Modal visible={editingSr !== null} transparent animationType="fade">
       <View style={styles.modalBg}>
         <View style={styles.modal}>
@@ -255,9 +197,7 @@ function OffsetInner(
             <Text
               style={styles.save}
               onPress={() => {
-                if (editingSr !== null) {
-                  setEdited({ ...edited, [editingSr]: tempVal });
-                }
+                setEdited({ ...edited, [editingSr!]: tempVal });
                 setEditingSr(null);
               }}
             >
@@ -275,37 +215,22 @@ function OffsetInner(
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  title: { fontSize: 16, fontWeight: '700', color: '#111' },
-  close: { color: '#0066ff', fontWeight: '700' },
+  title: { fontSize: 16, fontWeight: '700' },
+  close: { color: '#007bff', fontWeight: '700' },
   loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-
-  paramBox: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  paramText: { fontSize: 10, fontWeight: '700', color: '#000' },
-
-  serialBox: {
-    position: 'absolute',
-    backgroundColor: '#000',
-    borderColor: '#fff',
-    borderWidth: 1.4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  serialText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 20 },
+  paramBox: { position: 'absolute', borderRadius: 6, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)' },
+  paramText: { fontSize: 10, fontWeight: '700' },
+  serialBox: { position: 'absolute', backgroundColor: '#000', borderColor: '#fff', borderWidth: 1.3,
+    justifyContent: 'center', alignItems: 'center', borderRadius: 6 },
+  serialText: { fontWeight: '700', color: '#fff', fontSize: 10 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 18 },
   modal: { backgroundColor: '#fff', borderRadius: 10, padding: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
-  cancel: { marginRight: 20, color: '#555' },
+  modalTitle: { fontSize: 16, fontWeight: '700' },
+  row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
+  cancel: { color: '#666', marginRight: 20 },
   save: { color: '#007bff', fontWeight: '700' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 6 },
+  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 6, padding: 8 }
 });
 
-export default React.forwardRef(OffsetInner);
+export default React.forwardRef(GlueTapInner);

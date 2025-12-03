@@ -12,8 +12,8 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { apiGet } from '../../../api/api';
 
 type Props = {
   recipeId: number;
@@ -68,7 +68,7 @@ function FoldsInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/folds.jpeg'); // 📌 your image
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/folds.jpeg'); // 📌 your image
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);

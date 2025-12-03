@@ -13,8 +13,8 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { apiGet } from '../../../api/api';
 
 type Props = {
   recipeId: number;
@@ -83,7 +83,7 @@ function MachinePanelInner(
   const [dispW, setDispW] = useState<number>(contW);
   const [dispH, setDispH] = useState<number>(contH);
 
-  const imageSource = imageUri ? { uri: imageUri } : require('../assets/Paper_size.jpg');
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Paper_size.jpg');
 
   // Edited values state (keyed by parameter_no)
   const [editedValues, setEditedValues] = useState<Record<number, string>>({});
@@ -125,13 +125,13 @@ function MachinePanelInner(
         }
       );
     } else {
-      resolveLocal(imageSource);
+      resolveLocal(imgSrc);
     }
 
     return () => {
       mounted = false;
     };
-  }, [imageUri, contW, contH, imageSource]);
+  }, [imageUri, contW, contH, imgSrc]);
 
   useEffect(() => {
     if (!natW || !natH) {
@@ -255,9 +255,9 @@ function MachinePanelInner(
         ) : null}
       </View>
 
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center',paddingLeft: 20 }}>
         <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
-          <ImageBackground source={imageSource} style={{ width: dispW, height: dispH }} resizeMode="contain">
+          <ImageBackground source={imgSrc} style={{ width: dispW, height: dispH }} resizeMode="contain">
             {loading && (
               <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
                 <ActivityIndicator size="large" />

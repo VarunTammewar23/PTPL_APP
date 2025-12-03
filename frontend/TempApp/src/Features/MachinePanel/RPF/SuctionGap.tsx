@@ -1,37 +1,39 @@
-// src/components/GlueTap.tsx
+// src/components/SuctionGap.tsx
 import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
 import {
   View, Text, StyleSheet, ActivityIndicator, ImageBackground,
   Dimensions, Image, TouchableOpacity, Modal, TextInput
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { apiGet } from '../../../api/api';
 
-const PARAM_SR = [12];  // 🔁 CHANGE SERIALS
+const PARAM_SR = [1, 13, 14]; // 🔁 CHANGE
 const POSITIONS = {
-  12: { x: 30, y: 55 },
+  1: { x: 55, y: 72 },
+  13: { x: 72, y: 53 },
+  14: { x: 10, y: 38 },
 };
 const SERIAL_POS = [
-  { id: 12, x: 30, y: 45 },
+  { id: 1, x: 55, y: 80 },
+  { id: 13, x: 72, y: 62 },
+  { id: 14, x: 5, y: 48 },
 ];
 
 const BOX_W = 30, BOX_H = 24;
 
-function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
+function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
   const { theme } = useTheme();
   const dark = theme === 'dark';
+
   const [params, setParams] = useState(initialParams ?? []);
   const [loading, setLoading] = useState(!initialParams);
-
-  const [natW, setNatW] = useState<number | null>(null);
-  const [natH, setNatH] = useState<number | null>(null);
+  const [natW, setNatW] = useState(null); const [natH, setNatH] = useState(null);
   const [contW, setContW] = useState(Dimensions.get('window').width);
   const [contH, setContH] = useState(Math.round(Dimensions.get('window').height * 0.45));
-  const [dispW, setDispW] = useState(contW);
-  const [dispH, setDispH] = useState(contH);
+  const [dispW, setDispW] = useState(contW), [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/gluetap.jpeg'); // 🔁 CHANGE IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/suctiongap.jpeg'); // 🔁 IMAGE
 
   const [edited, setEdited] = useState({});
   const [editingSr, setEditingSr] = useState(null);
@@ -40,18 +42,15 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
   useEffect(() => {
     if (!initialParams) {
       const load = async () => {
-        try {
-          const res = await apiGet(`/recipes/${recipeId}`);
-          setParams(res.data?.params ?? []);
-        } finally {
-          setLoading(false);
-        }
+        const res = await apiGet(`/recipes/${recipeId}`);
+        setParams(res.data?.params ?? []);
+        setLoading(false);
       };
       load();
       const id = setInterval(load, pollMs);
       return () => clearInterval(id);
     }
-  }, [recipeId, initialParams]);
+  }, [recipeId]);
 
   useEffect(() => {
     const uri = imgSrc.uri ?? Image.resolveAssetSource(imgSrc).uri;
@@ -65,16 +64,16 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
   }, [natW, natH, contW, contH]);
 
   const values = useMemo(() => {
-    const map = {};
-    PARAM_SR.forEach(sr => map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null);
-    return map;
+    const m = {};
+    PARAM_SR.forEach(sr => m[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null);
+    return m;
   }, [params]);
 
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'GLUE / TAP QTY',
+        section: values[sr]?.section ?? 'SUCTION / GAP SET',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -92,12 +91,12 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
   >
     <View style={styles.header}>
       <Text style={[styles.title, dark && { color: '#fff' }]}>
-        {recipeName ?? 'Glue / Tap Qty'}
+        {recipeName ?? 'Suction / Gap Set'}
       </Text>
       <Text style={styles.close} onPress={onClose}>Close</Text>
     </View>
 
-    {/* CENTER WRAPPER — FIXES WHITE SPACE */}
+    {/* Center wrapper to prevent image shrinking */}
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ZoomableView
         minScale={1}
@@ -117,6 +116,7 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
             </View>
           )}
 
+          {/* Editable Values */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
             const val = edited[sr] ?? values[sr]?.value_01 ?? '';
@@ -148,13 +148,14 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
             );
           })}
 
+          {/* Serial Number Labels */}
           {SERIAL_POS.map(s => {
             const left = (s.x / 100) * dispW;
             const top = (s.y / 100) * dispH;
 
             return (
               <View
-                key={s.id}
+                key={`s-${s.id}`}
                 pointerEvents="none"
                 style={[
                   styles.serialBox,
@@ -179,7 +180,7 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
       </ZoomableView>
     </View>
 
-    {/* EDIT MODAL */}
+    {/* Value Edit Modal */}
     <Modal visible={editingSr !== null} transparent animationType="fade">
       <View style={styles.modalBg}>
         <View style={styles.modal}>
@@ -194,10 +195,13 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
 
           <View style={styles.row}>
             <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
+
             <Text
               style={styles.save}
               onPress={() => {
-                setEdited({ ...edited, [editingSr!]: tempVal });
+                if (editingSr !== null) {
+                  setEdited({ ...edited, [editingSr]: tempVal });
+                }
                 setEditingSr(null);
               }}
             >
@@ -216,21 +220,21 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8, overflow: 'hidden' },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   title: { fontSize: 16, fontWeight: '700' },
-  close: { color: '#007bff', fontWeight: '700' },
-  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  paramBox: { position: 'absolute', borderRadius: 6, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)' },
+  close: { fontWeight: '700', color: '#007bff' },
+  loading: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
+  paramBox: { position: 'absolute', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 6 },
   paramText: { fontSize: 10, fontWeight: '700' },
-  serialBox: { position: 'absolute', backgroundColor: '#000', borderColor: '#fff', borderWidth: 1.3,
-    justifyContent: 'center', alignItems: 'center', borderRadius: 6 },
+  serialBox: { position: 'absolute', backgroundColor: '#000', borderWidth: 1.3,
+    borderColor: '#fff', justifyContent: 'center', alignItems: 'center', borderRadius: 6 },
   serialText: { fontWeight: '700', color: '#fff', fontSize: 10 },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 18 },
+  modalBg: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', padding: 18 },
   modal: { backgroundColor: '#fff', borderRadius: 10, padding: 12 },
   modalTitle: { fontSize: 16, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
-  cancel: { color: '#666', marginRight: 20 },
+  cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
-  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 6, padding: 8 }
+  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 6, padding: 8 },
 });
 
-export default React.forwardRef(GlueTapInner);
+export default React.forwardRef(SuctionGapInner);

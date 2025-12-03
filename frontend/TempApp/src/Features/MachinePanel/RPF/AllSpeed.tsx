@@ -10,8 +10,8 @@ import {
   Dimensions, Image, TouchableOpacity, Modal, TextInput
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { apiGet } from '../../../api/api';
 
 const PARAM_SR = [15, 16, 17, 118, 102, 134];
 

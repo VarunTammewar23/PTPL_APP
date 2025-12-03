@@ -14,7 +14,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
-import MachinePanel from '../components/PaperSizes';
+import MachinePanel from '../Features/MachinePanel/RPF/PaperSizes';
 import HeaderBar from '../components/HeaderBar';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -25,11 +25,11 @@ import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';
 import BottomBar from '../components/BottomBar';
-import Folds from '../components/Folds';
-import Offset from '../components/Offset';
-import GlueTap from '../components/GlueTap';
-import SuctionGap from '../components/SuctionGap';
-import AllSpeed from '../components/AllSpeed';
+import Folds from '../Features/MachinePanel/RPF/Folds';
+import Offset from '../Features/MachinePanel/RPF/Offset';
+import GlueTap from '../Features/MachinePanel/RPF/GlueTap';
+import SuctionGap from '../Features/MachinePanel/RPF/SuctionGap';
+import AllSpeed from '../Features/MachinePanel/RPF/AllSpeed';
 
 const { FilePickerModule } = NativeModules;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');

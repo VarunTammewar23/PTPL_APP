@@ -33,6 +33,7 @@ export default function RecipeTable({ data, darkMode = false }: RecipeTableProps
         style={{
           flexDirection: 'row',
           paddingVertical: 8,
+          paddingHorizontal: 10,
           borderBottomWidth: 1,
           borderColor,
           backgroundColor: headerBg,
@@ -53,6 +54,7 @@ export default function RecipeTable({ data, darkMode = false }: RecipeTableProps
             style={{
               flexDirection: 'row',
               paddingVertical: 10,
+              paddingHorizontal: 10,
               borderBottomWidth: 0.5,
               borderColor,
               backgroundColor: rowBg,
