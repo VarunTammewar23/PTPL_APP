@@ -33,7 +33,7 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
   const [contH, setContH] = useState(Math.round(Dimensions.get('window').height * 0.45));
   const [dispW, setDispW] = useState(contW), [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/suctiongap.jpeg'); // 🔁 IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/suctiongap.jpeg'); // 🔁 IMAGE
 
   const [edited, setEdited] = useState({});
   const [editingSr, setEditingSr] = useState(null);

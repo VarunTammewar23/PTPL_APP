@@ -68,7 +68,7 @@ function FoldsInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/folds.jpeg'); // 📌 your image
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/folds.jpeg'); // 📌 your image
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);

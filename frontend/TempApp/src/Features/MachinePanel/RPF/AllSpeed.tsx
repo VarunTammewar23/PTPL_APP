@@ -52,9 +52,7 @@ function AllSpeedInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri
-    ? { uri: imageUri }
-    : require('../assets/allspeed.jpeg');
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/allspeed.jpeg');
 
   const [edited, setEdited] = useState<any>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);

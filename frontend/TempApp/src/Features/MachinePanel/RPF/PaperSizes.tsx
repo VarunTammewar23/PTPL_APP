@@ -83,7 +83,7 @@ function MachinePanelInner(
   const [dispW, setDispW] = useState<number>(contW);
   const [dispH, setDispH] = useState<number>(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Paper_size.jpg');
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/Paper_size.jpg');
 
   // Edited values state (keyed by parameter_no)
   const [editedValues, setEditedValues] = useState<Record<number, string>>({});

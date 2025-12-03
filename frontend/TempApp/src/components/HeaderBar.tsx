@@ -78,7 +78,7 @@ export default function HeaderBar({
         {/* ROW 1 */}
         <View style={styles.row1}>
           <Image
-            source={require('../assets/company_logo.jpeg')}
+            source={require('../assets/Images/company_logo.jpeg')}
             style={styles.logo}
             resizeMode="contain"
           />

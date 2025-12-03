@@ -74,7 +74,7 @@ function OffsetInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/offset.jpeg'); // 🔁 CHANGE IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/offset.jpeg'); // 🔁 CHANGE IMAGE
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);

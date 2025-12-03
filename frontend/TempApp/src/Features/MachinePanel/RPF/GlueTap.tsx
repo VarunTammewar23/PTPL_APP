@@ -31,7 +31,7 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/gluetap.jpeg'); // 🔁 CHANGE IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/gluetap.jpeg'); // 🔁 CHANGE IMAGE
 
   const [edited, setEdited] = useState({});
   const [editingSr, setEditingSr] = useState(null);
