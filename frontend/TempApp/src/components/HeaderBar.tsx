@@ -24,8 +24,7 @@ interface Props {
   onSave: () => void;
   onUpload: () => void;
 
-  // newly added props for dropdown + download
-  recipes?: Recipe[]; // list of available recipes
+  recipes?: Recipe[];
   selectedRecipeId?: number;
   selectedRecipeName?: string | null;
   onSelectRecipe?: (id: number) => void;
@@ -107,24 +106,24 @@ export default function HeaderBar({
 
         {/* ROW 2 BUTTONS */}
         <View style={styles.row2}>
-          <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
+
+          <TouchableOpacity style={styles.saveBtn} onPress={() => onSave && onSave()}>
             <Text style={styles.btnText}>Save Current Data</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => onUpload && onUpload()}>
             <Text style={styles.btnText}>Upload Recipe</Text>
           </TouchableOpacity>
 
-          {/* DROPDOWN + DOWNLOAD moved here */}
           <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
-            <Text style={[styles.btnText, { color: '#000' }]}>
+            <Text style={styles.dropdownText}>
               {selectedRecipeName ?? 'Select recipe'} ▾
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.downloadBtn, selectedRecipeId === -1 && styles.downloadDisabled]}
-            onPress={() => onDownload && onDownload()}
+            onPress={() => selectedRecipeId !== -1 && onDownload && onDownload()}
             disabled={selectedRecipeId === -1}
           >
             <Text style={styles.btnText}>Download ⬇</Text>
@@ -150,6 +149,7 @@ export default function HeaderBar({
   );
 }
 
+// ---------- STYLES ----------
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
@@ -206,9 +206,13 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
 
+  dropdownText: {
+    color: '#000',
+    fontWeight: '700',
+  },
+
   btnText: { color: '#fff', fontWeight: '700' },
 
-  /* Modal styles */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 },
   modalContent: { maxHeight: '70%', borderRadius: 8, padding: 8, backgroundColor: '#fff' },
   modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },

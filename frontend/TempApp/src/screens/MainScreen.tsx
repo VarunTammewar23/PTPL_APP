@@ -13,23 +13,31 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
 } from 'react-native';
+
 import RecipeTable from '../components/RecipeTable';
 import MachinePanel from '../Features/MachinePanel/RPF/PaperSizes';
 import HeaderBar from '../components/HeaderBar';
+
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
+
 import { apiGet } from '../api/api';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';
+
 import BottomBar from '../components/BottomBar';
 import Folds from '../Features/MachinePanel/RPF/Folds';
 import Offset from '../Features/MachinePanel/RPF/Offset';
 import GlueTap from '../Features/MachinePanel/RPF/GlueTap';
 import SuctionGap from '../Features/MachinePanel/RPF/SuctionGap';
 import AllSpeed from '../Features/MachinePanel/RPF/AllSpeed';
+
+import {
+  buildFinalParamsForPanel
+} from '../utils/panelSave';
 
 const { FilePickerModule } = NativeModules;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -82,10 +90,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   const rpfRef = useRef<any>(null);
 
-  const ITEM_H = 54;
   const MENU_W = 140;
   const MENU_PADDING = 6;
-
   const RPF_ITEMS = [
     "PAPER SIZES",
     "NO OF FOLDS",
@@ -99,7 +105,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     "FOLDING TRAY"
   ];
 
-  // 🔥 FIXED RPF SUBMENU LOGIC — NOTHING ELSE CHANGED
+  // PANEL OPEN LOGIC (UNCHANGED)
   const openPanel = (name: string) => {
     if (name === "RPF") {
       if (showSideMenu) {
@@ -133,7 +139,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           panelAnim.setValue(SCREEN_H);
         }
       );
-
       return;
     }
 
@@ -155,6 +160,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }).start(() => setActivePanel(null));
   };
 
+  // FETCH RECIPE LIST
   const fetchRecipes = useCallback(async () => {
     setLoadingRecipes(true);
     try {
@@ -170,6 +176,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   }, [customerCode]);
 
+  // FETCH PARAMS FOR SELECTED RECIPE
   const fetchRecipeParams = useCallback(async (id: number) => {
     setLoadingParams(true);
     try {
@@ -204,7 +211,118 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     setShowMachine(false);
   };
 
-  // Excel download
+  // ======================================================================
+  // SAVE + CREATE VERSION LOGIC
+  // ======================================================================
+  function getNextVersionName(baseName: string | null, allNames: string[]) {
+    if (!baseName) return `recipe_${Date.now()}`;
+    const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`^${escaped}_(\\d+)$`);
+    let max = 0;
+    allNames.forEach(n => {
+      const m = n.match(regex);
+      if (m && m[1]) {
+        const num = parseInt(m[1], 10);
+        if (!isNaN(num) && num > max) max = num;
+      }
+    });
+    const next = (max + 1).toString().padStart(2, "0");
+    return `${baseName}_${next}`;
+  }
+
+ const saveCurrentMachineData = async () => {
+  console.log("=== SAVE BTN CLICKED ===");
+
+  if (!showMachine) {
+    console.log("Cannot save: Machine panel not open");
+    return Alert.alert("Open PAPER SIZES (MachinePanel) first before saving.");
+  }
+
+  if (
+    !machineRef.current ||
+    typeof machineRef.current.getEditedValues !== "function"
+  ) {
+    console.log("Machine ref missing or incorrect");
+    return Alert.alert("Machine data not ready");
+  }
+
+  // LOGGING VALUES
+  const edited = machineRef.current.getEditedValues();
+  const original = machineRef.current.getOriginalParams();
+  const serials = machineRef.current.getSrList();
+
+  console.log("Edited Values:", edited);
+  console.log("Original Params:", original);
+  console.log("Serial List:", serials);
+
+  const finalParams = buildFinalParamsForPanel(serials, original, edited);
+
+  console.log("Final Params to Save:", finalParams);
+
+  if (!finalParams || finalParams.length === 0) {
+    console.log("No params found to save");
+    return Alert.alert("No parameters to save");
+  }
+
+  const allNames = recipes.map(r => r.recipe_name);
+  const baseName = selectedRecipeName ?? `recipe_${Date.now()}`;
+  const newRecipeName = getNextVersionName(baseName, allNames);
+
+  console.log("New Recipe Name:", newRecipeName);
+
+  const rows = finalParams.map(p => ({
+    recipe_name: newRecipeName,
+    customer_code: customerCode,
+    section: p.section ?? "",
+    parameter_no: p.parameter_no,
+    parameter: p.parameter ?? "",
+    value_01: p.value_01 ?? "",
+    unit: p.unit ?? ""
+  }));
+
+  console.log("Final Rows Payload:", rows);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows })
+    });
+
+    const res = await response.json();
+    console.log("Backend Response:", res);
+
+    if (res.exists) {
+      Alert.alert("Duplicate", res.message || "Recipe already exists");
+      return;
+    }
+
+    if (res.success) {
+      Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
+      await fetchRecipes();
+
+      if (res.newRecipeId) {
+        setSelectedRecipeId(res.newRecipeId);
+        setShowMachine(false);
+      } else {
+        const found = (recipes || []).find(
+          r => r.recipe_name === newRecipeName
+        );
+        if (found) setSelectedRecipeId(found.recipe_id);
+      }
+    } else {
+      Alert.alert("Error", res.message || "Failed to save recipe");
+    }
+  } catch (err: any) {
+    console.log("NETWORK ERROR:", err);
+    Alert.alert("Network error", err?.message ?? "Failed to save");
+  }
+};
+
+
+  // ======================================================================
+  // DOWNLOAD RECIPE EXCEL (RESTORED)
+  // ======================================================================
   const downloadRecipeExcel = async () => {
     if (selectedRecipeId === -1) return Alert.alert("Select recipe first");
     try {
@@ -222,6 +340,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   };
 
+  // ======================================================================
+  // UPLOAD EXCEL (RESTORED)
+  // ======================================================================
   const sendToBackend = async (rows: any[]) => {
     try {
       const response = await fetch(`${API_BASE}/api/upload-excel`, {
@@ -238,7 +359,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         await fetchRecipes();
         res.newRecipeId && setSelectedRecipeId(res.newRecipeId);
       }
-    } catch {}
+    } catch {
+      Alert.alert("Upload Error");
+    }
   };
 
   const openPicker = async () => {
@@ -254,92 +377,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   };
 
-  function getNextVersionName(baseName: string | null, allNames: string[]) {
-    if (!baseName) return `recipe_${Date.now()}`;
-
-    const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`^${escaped}_(\\d+)$`);
-
-    let max = 0;
-    allNames.forEach(n => {
-      const m = n.match(regex);
-      if (m && m[1]) {
-        const num = parseInt(m[1], 10);
-        if (!isNaN(num) && num > max) max = num;
-      }
-    });
-
-    const next = (max + 1).toString().padStart(2, "0");
-    return `${baseName}_${next}`;
-  }
-
-  const saveCurrentMachineData = async () => {
-    if (!showMachine)
-      return Alert.alert("Open PAPER SIZES (MachinePanel) first before saving.");
-
-    if (
-      !machineRef.current ||
-      typeof machineRef.current.getFinalParams !== "function"
-    ) {
-      return Alert.alert("Machine data not ready");
-    }
-
-    const finalParams = machineRef.current.getFinalParams();
-
-    if (!finalParams || finalParams.length === 0) {
-      return Alert.alert("No parameters to save");
-    }
-
-    const allNames = recipes.map(r => r.recipe_name);
-    const baseName =
-      selectedRecipeName ?? `recipe_${Date.now()}`;
-    const newRecipeName = getNextVersionName(baseName, allNames);
-
-    const rows = finalParams.map(p => ({
-      recipe_name: newRecipeName,
-      customer_code: customerCode,
-      section: p.section ?? "",
-      parameter_no: p.parameter_no,
-      parameter: p.parameter ?? "",
-      value_01: p.value_01 ?? "",
-      unit: p.unit ?? ""
-    }));
-
-    try {
-      const response = await fetch(`${API_BASE}/api/upload-excel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows })
-      });
-
-      const res = await response.json();
-
-      if (res.exists) {
-        Alert.alert("Duplicate", res.message || "Recipe already exists");
-        return;
-      }
-
-      if (res.success) {
-        Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
-        await fetchRecipes();
-
-        if (res.newRecipeId) {
-          setSelectedRecipeId(res.newRecipeId);
-          setShowMachine(false);
-        } else {
-          const found = (recipes || []).find(
-            r => r.recipe_name === newRecipeName
-          );
-          if (found) setSelectedRecipeId(found.recipe_id);
-        }
-      } else {
-        Alert.alert("Error", res.message || "Failed to save recipe");
-      }
-    } catch (err: any) {
-      Alert.alert("Network error", err?.message ?? "Failed to save");
-    }
-  };
-
+  // ======================================================================
+  // UI CONTENT (UNCHANGED)
+  // ======================================================================
   const labels = [
     "HOME/LOGIN",
     "RECIPE",
@@ -361,11 +401,11 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         recipeName={selectedRecipeName}
         onSave={saveCurrentMachineData}
         onUpload={openPicker}
+        onDownload={downloadRecipeExcel}
         recipes={recipes}
         selectedRecipeId={selectedRecipeId}
         selectedRecipeName={selectedRecipeName}
         onSelectRecipe={onSelectRecipe}
-        onDownload={downloadRecipeExcel}
       />
 
       <View style={{ flex: 1 }}>
@@ -425,6 +465,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         )}
       </View>
 
+      {/* SIDE MENU (UNCHANGED) */}
       {showSideMenu && activePanel === "RPF" && (
         <TouchableWithoutFeedback
           onPress={() => {
@@ -526,47 +567,16 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             <Text style={styles.panelItem}>RPF Speed Setting</Text>
           </>
         )}
-
-        {activePanel === "RT ANGLE" && (
-          <>
-            <Text style={styles.panelItem}>Rotate Left</Text>
-            <Text style={styles.panelItem}>Rotate Right</Text>
-            <Text style={styles.panelItem}>Reset Angle</Text>
-          </>
-        )}
-
-        {activePanel === "KNIFE 1" && (
-          <>
-            <Text style={styles.panelItem}>Knife 1 Width</Text>
-            <Text style={styles.panelItem}>Knife 1 Speed</Text>
-          </>
-        )}
-
-        {activePanel === "KNIFE 2" && (
-          <>
-            <Text style={styles.panelItem}>Knife 2 Width</Text>
-            <Text style={styles.panelItem}>Knife 2 Pressure</Text>
-          </>
-        )}
-
-        {activePanel === "Tray" && (
-          <>
-            <Text style={styles.panelItem}>Tray Up</Text>
-            <Text style={styles.panelItem}>Tray Down</Text>
-            <Text style={styles.panelItem}>Tray Reset</Text>
-          </>
-        )}
       </Animated.View>
     </SafeAreaView>
   );
 }
 
+// ---------------- STYLES — DO NOT MODIFY ----------------
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingVertical: 12, paddingHorizontal: 0 },
   lightBg: { backgroundColor: "#fff" },
   darkBg: { backgroundColor: "#111" },
-  lightCard: { backgroundColor: "#fff" },
-  darkCard: { backgroundColor: "#222" },
   textLight: { color: "#fff" },
   textDark: { color: "#000" },
 
@@ -593,7 +603,6 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
 
-  // 🔥 FIXED BUTTON HEIGHT + GAP
   sideMenuButton: {
     height: 38,
     marginBottom: 4,

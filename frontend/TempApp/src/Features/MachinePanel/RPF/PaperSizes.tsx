@@ -1,42 +1,34 @@
-// src/components/MachinePanel.tsx
-import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
+// src/Features/MachinePanel/RPF/PaperSizes.tsx
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
-  ImageBackground,
-  Dimensions,
   Image,
+  ImageBackground,
   TouchableOpacity,
   Modal,
   TextInput,
-} from 'react-native';
-import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../../../theme/ThemeProvider';
-import { apiGet } from '../../../api/api';
+  ActivityIndicator,
+  Dimensions,
+} from "react-native";
+import ZoomableView from "@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView";
+import { useTheme } from "../../../theme/ThemeProvider";
 
 type Props = {
   recipeId: number;
   recipeName?: string;
   imageUri?: string;
-  onClose?: () => void;
   initialParams?: any[];
-  pollMs?: number;
+  onClose?: () => void;
 };
 
-interface RecipeParam {
-  parameter_no: number;
-  section?: string;
-  parameter?: string;
-  value_01?: number | string;
-  unit?: string;
-}
-
-const OVERLAY_WIDTH = 30;
-const OVERLAY_HEIGHT = 24;
-const OVERLAY_FONT_SIZE = 10;
-const OVERLAY_BORDER_RADIUS = 8;
+const SR_LIST = [1, 2, 3, 4, 5, 6];
 
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
   1: { x: 18, y: 7 },
@@ -47,191 +39,95 @@ const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
   6: { x: 90, y: 90 },
 };
 
-const SR_LIST = [1, 2, 3, 4, 5, 6];
 const SERIAL_POSITIONS = [
   { id: 1, x: 28, y: 7 },
-  { id: 2, x: 10,  y: 65 },
+  { id: 2, x: 10, y: 65 },
   { id: 3, x: 30, y: 20 },
   { id: 4, x: 55, y: 65 },
   { id: 5, x: 88, y: 50 },
   { id: 6, x: 93, y: 81 },
 ];
 
-
-function MachinePanelInner(
-  {
-    recipeId,
-    recipeName,
-    imageUri,
-    onClose,
-    initialParams,
-    pollMs = 2000,
-  }: Props,
+function PaperSizes(
+  { recipeId, recipeName, imageUri, initialParams = [], onClose }: Props,
   ref: any
 ) {
   const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const dark = theme === "dark";
 
-  const [loading, setLoading] = useState<boolean>(!initialParams);
-  const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
+  const [editedValues, setEditedValues] = useState<Record<number, string>>({});
+  const [editingSr, setEditingSr] = useState<number | null>(null);
+  const [tempValue, setTempValue] = useState("");
+
+  const [loading, setLoading] = useState(!initialParams);
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
-  const [contW, setContW] = useState<number>(Dimensions.get('window').width);
-  const [contH, setContH] = useState<number>(Math.round(Dimensions.get('window').height * 0.45));
 
-  const [dispW, setDispW] = useState<number>(contW);
-  const [dispH, setDispH] = useState<number>(contH);
+  const screenW = Dimensions.get("window").width;
+  const screenH = Math.round(Dimensions.get("window").height * 0.45);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../../../assets/Images/Paper_size.jpg');
+  const [contW, setContW] = useState(screenW);
+  const [contH, setContH] = useState(screenH);
 
-  // Edited values state (keyed by parameter_no)
-  const [editedValues, setEditedValues] = useState<Record<number, string>>({});
-  // editing modal state
-  const [editingSr, setEditingSr] = useState<number | null>(null);
-  const [tempValue, setTempValue] = useState<string>('');
+  const [dispW, setDispW] = useState(screenW);
+  const [dispH, setDispH] = useState(screenH);
 
+  const originalMap: Record<number, any> = {};
+  initialParams.forEach((p) => {
+    originalMap[p.parameter_no] = p;
+  });
+
+  const imgSrc = imageUri
+    ? { uri: imageUri }
+    : require("../../../assets/Images/Paper_size.jpg");
+
+  // Load image dimensions
   useEffect(() => {
-    let mounted = true;
-
-    const resolveLocal = (src: any) => {
-      try {
-        const resolved = Image.resolveAssetSource(src);
-        if (mounted) {
-          setNatW(resolved.width);
-          setNatH(resolved.height);
-        }
-      } catch {
-        if (mounted) {
-          setNatW(contW);
-          setNatH(contH);
-        }
+    const uri = imageUri ?? Image.resolveAssetSource(imgSrc).uri;
+    Image.getSize(
+      uri,
+      (w, h) => {
+        setNatW(w);
+        setNatH(h);
+        setLoading(false);
+      },
+      () => {
+        setNatW(contW);
+        setNatH(contH);
+        setLoading(false);
       }
-    };
-
-    if (imageUri) {
-      Image.getSize(
-        imageUri,
-        (w, h) => {
-          if (!mounted) return;
-          setNatW(w);
-          setNatH(h);
-        },
-        () => {
-          if (mounted) {
-            setNatW(contW);
-            setNatH(contH);
-          }
-        }
-      );
-    } else {
-      resolveLocal(imgSrc);
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [imageUri, contW, contH, imgSrc]);
-
-  useEffect(() => {
-    if (!natW || !natH) {
-      setDispW(contW);
-      setDispH(contH);
-      return;
-    }
-    const scale = Math.min(contW / natW, contH / natH);
-    setDispW(Math.round(natW * scale));
-    setDispH(Math.round(natH * scale));
-  }, [natW, natH, contW, contH]);
-
-  useEffect(() => {
-    const onChange = ({ window }: { window: { width: number; height: number } }) => {
-      setContW(window.width);
-      setContH(Math.round(window.height * 0.45));
-    };
-
-    const sub: any =
-      (Dimensions as any).addEventListener && Dimensions.addEventListener('change', onChange);
-
-    return () => {
-      try {
-        if (sub?.remove) sub.remove();
-        else if ((Dimensions as any).removeEventListener)
-          (Dimensions as any).removeEventListener('change', onChange);
-      } catch {}
-    };
+    );
   }, []);
 
-  const fetchParams = async () => {
-    try {
-      const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
-      const p: RecipeParam[] = res.data?.params ?? [];
-      setParams(p);
-    } catch (err) {
-      console.warn('MachinePanel fetch error', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Scale image
   useEffect(() => {
-    let alive = true;
+    if (!natW || !natH) return;
+    const scale = Math.min(contW / natW, contH / natH);
+    setDispW(natW * scale);
+    setDispH(natH * scale);
+  }, [natW, natH, contW, contH]);
 
-    if (!initialParams) {
-      setLoading(true);
-      fetchParams();
-
-      const id = setInterval(() => {
-        if (!alive) return;
-        fetchParams();
-      }, pollMs);
-
-      return () => {
-        alive = false;
-        clearInterval(id);
-      };
-    } else {
-      // if initialParams provided, ensure local params are initialized
-      setParams(initialParams);
-      setLoading(false);
-    }
-  }, [recipeId, initialParams, pollMs]);
-
-  const valuesBySr = useMemo(() => {
-    const map: Record<number, RecipeParam | null> = {};
-    SR_LIST.forEach((sr) => {
-      map[sr] = params.find((p) => Number(p.parameter_no) === sr) ?? null;
-    });
-    return map;
-  }, [params]);
-
-  // Expose getFinalParams to parent via ref
+  // Expose minimal API
   useImperativeHandle(ref, () => ({
-    getFinalParams: () => {
-      return SR_LIST.map((sr) => {
-        const original = valuesBySr[sr];
-        const edited = editedValues[sr];
-        return {
-          parameter_no: sr,
-          section: original?.section ?? '',
-          parameter: original?.parameter ?? '',
-          value_01: edited !== undefined ? edited : original?.value_01 ?? '',
-          unit: original?.unit ?? '',
-        };
-      });
-    },
+    getEditedValues: () => editedValues,
+    getOriginalParams: () => initialParams,
+    getSrList: () => SR_LIST,
   }));
 
-  const openEditor = (sr: number, current: string) => {
+  const openEditor = (sr: number, currentValue: string) => {
     setEditingSr(sr);
-    setTempValue(String(current ?? ''));
+    setTempValue(currentValue);
   };
 
   const saveEditor = () => {
-    if (editingSr === null) return;
-    setEditedValues((prev) => ({ ...prev, [editingSr]: tempValue }));
+    if (editingSr == null) return;
+    setEditedValues((prev) => ({
+      ...prev,
+      [editingSr]: tempValue,
+    }));
     setEditingSr(null);
-    setTempValue('');
+    setTempValue("");
   };
 
   return (
@@ -239,124 +135,137 @@ function MachinePanelInner(
       style={styles.container}
       onLayout={(e) => {
         const { width, height } = e.nativeEvent.layout;
-        if (width) setContW(width);
-        if (height) setContH(Math.round(height));
+        setContW(width);
+        setContH(height);
       }}
     >
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, isDark ? { color: '#fff' } : { color: '#111' }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, dark ? styles.white : styles.black]}>
           {recipeName ?? `Recipe ${recipeId}`}
         </Text>
 
-        {onClose ? (
-          <Text style={styles.closeText} onPress={onClose}>
+        {onClose && (
+          <Text style={styles.close} onPress={onClose}>
             Close
           </Text>
-        ) : null}
+        )}
       </View>
 
-      <View style={{ flex: 1, alignItems: 'flex-start', justifyContent: 'center',paddingLeft: 20 }}>
-        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
-          <ImageBackground source={imgSrc} style={{ width: dispW, height: dispH }} resizeMode="contain">
+      <View style={styles.centerBox}>
+        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2}>
+          <ImageBackground
+            source={imgSrc}
+            resizeMode="contain"
+            style={{ width: dispW, height: dispH }}
+          >
             {loading && (
-              <View style={[styles.loadingOverlay, { width: dispW, height: dispH }]}>
+              <View
+                style={[
+                  styles.loadingOverlay,
+                  { width: dispW, height: dispH },
+                ]}
+              >
                 <ActivityIndicator size="large" />
               </View>
             )}
 
             {SR_LIST.map((sr) => {
               const pos = POSITIONS_BY_SR[sr];
-              const param = valuesBySr[sr];
-              const display = editedValues[sr] !== undefined ? String(editedValues[sr]) : (param ? String(param.value_01 ?? '') : '');
+              const original = originalMap[sr];
+              const edited = editedValues[sr];
 
-              const leftPx = Math.round((pos.x / 100) * dispW);
-              const topPx = Math.round((pos.y / 100) * dispH);
+              const display =
+                edited !== undefined
+                  ? String(edited)
+                  : original
+                  ? String(original.value_01)
+                  : "";
+
+              const left = (pos.x / 100) * dispW;
+              const top = (pos.y / 100) * dispH;
 
               return (
                 <TouchableOpacity
-                  key={`ov-${sr}`}
-                  activeOpacity={0.8}
-                  onPress={() => openEditor(sr, display)}
+                  key={sr}
                   style={[
                     styles.overlay,
                     {
-                      left: leftPx,
-                      top: topPx,
+                      left,
+                      top,
                       transform: [
-                        { translateX: -(OVERLAY_WIDTH / 2) },
-                        { translateY: -(OVERLAY_HEIGHT / 2) },
+                        { translateX: -15 },
+                        { translateY: -12 },
                       ],
-                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.1)',
-                      width: OVERLAY_WIDTH,
-                      height: OVERLAY_HEIGHT,
-                      borderRadius: OVERLAY_BORDER_RADIUS,
                     },
                   ]}
+                  activeOpacity={0.8}
+                  onPress={() => openEditor(sr, display)}
                 >
-                  <Text
-                    style={[
-                      styles.overlayValue,
-                      isDark ? { color: '#fff' } : { color: '#000' },
-                      { fontSize: OVERLAY_FONT_SIZE },
-                    ]}
-                  >
+                  <Text style={[styles.overlayText, dark && { color: "#fff" }]}>
                     {display}
                   </Text>
                 </TouchableOpacity>
               );
             })}
-{/* SERIAL_POSITIONS box  */}
-            {SERIAL_POSITIONS.map(item => {
-            const leftPx = Math.round((item.x / 100) * dispW);
-  const topPx = Math.round((item.y / 100) * dispH);
 
-  return (
-    <View
-      key={`serial-${item.id}`}
-      pointerEvents="none" // 🔒 disable any touch
-      style={[
-        styles.serialOverlay,
-        {
-          left: leftPx,
-          top: topPx,
-          width: OVERLAY_WIDTH,
-          height: OVERLAY_HEIGHT,
-          transform: [
-            { translateX: -(OVERLAY_WIDTH / 2) },
-            { translateY: -(OVERLAY_HEIGHT / 2) },
-          ],
-        },
-      ]}
-    >
-      <Text style={styles.serialText}>{item.id}</Text>
-    </View>
-  );
-})}
+            {SERIAL_POSITIONS.map((item) => {
+              const left = (item.x / 100) * dispW;
+              const top = (item.y / 100) * dispH;
 
+              return (
+                <View
+                  key={`serial-${item.id}`}
+                  pointerEvents="none"
+                  style={[
+                    styles.serial,
+                    {
+                      left,
+                      top,
+                      transform: [
+                        { translateX: -15 },
+                        { translateY: -12 },
+                      ],
+                    },
+                  ]}
+                >
+                  <Text style={styles.serialText}>{item.id}</Text>
+                </View>
+              );
+            })}
           </ImageBackground>
         </ZoomableView>
       </View>
 
-      {/* Editor modal */}
-      <Modal visible={editingSr !== null} animationType="fade" transparent onRequestClose={() => setEditingSr(null)}>
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.box}>
-            <Text style={modalStyles.title}>Edit Value (SR {editingSr})</Text>
+      <Modal
+        visible={editingSr !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingSr(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>
+              Edit Value (SR {editingSr})
+            </Text>
+
             <TextInput
-              style={modalStyles.input}
+              style={styles.input}
+              keyboardType="numeric"
               value={tempValue}
               onChangeText={setTempValue}
-              keyboardType="numeric"
-              placeholder="Enter value"
             />
-            <View style={modalStyles.row}>
-              <TouchableOpacity onPress={() => { setEditingSr(null); setTempValue(''); }}>
-                <Text style={modalStyles.cancel}>Cancel</Text>
-              </TouchableOpacity>
 
-              <TouchableOpacity onPress={saveEditor}>
-                <Text style={modalStyles.save}>Save</Text>
-              </TouchableOpacity>
+            <View style={styles.row}>
+              <Text
+                style={styles.cancel}
+                onPress={() => setEditingSr(null)}
+              >
+                Cancel
+              </Text>
+
+              <Text style={styles.save} onPress={saveEditor}>
+                Save
+              </Text>
             </View>
           </View>
         </View>
@@ -365,102 +274,99 @@ function MachinePanelInner(
   );
 }
 
-const modalStyles = StyleSheet.create({
-  overlay: {
+export default forwardRef(PaperSizes);
+
+// ------------------- STYLES -------------------
+const styles = StyleSheet.create({
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    padding: 8,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
   },
-  box: {
-    backgroundColor: '#fff',
-    width: '100%',
-    maxWidth: 420,
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+
+  title: { fontSize: 16, fontWeight: "700" },
+  white: { color: "#fff" },
+  black: { color: "#000" },
+
+  close: { color: "#007bff", fontWeight: "700" },
+
+  centerBox: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  loadingOverlay: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  overlay: {
+    position: "absolute",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 30,
+    height: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  overlayText: {
+    fontWeight: "700",
+    fontSize: 10,
+  },
+
+  serial: {
+    position: "absolute",
+    backgroundColor: "#000",
+    borderColor: "#fff",
+    borderWidth: 1.2,
+    borderRadius: 6,
+    width: 30,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  serialText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    padding: 20,
+  },
+
+  modalBox: {
+    backgroundColor: "#fff",
     padding: 14,
-    borderRadius: 10,
-    elevation: 8,
+    borderRadius: 8,
   },
-  title: { fontWeight: '700', fontSize: 16, marginBottom: 8 },
+
+  modalTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8 },
+
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    borderColor: "#ccc",
+    padding: 8,
     borderRadius: 6,
     marginBottom: 12,
     fontSize: 16,
   },
-  row: { flexDirection: 'row', justifyContent: 'flex-end' },
-  cancel: { marginRight: 20, color: '#666' },
-  save: { fontWeight: '700', color: '#007bff' },
+
+  row: { flexDirection: "row", justifyContent: "flex-end" },
+  cancel: { marginRight: 20, color: "#666" },
+  save: { color: "#007bff", fontWeight: "700" },
 });
-
-const styles = StyleSheet.create({
-
-serialOverlay: {
-  position: 'absolute',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#000',  // black box
-  borderColor: '#fff',      // white border
-  borderWidth: 1.5,
-  borderRadius: 6,
-  paddingHorizontal: 6,
-},
-
-serialText: {
-  color: '#fff',            // white text
-  fontSize: 10,
-  fontWeight: '700',
-  textAlign: 'center',
-},
-
-  container: {
-    flex: 1,
-    minHeight: 220,
-    maxHeight: 620,
-    marginVertical: 8,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 8,
-    overflow: 'hidden',
-  },
-
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-
-  closeText: {
-    color: '#007bff',
-    fontWeight: '700',
-  },
-
-  loadingOverlay: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  overlay: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-
-  overlayValue: {
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-});
-
-export default React.forwardRef(MachinePanelInner);
