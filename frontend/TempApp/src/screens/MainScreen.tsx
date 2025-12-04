@@ -30,6 +30,12 @@ import Offset from '../components/Offset';
 import GlueTap from '../components/GlueTap';
 import SuctionGap from '../components/SuctionGap';
 import AllSpeed from '../components/AllSpeed';
+import SideLay from '../components/SideLay';
+import BlowerSettings from '../components/BlowerSettings';
+import RollerGap from '../components/RollerGap';
+
+
+
 
 const { FilePickerModule } = NativeModules;
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -70,6 +76,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showGlueTap, setShowGlueTap] = useState(false);
   const [showSuctionGap, setShowSuctionGap] = useState(false);
   const [showAllSpeed, setShowAllSpeed] = useState(false);
+  const [showSideLay, setShowSideLay] = useState(false);
+  const [showBlowerSettings, setShowBlowerSettings] = useState(false);
+  const [showRollerGap, setShowRollerGap] = useState(false);
+
+
+
 
   const machineRef = useRef<any>(null);
 
@@ -418,6 +430,27 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
             recipeName={selectedRecipeName}
             onClose={() => setShowAllSpeed(false)}
           />
+          ) : showSideLay ? (
+          <SideLay
+            recipeId={selectedRecipeId}
+            recipeName={selectedRecipeName ?? undefined}
+            initialParams={recipeParams}
+            onClose={() => setShowSideLay(false)}
+          />
+          ) : showBlowerSettings ? (
+          <BlowerSettings
+            recipeId={selectedRecipeId}
+            recipeName={selectedRecipeName ?? undefined}
+            onClose={() => setShowBlowerSettings(false)}
+          />
+          ) : showRollerGap ? (
+          <RollerGap
+            recipeId={selectedRecipeId}
+            recipeName={selectedRecipeName ?? undefined}
+            onClose={() => setShowRollerGap(false)}
+          />
+
+
         ) : recipeParams.length === 0 ? (
           <Text>No parameters for this recipe.</Text>
         ) : (
@@ -474,6 +507,15 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                           return setShowSuctionGap(true);
                         if (it === "ALL SPEED")
                           return setShowAllSpeed(true);
+                        if (it === "SIDE LAY")
+                          return setShowSideLay(true); // ⬅️ ADD THIS
+                        if (it === "BLOWER SETTINGS")
+                          return setShowBlowerSettings(true);
+                        if (it === "ROLLER GAP") 
+                          return setShowRollerGap(true);
+
+
+
                       }}
                     >
                       <View style={styles.sideMenuGloss} />
