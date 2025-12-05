@@ -2,7 +2,6 @@
 import React from 'react';
 import { View, Text, FlatList } from 'react-native';
 
-// --- Define the shape of one recipe parameter ---
 interface RecipeParam {
   row_id?: number;
   recipe_name?: string;
@@ -13,35 +12,80 @@ interface RecipeParam {
   unit?: string;
 }
 
-// --- Props type for the component ---
 interface RecipeTableProps {
   data: RecipeParam[];
-  darkMode?: boolean; // optional prop to switch styling
+  darkMode?: boolean;
 }
 
-// --- Component ---
 export default function RecipeTable({ data, darkMode = false }: RecipeTableProps) {
   const headerBg = darkMode ? '#222' : '#f8f8f8';
   const rowBg = darkMode ? '#111' : '#fff';
   const textColor = darkMode ? '#fff' : '#000';
-  const borderColor = darkMode ? '#333' : '#ddd';
+  const borderColor = darkMode ? '#333' : '#ccc';
+
+  const colBorder = { borderRightWidth: 1, borderColor };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingHorizontal: 10 }}>
       {/* Table header */}
       <View
         style={{
           flexDirection: 'row',
-          paddingVertical: 8,
-          borderBottomWidth: 1,
+          borderWidth: 1,
           borderColor,
           backgroundColor: headerBg,
         }}
       >
-        <Text style={{ flex: 1, fontWeight: '600', color: textColor }}>No</Text>
-        <Text style={{ flex: 3, fontWeight: '600', color: textColor }}>Parameter</Text>
-        <Text style={{ width: 80, textAlign: 'right', fontWeight: '600', color: textColor }}>Value</Text>
-        <Text style={{ width: 60, textAlign: 'right', fontWeight: '600', color: textColor }}>Unit</Text>
+        <Text
+          style={{
+            flex: 1,
+            textAlign: 'center',
+            fontWeight: '600',
+            color: textColor,
+            paddingVertical: 8,
+            ...colBorder,
+          }}
+        >
+          Sr No.
+        </Text>
+
+        <Text
+          style={{
+            flex: 3,
+            textAlign: 'center',
+            fontWeight: '600',
+            color: textColor,
+            paddingVertical: 8,
+            ...colBorder,
+          }}
+        >
+          Parameter
+        </Text>
+
+        <Text
+          style={{
+            width: 80,
+            textAlign: 'center',
+            fontWeight: '600',
+            color: textColor,
+            paddingVertical: 8,
+            ...colBorder,
+          }}
+        >
+          Value
+        </Text>
+
+        <Text
+          style={{
+            width: 60,
+            textAlign: 'center',
+            fontWeight: '600',
+            color: textColor,
+            paddingVertical: 8,
+          }}
+        >
+          Unit
+        </Text>
       </View>
 
       {/* Table data */}
@@ -52,16 +96,59 @@ export default function RecipeTable({ data, darkMode = false }: RecipeTableProps
           <View
             style={{
               flexDirection: 'row',
-              paddingVertical: 10,
-              borderBottomWidth: 0.5,
-              borderColor,
               backgroundColor: rowBg,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderBottomWidth: 1,
+              borderColor,
             }}
           >
-            <Text style={{ flex: 1, color: textColor }}>{item.parameter_no}</Text>
-            <Text style={{ flex: 3, color: textColor }}>{item.parameter}</Text>
-            <Text style={{ width: 80, textAlign: 'right', color: textColor }}>{item.value_01}</Text>
-            <Text style={{ width: 60, textAlign: 'right', color: textColor }}>{item.unit || ''}</Text>
+            <Text
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                color: textColor,
+                paddingVertical: 10,
+                ...colBorder,
+              }}
+            >
+              {item.parameter_no}
+            </Text>
+
+            <Text
+              style={{
+                flex: 3,
+                textAlign: 'center',
+                color: textColor,
+                paddingVertical: 10,
+                ...colBorder,
+              }}
+            >
+              {item.parameter}
+            </Text>
+
+            <Text
+              style={{
+                width: 80,
+                textAlign: 'center',
+                color: textColor,
+                paddingVertical: 10,
+                ...colBorder,
+              }}
+            >
+              {item.value_01}
+            </Text>
+
+            <Text
+              style={{
+                width: 60,
+                textAlign: 'center',
+                color: textColor,
+                paddingVertical: 10,
+              }}
+            >
+              {item.unit || ''}
+            </Text>
           </View>
         )}
       />

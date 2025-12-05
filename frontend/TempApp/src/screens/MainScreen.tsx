@@ -371,7 +371,6 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       <HeaderBar
         recipeId={selectedRecipeId}
         recipeName={selectedRecipeName}
-        onSave={saveCurrentMachineData}
         onUpload={openPicker}
         recipes={recipes}
         selectedRecipeId={selectedRecipeId}
@@ -379,6 +378,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         onSelectRecipe={onSelectRecipe}
         onDownload={downloadRecipeExcel}
       />
+
 
       <View style={{ flex: 1 }}>
         {loadingParams ? (
@@ -530,25 +530,26 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       )}
 
       <BottomBar
-        labels={labels}
-        activePanel={activePanel}
-        rpfRef={rpfRef}
-        onPressItem={label => {
-          const isActive = activePanel === label;
-          if (isActive && label !== "RPF") closePanel();
-          else openPanel(label);
-        }}
-        onExit={() =>
-          Alert.alert("Exit", "Do you want to exit?", [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Exit",
-              style: "destructive",
-              onPress: () => {}
-            }
-          ])
-        }
-      />
+  labels={labels}
+  activePanel={activePanel}
+  rpfRef={rpfRef}
+  onSave={saveCurrentMachineData}   // << ADDED HERE
+  onPressItem={label => {
+    const isActive = activePanel === label;
+    if (isActive && label !== "RPF") closePanel();
+    else openPanel(label);
+  }}
+  onExit={() =>
+    Alert.alert("Exit", "Do you want to exit?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Exit",
+        style: "destructive",
+        onPress: () => {}
+      }
+    ])
+  }
+  />
 
       <Animated.View
         style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}

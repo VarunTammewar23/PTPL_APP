@@ -21,11 +21,9 @@ interface Recipe {
 interface Props {
   recipeId: number;
   recipeName: string | null;
-  onSave: () => void;
   onUpload: () => void;
 
-  // newly added props for dropdown + download
-  recipes?: Recipe[]; // list of available recipes
+  recipes?: Recipe[];
   selectedRecipeId?: number;
   selectedRecipeName?: string | null;
   onSelectRecipe?: (id: number) => void;
@@ -35,7 +33,6 @@ interface Props {
 export default function HeaderBar({
   recipeId,
   recipeName,
-  onSave,
   onUpload,
   recipes = [],
   selectedRecipeId = -1,
@@ -83,6 +80,12 @@ export default function HeaderBar({
             resizeMode="contain"
           />
 
+          <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
+            <Text style={[styles.btnText, { color: '#000' }]}>
+              {selectedRecipeName ?? 'Select recipe'} ▾
+            </Text>
+          </TouchableOpacity>
+
           <Text style={styles.label}>Recipe No:</Text>
           <Text style={styles.inputBox}>
             {recipeId !== -1 ? recipeId : '--'}
@@ -93,47 +96,33 @@ export default function HeaderBar({
             {recipeName ?? '--'}
           </Text>
 
-          <View style={styles.rightSide}>
-            <Text style={styles.date}>
-              {new Date().toLocaleDateString()}{' '}
-              {new Date().toLocaleTimeString().slice(0, 5)}
-            </Text>
+          {/* Upload + Download + Settings */}
+          <View style={styles.rightButtons}>
+            <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
+              <Text style={styles.btnText}>Upload</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.downloadBtn, selectedRecipeId === -1 && styles.downloadDisabled]}
+              onPress={() => onDownload && onDownload()}
+              disabled={selectedRecipeId === -1}
+            >
+              <Text style={styles.btnText}>Download ⬇</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
               <Icon name="settings" size={26} color="#000" />
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* ROW 2 BUTTONS */}
-        <View style={styles.row2}>
-          <TouchableOpacity style={styles.saveBtn} onPress={onSave}>
-            <Text style={styles.btnText}>Save Current Data</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
-            <Text style={styles.btnText}>Upload Recipe</Text>
-          </TouchableOpacity>
-
-          {/* DROPDOWN + DOWNLOAD moved here */}
-          <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
-            <Text style={[styles.btnText, { color: '#000' }]}>
-              {selectedRecipeName ?? 'Select recipe'} ▾
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.downloadBtn, selectedRecipeId === -1 && styles.downloadDisabled]}
-            onPress={() => onDownload && onDownload()}
-            disabled={selectedRecipeId === -1}
-          >
-            <Text style={styles.btnText}>Download ⬇</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
-      {/* DROPDOWN MODAL */}
-      <Modal visible={dropdownVisible} animationType="fade" transparent onRequestClose={() => setDropdownVisible(false)}>
+      <Modal
+        visible={dropdownVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setDropdownVisible(false)}
+      >
         <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
           <View style={[styles.modalContent]}>
             <Text style={styles.modalTitle}>Select recipe</Text>
@@ -155,7 +144,6 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#d6e4f0',
     paddingVertical: 10,
-    paddingHorizontal: 0,
     elevation: 5,
   },
   content: { paddingHorizontal: 12 },
@@ -181,19 +169,15 @@ const styles = StyleSheet.create({
     color: '#000',
   },
 
-  rightSide: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' },
-  date: { marginRight: 10, fontWeight: '700', color: '#000' },
-
-  row2: {
+  rightButtons: {
+    marginLeft: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    paddingBottom: 6,
+    gap: 8,
   },
 
-  saveBtn: { backgroundColor: '#006edc', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, marginRight: 10 },
-  uploadBtn: { backgroundColor: '#008a3e', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, marginRight: 10 },
-  downloadBtn: { backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 6 },
+  uploadBtn: { backgroundColor: '#008a3e', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 },
+  downloadBtn: { backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
   downloadDisabled: { backgroundColor: '#999' },
 
   dropdownTrigger: {
@@ -203,12 +187,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginLeft: 6,
+    marginRight: 8,
   },
 
   btnText: { color: '#fff', fontWeight: '700' },
 
-  /* Modal styles */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 },
   modalContent: { maxHeight: '70%', borderRadius: 8, padding: 8, backgroundColor: '#fff' },
   modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },

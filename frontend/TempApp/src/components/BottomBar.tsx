@@ -1,4 +1,4 @@
-//BottomBar.tsx
+// src/components/BottomBar.tsx
 import React, { FC } from 'react';
 import {
   View,
@@ -15,6 +15,7 @@ interface BottomBarProps {
   onPressItem: (label: string) => void;
   rpfRef?: any;
   onExit: () => void;
+  onSave: () => void;  // NEW
 }
 
 const BottomBar: FC<BottomBarProps> = ({
@@ -23,6 +24,7 @@ const BottomBar: FC<BottomBarProps> = ({
   onPressItem,
   rpfRef,
   onExit,
+  onSave,
 }) => {
   return (
     <View style={styles.bottomBarContainer}>
@@ -52,14 +54,21 @@ const BottomBar: FC<BottomBarProps> = ({
           );
         })}
 
-        {/* Exit button */}
+        {/* SAVE Button */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={onSave}
+          style={styles.savePill}
+        >
+          <Icon name="save" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+          <Text style={styles.saveText}>SAVE</Text>
+        </TouchableOpacity>
+
+        {/* EXIT button */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onExit}
-          style={[
-            styles.exitPill,
-            activePanel === 'EXIT' && styles.pillButtonActive,
-          ]}
+          style={styles.exitPill}
         >
           <Icon name="logout" size={18} color="#6b0f1a" style={{ marginRight: 8 }} />
           <Text style={styles.exitText}>EXIT</Text>
@@ -118,13 +127,30 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: '#000',
   },
+
+  /* SAVE STYLES */
+  savePill: {
+    backgroundColor: '#006edc',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 6,
+    height: 48,
+  },
+  saveText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+
+  /* EXIT */
   exitPill: {
     backgroundColor: '#ffd0d6',
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 0,
-    marginLeft: 0,
-    marginRight: 6,
     flexDirection: 'row',
     alignItems: 'center',
     borderTopColor: '#fff',

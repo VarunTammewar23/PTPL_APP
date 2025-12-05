@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  PixelRatio, // ✅ already added earlier
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
 import { useTheme } from '../theme/ThemeProvider';
@@ -33,9 +34,18 @@ interface RecipeParam {
   unit?: string;
 }
 
+// ❗ Only these constants changed a bit (for font size)
 const OVERLAY_WIDTH = 47;
 const OVERLAY_HEIGHT = 30;
-const OVERLAY_FONT_SIZE = 12;
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const BASE_WIDTH = 360;
+const SCALE = SCREEN_W / BASE_WIDTH;
+const CLAMPED_SCALE = Math.max(0.85, Math.min(SCALE, 1.15)); // clamp so it doesn't explode on tab-mode phones
+
+const OVERLAY_FONT_SIZE = 12 * CLAMPED_SCALE * PixelRatio.getFontScale();
+const SERIAL_FONT_SIZE = 10 * CLAMPED_SCALE * PixelRatio.getFontScale();
+
 const OVERLAY_BORDER_RADIUS = 10;
 
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
@@ -164,9 +174,9 @@ function MachinePanelInner(
   }, [isLandscape]);
 
   // 🔥 RESET ZOOM ON ORIENTATION CHANGE
-useEffect(() => {
-  setZoomKey(prev => prev + 1);  // forces re-render & resets zoom
-}, [isLandscape]);
+  useEffect(() => {
+    setZoomKey(prev => prev + 1);  // forces re-render & resets zoom
+  }, [isLandscape]);
 
 
   const fetchParams = async () => {
@@ -307,7 +317,9 @@ useEffect(() => {
                       },
                     ]}
                   >
-                    <Text style={styles.serialText}>{item.id}</Text>
+                    <Text style={[styles.serialText, { fontSize: SERIAL_FONT_SIZE }]}>
+                      {item.id}
+                    </Text>
                   </View>
                 );
               })}
@@ -469,7 +481,6 @@ const styles = StyleSheet.create({
 
   serialText: {
     color: '#fff',
-    fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',
   },
