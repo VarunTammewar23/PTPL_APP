@@ -12,6 +12,7 @@ import {
   NativeModules,
   Dimensions,
   TouchableWithoutFeedback,
+  StatusBar,
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
 import MachinePanel from '../components/PaperSizes';
@@ -22,7 +23,6 @@ import { apiGet } from '../api/api';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
-import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';
 import BottomBar from '../components/BottomBar';
 import Folds from '../components/Folds';
@@ -33,6 +33,9 @@ import AllSpeed from '../components/AllSpeed';
 import SideLay from '../components/SideLay';
 import BlowerSettings from '../components/BlowerSettings';
 import RollerGap from '../components/RollerGap';
+import { getCurrentApiBase } from '../config/ConfigContext';
+import { PermissionsAndroid, Platform } from "react-native";
+
 
 
 
@@ -218,25 +221,48 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // Excel download
   const downloadRecipeExcel = async () => {
-    if (selectedRecipeId === -1) return Alert.alert("Select recipe first");
-    try {
-      const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
-      const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
-      const result = await RNFS.downloadFile({
-        fromUrl: url,
-        toFile: filePath
-      }).promise;
-      if (result.statusCode !== 200) throw new Error("Download failed");
-      ToastAndroid.show("Saved to Downloads!", ToastAndroid.LONG);
-      await FileViewer.open(filePath);
-    } catch (err: any) {
-      Alert.alert("Error downloading", err.message);
+  if (selectedRecipeId === -1) return Alert.alert("Select recipe first");
+
+  try {
+    // Permission for Android < 11
+    if (Platform.OS === "android" && Platform.Version < 30) {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
     }
-  };
+
+    // Safe URL (no double slashes)
+    const base = getCurrentApiBase();
+    const url = `${base.replace(/\/+$/, '')}/recipes/${selectedRecipeId}/download`;
+
+    // Save in internal Documents (works on ALL Android)
+    const filePath = `${RNFS.DocumentDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+
+    const result = await RNFS.downloadFile({
+      fromUrl: url,
+      toFile: filePath,
+      background: true,
+      progressDivider: 1,
+    }).promise;
+
+    if (result.statusCode !== 200) {
+      throw new Error(`Download failed, status: ${result.statusCode}`);
+    }
+
+    ToastAndroid.show(`File saved`, ToastAndroid.LONG);
+    console.log("Saved at:", filePath);
+
+    await FileViewer.open(filePath);
+
+  } catch (err: any) {
+    console.log("Download error:", err);
+    Alert.alert("Download Error", err.message ?? "Failed to download");
+  }
+};
 
   const sendToBackend = async (rows: any[]) => {
     try {
-      const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows })
@@ -318,7 +344,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }));
 
     try {
-      const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows })
@@ -366,8 +392,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   return (
     <SafeAreaView
-      style={[styles.safe, isDark ? styles.darkBg : styles.lightBg]}
-    >
+  style={[styles.safe, isDark ? styles.darkBg : styles.lightBg]}
+  edges={[]}
+>
+  <StatusBar backgroundColor="#d6e4f0" barStyle="dark-content" />
+
+
       <HeaderBar
         recipeId={selectedRecipeId}
         recipeName={selectedRecipeName}
@@ -381,6 +411,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 
       <View style={{ flex: 1 }}>
+
         {loadingParams ? (
           <ActivityIndicator />
         ) : selectedRecipeId === -1 ? (
@@ -605,7 +636,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, paddingVertical: 12, paddingHorizontal: 0 },
+  safe: { flex: 1, paddingHorizontal: 0 },
   lightBg: { backgroundColor: "#fff" },
   darkBg: { backgroundColor: "#111" },
   lightCard: { backgroundColor: "#fff" },
@@ -699,4 +730,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#ddd"
   }
-});
+}); 
