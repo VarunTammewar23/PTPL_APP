@@ -15,8 +15,11 @@ interface BottomBarProps {
   onPressItem: (label: string) => void;
   rpfRef?: any;
   onExit: () => void;
-  onSave: () => void;  // NEW
+  onSave: () => void;
+  onSettings: () => void;  // <-- ADD THIS LINE
 }
+
+
 
 const BottomBar: FC<BottomBarProps> = ({
   labels,
@@ -25,6 +28,8 @@ const BottomBar: FC<BottomBarProps> = ({
   rpfRef,
   onExit,
   onSave,
+  onSettings,    // <-- ADD THIS
+
 }) => {
   return (
     <View style={styles.bottomBarContainer}>
@@ -64,6 +69,16 @@ const BottomBar: FC<BottomBarProps> = ({
           <Text style={styles.saveText}>SAVE</Text>
         </TouchableOpacity>
 
+        {/* SETTINGS button */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={onSettings}
+          style={styles.settingsPill}
+        >
+          <Icon name="settings" size={18} color="#fff" style={{ marginRight: 6 }} />
+          <Text style={styles.settingsText}>SETTINGS</Text>
+        </TouchableOpacity>
+
         {/* EXIT button */}
         <TouchableOpacity
           activeOpacity={0.9}
@@ -80,23 +95,30 @@ const BottomBar: FC<BottomBarProps> = ({
 
 export default BottomBar;
 
+const BUTTON_HEIGHT = 50;   // universal height
+const BUTTON_WIDTH = 120;   // universal width for all buttons
+const FONT_SIZE = 15;       // universal font size
+
 const styles = StyleSheet.create({
   bottomBarContainer: {
     borderTopWidth: 1,
     borderTopColor: '#cfcfcf',
     backgroundColor: '#e6e6e8',
-    paddingVertical: 10,
+    paddingVertical: 4,
   },
+
   bottomBarScroll: {
     alignItems: 'center',
     paddingHorizontal: 6,
+    flexDirection: 'row',
   },
+
+  // ALL MAIN BUTTONS (RPF, RECIPE, etc.)
   pillButton: {
     backgroundColor: '#e9e5f6',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    width: BUTTON_WIDTH,          // 🔥 FIXED WIDTH
+    height: BUTTON_HEIGHT,        // 🔥 FIXED HEIGHT
     borderRadius: 0,
-    marginRight: 0,
     borderTopColor: '#ffffff',
     borderLeftColor: '#ffffff',
     borderBottomColor: '#bdb6d9',
@@ -105,12 +127,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 110,
-    height: 48,
   },
-  lastPill: {
-    borderRightWidth: 0,
-  },
+
   pillButtonActive: {
     backgroundColor: '#d6d6d8',
     borderTopColor: '#bdbdbf',
@@ -118,51 +136,74 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ffffff',
     borderRightColor: '#ffffff',
   },
+
   pillText: {
     color: '#211f2e',
     fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 0.5,
+    fontSize: FONT_SIZE,
+    letterSpacing: 0.4,
+    textAlign: 'center',
+    width: BUTTON_WIDTH - 10,     // ensures text fits & doesn't overflow
   },
+
   pillTextActive: {
     color: '#000',
   },
 
-  /* SAVE STYLES */
+  /* SAVE BUTTON */
   savePill: {
     backgroundColor: '#006edc',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 0,
+    width: BUTTON_WIDTH,          // 🔥 SAME FIXED WIDTH
+    height: BUTTON_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 6,
-    height: 48,
+    justifyContent: 'center',
+    borderRadius: 0,
+    borderRightWidth: 1,          // join with exit
+    borderRightColor: '#0055a8',
   },
   saveText: {
     color: '#fff',
     fontWeight: '800',
-    fontSize: 14,
+    fontSize: FONT_SIZE,
   },
 
-  /* EXIT */
+  /* EXIT BUTTON */
   exitPill: {
     backgroundColor: '#ffd0d6',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 0,
+    width: BUTTON_WIDTH,          // 🔥 SAME FIXED WIDTH
+    height: BUTTON_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
+    borderLeftWidth: 0,           // no gap next to SAVE
     borderTopColor: '#fff',
-    borderLeftColor: '#fff',
     borderBottomColor: '#df9aa6',
     borderRightColor: '#df9aa6',
     borderWidth: 1,
-    height: 48,
   },
   exitText: {
     color: '#6b0f1a',
     fontWeight: '800',
-    fontSize: 14,
+    fontSize: FONT_SIZE,
   },
+  settingsPill: {
+  backgroundColor: '#444',  // dark grey like Android settings
+  width: BUTTON_WIDTH,
+  height: BUTTON_HEIGHT,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 0,
+  borderRightWidth: 1,
+  borderRightColor: '#000',
+},
+settingsText: {
+  color: '#fff',
+  fontWeight: '800',
+  fontSize: FONT_SIZE,
+},
+
 });
+

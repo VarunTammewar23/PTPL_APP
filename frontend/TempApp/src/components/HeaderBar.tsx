@@ -72,7 +72,8 @@ export default function HeaderBar({
   return (
     <View style={styles.wrapper}>
       <View style={styles.content}>
-        {/* ROW 1 */}
+
+        {/* ================= TOP ROW ================= */}
         <View style={styles.row1}>
           <Image
             source={require('../assets/company_logo.jpeg')}
@@ -80,8 +81,9 @@ export default function HeaderBar({
             resizeMode="contain"
           />
 
+          {/* Recipe Select Dropdown */}
           <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
-            <Text style={[styles.btnText, { color: '#000' }]}>
+            <Text style={[styles.dropdownText]}>
               {selectedRecipeName ?? 'Select recipe'} ▾
             </Text>
           </TouchableOpacity>
@@ -91,32 +93,33 @@ export default function HeaderBar({
             {recipeId !== -1 ? recipeId : '--'}
           </Text>
 
-          <Text style={[styles.label, { marginLeft: 10 }]}>Recipe Name:</Text>
-          <Text style={[styles.inputBox, { minWidth: 170 }]}>
+          <Text style={[styles.label]}>Recipe Name:</Text>
+          <Text style={[styles.inputBox, { minWidth: 140 }]}>
             {recipeName ?? '--'}
           </Text>
 
-          {/* Upload + Download + Settings */}
+          {/* Right Side Buttons */}
           <View style={styles.rightButtons}>
-            <TouchableOpacity style={styles.uploadBtn} onPress={onUpload}>
+            <TouchableOpacity style={[styles.commonBtn, styles.uploadBtn]} onPress={onUpload}>
               <Text style={styles.btnText}>Upload</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.downloadBtn, selectedRecipeId === -1 && styles.downloadDisabled]}
+              style={[
+                styles.commonBtn,
+                styles.downloadBtn,
+                selectedRecipeId === -1 && styles.downloadDisabled,
+              ]}
               onPress={() => onDownload && onDownload()}
               disabled={selectedRecipeId === -1}
             >
-              <Text style={styles.btnText}>Download ⬇</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-              <Icon name="settings" size={26} color="#000" />
+              <Text style={styles.btnText}>Download</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
+      {/* ================= MODAL ================= */}
       <Modal
         visible={dropdownVisible}
         animationType="fade"
@@ -124,7 +127,7 @@ export default function HeaderBar({
         onRequestClose={() => setDropdownVisible(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setDropdownVisible(false)}>
-          <View style={[styles.modalContent]}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select recipe</Text>
             <FlatList
               data={recipes}
@@ -139,14 +142,30 @@ export default function HeaderBar({
   );
 }
 
+/* ============================================================
+                      STYLES
+============================================================ */
+
+const BUTTON_WIDTH = 150;
+const BUTTON_HEIGHT = 45;
+
+const FIELD_HEIGHT = 45;
+const FIELD_MIN_WIDTH = 150;
+
+
 const styles = StyleSheet.create({
   wrapper: {
-    width: '100%',
-    backgroundColor: '#d6e4f0',
-    paddingVertical: 10,
-    elevation: 5,
-  },
-  content: { paddingHorizontal: 12 },
+  width: '100%',
+  backgroundColor: '#d6e4f0',
+  height: 65,       // set a fixed header height (you can change this)
+  elevation: 5,
+},
+
+  content: {
+  flex: 1,
+  paddingHorizontal: 12,
+},
+
 
   row1: {
     flexDirection: 'row',
@@ -154,46 +173,99 @@ const styles = StyleSheet.create({
     width: '100%',
     flexWrap: 'nowrap',
   },
-  logo: { width: 72, height: 48, marginRight: 10 },
 
-  label: { fontSize: 16, fontWeight: '700', color: '#000' },
+  logo: {
+  height: '100%',
+  width: undefined,
+  aspectRatio: 72 / 48, // keeps the same ratio
+  resizeMode: 'contain',
+  marginRight: 10,
+},
+
+
+  dropdownTrigger: {
+                    backgroundColor: '#fff',
+                    height: FIELD_HEIGHT,
+                    minWidth: FIELD_MIN_WIDTH,
+                    paddingHorizontal: 10,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    justifyContent: 'center',
+                    marginRight: 8,
+                  },
+
+  dropdownText: {
+  color: '#000',
+  fontWeight: '700',
+  fontSize: 20,
+  textAlign: 'center',
+  includeFontPadding: false,
+},
+
+
+  label: { fontSize: 20, fontWeight: '500', color: '#000', marginLeft: 6, marginRight: 8 },
+
 
   inputBox: {
-    backgroundColor: '#fff',
-    paddingVertical: 6,
-    paddingHorizontal: 25,
-    borderRadius: 4,
-    marginHorizontal: 6,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: '#000',
-  },
+  backgroundColor: '#fff',
+  height: FIELD_HEIGHT,
+  minWidth: FIELD_MIN_WIDTH,
+  paddingHorizontal: 10,
+  borderRadius: 6,
+  fontSize: 20,
+  fontWeight: 500,
+  textAlign: 'center',
+  color: '#000',
+  justifyContent: 'center',
+  textAlignVertical: 'center',
+  marginLeft: 6,
+  marginRight: 8
+},
 
+
+  /* RIGHT BUTTONS */
   rightButtons: {
-    marginLeft: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8,
     gap: 8,
   },
 
-  uploadBtn: { backgroundColor: '#008a3e', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 },
-  downloadBtn: { backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
-  downloadDisabled: { backgroundColor: '#999' },
-
-  dropdownTrigger: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  commonBtn: {
+    width: BUTTON_WIDTH,
+    height: BUTTON_HEIGHT,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6, 
+    marginRight: 8
   },
 
-  btnText: { color: '#fff', fontWeight: '700' },
+  btnText: {
+    color: '#fff',
+    fontWeight: '500',
+    fontSize: 24,
+    textAlign: 'center',
+  },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 },
-  modalContent: { maxHeight: '70%', borderRadius: 8, padding: 8, backgroundColor: '#fff' },
+  uploadBtn: { backgroundColor: '#008a3e' },
+  downloadBtn: { backgroundColor: '#007bff' },
+  downloadDisabled: { backgroundColor: '#999' },
+
+  /* MODAL */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    maxHeight: '70%',
+    borderRadius: 8,
+    padding: 8,
+    backgroundColor: '#fff',
+  },
   modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },
 
   dropdownItem: { paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },

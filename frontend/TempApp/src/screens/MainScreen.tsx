@@ -530,26 +530,42 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       )}
 
       <BottomBar
-  labels={labels}
-  activePanel={activePanel}
-  rpfRef={rpfRef}
-  onSave={saveCurrentMachineData}   // << ADDED HERE
-  onPressItem={label => {
-    const isActive = activePanel === label;
-    if (isActive && label !== "RPF") closePanel();
-    else openPanel(label);
-  }}
-  onExit={() =>
-    Alert.alert("Exit", "Do you want to exit?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Exit",
-        style: "destructive",
-        onPress: () => {}
+      labels={labels}
+      activePanel={activePanel}
+      rpfRef={rpfRef}
+      onSave={saveCurrentMachineData}
+      onPressItem={label => {
+        // If clicking RECIPE
+        if (label === "RECIPE") {
+          setShowMachine(false);
+          setShowFolds(false);
+          setShowOffset(false);
+          setShowGlueTap(false);
+          setShowSuctionGap(false);
+          setShowAllSpeed(false);
+          setShowSideLay(false);
+          setShowBlowerSettings(false);
+          setShowRollerGap(false);
+
+          setActivePanel(null); // close bottom panel
+          return; // this will show RecipeTable because nothing else is active
+        }
+
+        // existing RPF logic
+        const isActive = activePanel === label;
+        if (isActive && label !== "RPF") closePanel();
+        else openPanel(label);
+      }}
+
+      onExit={() =>
+        Alert.alert("Exit", "Do you want to exit?", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Exit", style: "destructive", onPress: () => {} }
+        ])
       }
-    ])
-  }
-  />
+      onSettings={() => navigation.navigate("Settings")}  // 👈 ADD THIS LINE
+    />
+
 
       <Animated.View
         style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}
@@ -605,7 +621,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, paddingVertical: 12, paddingHorizontal: 0 },
+  safe: { flex: 1, paddingVertical: 0, paddingHorizontal: 0 },
   lightBg: { backgroundColor: "#fff" },
   darkBg: { backgroundColor: "#111" },
   lightCard: { backgroundColor: "#fff" },
