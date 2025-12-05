@@ -1,4 +1,25 @@
 // src/utils/panelSave.ts
+/**
+ * NOTE ABOUT THIS FILE:
+ * ----------------------
+ * This file does NOT save anything to the backend.
+ * It only prepares panel data before saving.
+ *
+ * Each panel displays a set of parameters (SR numbers).
+ * The user may edit some values, while others remain original.
+ *
+ * panelSave.ts merges:
+ *   → original values fetched from the backend
+ *   → edited values from the UI panel state
+ *
+ * The result is a clean list of final parameters for that panel,
+ * which can later be passed to a real SAVE function (API call).
+ *
+ * In short:
+ *   UI collects edits
+ *   panelSave.ts merges data
+ *   saveMachinePanel.ts will send it to the backend
+ */
 
 export type RecipeParam = {
   parameter_no: number;
