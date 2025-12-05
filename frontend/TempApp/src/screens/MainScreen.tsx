@@ -12,6 +12,7 @@ import {
   NativeModules,
   Dimensions,
   TouchableWithoutFeedback,
+  Image,
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
 import MachinePanel from '../components/PaperSizes';
@@ -381,82 +382,82 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 
       <View style={{ flex: 1 }}>
-        {loadingParams ? (
-          <ActivityIndicator />
-        ) : selectedRecipeId === -1 ? (
-          <Text
-            style={[
-              { color: "#666" },
-              isDark ? styles.textLight : styles.textDark
-            ]}
-          >
-            Select a recipe to view its parameters.
-          </Text>
-        ) : showMachine ? (
-          <MachinePanel
-            ref={machineRef}
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            initialParams={recipeParams}
-            onClose={() => setShowMachine(false)}
-          />
-        ) : showFolds ? (
-          <Folds
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            onClose={() => setShowFolds(false)}
-          />
-        ) : showOffset ? (
-          <Offset
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName}
-            onClose={() => setShowOffset(false)}
-          />
-        ) : showGlueTap ? (
-          <GlueTap
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName}
-            onClose={() => setShowGlueTap(false)}
-          />
-        ) : showSuctionGap ? (
-          <SuctionGap
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName}
-            onClose={() => setShowSuctionGap(false)}
-          />
-        ) : showAllSpeed ? (
-          <AllSpeed
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName}
-            onClose={() => setShowAllSpeed(false)}
-          />
-          ) : showSideLay ? (
-          <SideLay
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            initialParams={recipeParams}
-            onClose={() => setShowSideLay(false)}
-          />
-          ) : showBlowerSettings ? (
-          <BlowerSettings
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            onClose={() => setShowBlowerSettings(false)}
-          />
-          ) : showRollerGap ? (
-          <RollerGap
-            recipeId={selectedRecipeId}
-            recipeName={selectedRecipeName ?? undefined}
-            onClose={() => setShowRollerGap(false)}
-          />
-
-
-        ) : recipeParams.length === 0 ? (
-          <Text>No parameters for this recipe.</Text>
-        ) : (
-          <RecipeTable data={recipeParams} darkMode={isDark} />
-        )}
-      </View>
+  {loadingParams ? (
+    <ActivityIndicator />
+  ) : selectedRecipeId === -1 ? (
+    <View style={styles.noRecipeContainer}>
+      <Image
+        source={require('../assets/company_logo.jpeg')}
+        style={styles.noRecipeLogo}
+        resizeMode="contain"
+      />
+      <Text style={[styles.noRecipeText, isDark ? styles.textLight : styles.textDark]}>
+        Select a recipe to view its parameters
+      </Text>
+    </View>   
+  ) : showMachine ? (
+    <MachinePanel
+      ref={machineRef}
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName ?? undefined}
+      initialParams={recipeParams}
+      onClose={() => setShowMachine(false)}
+    />
+  ) : showFolds ? (
+    <Folds
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName ?? undefined}
+      onClose={() => setShowFolds(false)}
+    />
+  ) : showOffset ? (
+    <Offset
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName}
+      onClose={() => setShowOffset(false)}
+    />
+  ) : showGlueTap ? (
+    <GlueTap
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName}
+      onClose={() => setShowGlueTap(false)}
+    />
+  ) : showSuctionGap ? (
+    <SuctionGap
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName}
+      onClose={() => setShowSuctionGap(false)}
+    />
+  ) : showAllSpeed ? (
+    <AllSpeed
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName}
+      onClose={() => setShowAllSpeed(false)}
+    />
+  ) : showSideLay ? (
+    <SideLay
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName ?? undefined}
+      initialParams={recipeParams}
+      onClose={() => setShowSideLay(false)}
+    />
+  ) : showBlowerSettings ? (
+    <BlowerSettings
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName ?? undefined}
+      onClose={() => setShowBlowerSettings(false)}
+    />
+  ) : showRollerGap ? (
+    <RollerGap
+      recipeId={selectedRecipeId}
+      recipeName={selectedRecipeName ?? undefined}
+      onClose={() => setShowRollerGap(false)}
+    />
+  ) : recipeParams.length === 0 ? (
+    <Text>No parameters for this recipe.</Text>
+  ) : (
+    <RecipeTable data={recipeParams} darkMode={isDark} />
+  )}
+</View>
 
       {showSideMenu && activePanel === "RPF" && (
         <TouchableWithoutFeedback
@@ -621,6 +622,26 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  noRecipeContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+},
+
+noRecipeLogo: {
+  width: 260,   // adjust size as needed
+  height: 160,
+  marginBottom: 20,
+},
+
+noRecipeText: {
+  fontSize: 18,
+  fontWeight: '700',
+  textAlign: 'center',
+  color: '#666',
+},
+
   safe: { flex: 1, paddingVertical: 0, paddingHorizontal: 0 },
   lightBg: { backgroundColor: "#fff" },
   darkBg: { backgroundColor: "#111" },
