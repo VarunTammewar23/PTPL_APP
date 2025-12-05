@@ -308,13 +308,23 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
           </ImageBackground>
         </ZoomableView>
       </View>
-      {/* FLOATING SHOW TABLE BUTTON */}
-    <TouchableOpacity
-      style={styles.floatingButton}
-      onPress={() => setTablePopup(true)}
-    >
-      <Text style={styles.floatingButtonText}>SHOW TABLE</Text>
-    </TouchableOpacity>
+      {/* FLOATING ACTION BUTTONS */}
+<View style={styles.fabContainer}>
+  <TouchableOpacity
+    style={styles.fabButton}
+    onPress={() => setTablePopup(true)}
+  >
+    <Text style={styles.fabButtonText}>SHOW TABLE</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.fabButton}
+    onPress={() => console.log("Video clicked")} // later replace with video logic
+  >
+    <Text style={styles.fabButtonText}>VIDEO</Text>
+  </TouchableOpacity>
+</View>
+
 
 
       {/* MODAL: TABLE POPUP */}
@@ -548,22 +558,31 @@ const styles = StyleSheet.create({
 //   fontSize: 14,
 // },
 
-floatingButton: {
+// 
+fabContainer: {
   position: 'absolute',
   bottom: 12,
-  left : 130,
+  // left: 120,          // adjust this if you want more center
+  left: '10%' ,
+  flexDirection: 'row',
+  alignItems: 'center'
+},
+
+fabButton: {
   backgroundColor: '#007bff',
   paddingVertical: 10,
   paddingHorizontal: 18,
   borderRadius: 8,
   elevation: 5,
+  marginRight: 10,    // space between SHOW TABLE and VIDEO
 },
 
-floatingButtonText: {
+fabButtonText: {
   color: '#fff',
   fontWeight: '700',
   fontSize: 14,
 },
+
 
 
 
