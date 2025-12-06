@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // 👈 added FONT_WEIGHT
 
 interface BottomBarProps {
   labels: string[];
@@ -16,10 +17,8 @@ interface BottomBarProps {
   rpfRef?: any;
   onExit: () => void;
   onSave: () => void;
-  onSettings: () => void;  // <-- ADD THIS LINE
+  onSettings: () => void;
 }
-
-
 
 const BottomBar: FC<BottomBarProps> = ({
   labels,
@@ -28,8 +27,7 @@ const BottomBar: FC<BottomBarProps> = ({
   rpfRef,
   onExit,
   onSave,
-  onSettings,    // <-- ADD THIS
-
+  onSettings,
 }) => {
   return (
     <View style={styles.bottomBarContainer}>
@@ -49,7 +47,6 @@ const BottomBar: FC<BottomBarProps> = ({
               style={[
                 styles.pillButton,
                 isActive && styles.pillButtonActive,
-                idx === labels.length - 1 && styles.lastPill,
               ]}
             >
               <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
@@ -60,32 +57,20 @@ const BottomBar: FC<BottomBarProps> = ({
         })}
 
         {/* SAVE Button */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={onSave}
-          style={styles.savePill}
-        >
-          <Icon name="save" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+        <TouchableOpacity activeOpacity={0.9} onPress={onSave} style={styles.savePill}>
+          <Icon name="save" size={FONT_SIZE.header} color="#ffffff" style={{ marginRight: 6 }} />
           <Text style={styles.saveText}>SAVE</Text>
         </TouchableOpacity>
 
-        {/* SETTINGS button */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={onSettings}
-          style={styles.settingsPill}
-        >
-          <Icon name="settings" size={18} color="#fff" style={{ marginRight: 6 }} />
+        {/* SETTINGS Button */}
+        <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
+          <Icon name="settings" size={FONT_SIZE.header} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.settingsText}>SETTINGS</Text>
         </TouchableOpacity>
 
-        {/* EXIT button */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={onExit}
-          style={styles.exitPill}
-        >
-          <Icon name="logout" size={18} color="#6b0f1a" style={{ marginRight: 8 }} />
+        {/* EXIT Button */}
+        <TouchableOpacity activeOpacity={0.9} onPress={onExit} style={styles.exitPill}>
+          <Icon name="logout" size={FONT_SIZE.header} color="#6b0f1a" style={{ marginRight: 8 }} />
           <Text style={styles.exitText}>EXIT</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -95,9 +80,12 @@ const BottomBar: FC<BottomBarProps> = ({
 
 export default BottomBar;
 
-const BUTTON_HEIGHT = 50;   // universal height
-const BUTTON_WIDTH = 120;   // universal width for all buttons
-const FONT_SIZE = 15;       // universal font size
+/* ============================================================
+                      STYLES
+============================================================ */
+
+const BUTTON_HEIGHT = 50;
+const BUTTON_WIDTH = 120;
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
@@ -113,16 +101,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // ALL MAIN BUTTONS (RPF, RECIPE, etc.)
+  /* MAIN NAV BUTTONS */
   pillButton: {
     backgroundColor: '#e9e5f6',
-    width: BUTTON_WIDTH,          // 🔥 FIXED WIDTH
-    height: BUTTON_HEIGHT,        // 🔥 FIXED HEIGHT
-    borderRadius: 0,
-    borderTopColor: '#ffffff',
-    borderLeftColor: '#ffffff',
-    borderBottomColor: '#bdb6d9',
-    borderRightColor: '#bdb6d9',
+    width: BUTTON_WIDTH,
+    height: BUTTON_HEIGHT,
+    borderRadius: 1,
+    borderTopColor: '#7f8294ff',
+    borderLeftColor: '#7f8294ff',
+    borderBottomColor: '#7f8294ff',
+    borderRightColor: '#7f8294ff',
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -133,17 +121,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#d6d6d8',
     borderTopColor: '#bdbdbf',
     borderLeftColor: '#bdbdbf',
-    borderBottomColor: '#ffffff',
-    borderRightColor: '#ffffff',
+    borderBottomColor: '#bdbdbf',
+    borderRightColor: '#bdbdbf',
   },
 
   pillText: {
     color: '#211f2e',
-    fontWeight: '700',
-    fontSize: FONT_SIZE,
-    letterSpacing: 0.4,
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.label,
+    fontWeight: FONT_WEIGHT.bold,        // 👈 added
     textAlign: 'center',
-    width: BUTTON_WIDTH - 10,     // ensures text fits & doesn't overflow
+    width: BUTTON_WIDTH - 10,
   },
 
   pillTextActive: {
@@ -153,31 +141,52 @@ const styles = StyleSheet.create({
   /* SAVE BUTTON */
   savePill: {
     backgroundColor: '#006edc',
-    width: BUTTON_WIDTH,          // 🔥 SAME FIXED WIDTH
+    width: BUTTON_WIDTH,
     height: BUTTON_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 0,
-    borderRightWidth: 1,          // join with exit
-    borderRightColor: '#0055a8',
+    borderRightWidth: 1,
   },
   saveText: {
     color: '#fff',
-    fontWeight: '800',
-    fontSize: FONT_SIZE,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.header,
+    fontWeight: FONT_WEIGHT.bold,        // 👈 added
+  },
+
+  /* SETTINGS BUTTON */
+  settingsPill: {
+    backgroundColor: '#444',
+    width: BUTTON_WIDTH,
+    height: BUTTON_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 0,
+    borderRightWidth: 1,
+     borderTopColor: '#7f8294ff',
+    borderBottomColor: '#7f8294ff',
+    borderRightColor: '#7f8294ff',
+     borderLeftColor: '#7f8294ff',
+  },
+  settingsText: {
+    color: '#fff',
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: 18,
+    fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 
   /* EXIT BUTTON */
   exitPill: {
     backgroundColor: '#ffd0d6',
-    width: BUTTON_WIDTH,          // 🔥 SAME FIXED WIDTH
+    width: BUTTON_WIDTH,
     height: BUTTON_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 0,
-    borderLeftWidth: 0,           // no gap next to SAVE
     borderTopColor: '#fff',
     borderBottomColor: '#df9aa6',
     borderRightColor: '#df9aa6',
@@ -185,25 +194,8 @@ const styles = StyleSheet.create({
   },
   exitText: {
     color: '#6b0f1a',
-    fontWeight: '800',
-    fontSize: FONT_SIZE,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: FONT_SIZE.header,
+    fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
-  settingsPill: {
-  backgroundColor: '#444',  // dark grey like Android settings
-  width: BUTTON_WIDTH,
-  height: BUTTON_HEIGHT,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: 0,
-  borderRightWidth: 1,
-  borderRightColor: '#000',
-},
-settingsText: {
-  color: '#fff',
-  fontWeight: '800',
-  fontSize: FONT_SIZE,
-},
-
 });
-

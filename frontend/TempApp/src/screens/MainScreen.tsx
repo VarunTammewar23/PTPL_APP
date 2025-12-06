@@ -23,7 +23,6 @@ import { apiGet } from '../api/api';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
-import { API_BASE } from "@env";
 import * as XLSX from 'xlsx';
 import BottomBar from '../components/BottomBar';
 import Folds from '../components/Folds';
@@ -34,6 +33,7 @@ import AllSpeed from '../components/AllSpeed';
 import SideLay from '../components/SideLay';
 import BlowerSettings from '../components/BlowerSettings';
 import RollerGap from '../components/RollerGap';
+import { getCurrentApiBase } from '../config/ConfigContext';
 
 
 
@@ -221,7 +221,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const downloadRecipeExcel = async () => {
     if (selectedRecipeId === -1) return Alert.alert("Select recipe first");
     try {
-      const url = `${API_BASE}/recipes/${selectedRecipeId}/download`;
+      const url = `${getCurrentApiBase()}/recipes/${selectedRecipeId}/download`;
       const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
       const result = await RNFS.downloadFile({
         fromUrl: url,
@@ -237,7 +237,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   const sendToBackend = async (rows: any[]) => {
     try {
-      const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows })
@@ -319,7 +319,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }));
 
     try {
-      const response = await fetch(`${API_BASE}/api/upload-excel`, {
+      const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows })

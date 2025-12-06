@@ -10,8 +10,8 @@ import {
   FlatList,
   Pressable,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // 👈 NEW
 
 interface Recipe {
   recipe_id: number;
@@ -75,31 +75,34 @@ export default function HeaderBar({
 
         {/* ================= TOP ROW ================= */}
         <View style={styles.row1}>
-          <Image
-            source={require('../assets/company_logo.jpeg')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
 
-          {/* Recipe Select Dropdown */}
-          <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
-            <Text style={[styles.dropdownText]}>
-              {selectedRecipeName ?? 'Select recipe'} ▾
+          {/* LEFT GROUP */}
+          <View style={styles.leftGroup}>
+            <Image
+              source={require('../assets/company_logo.jpeg')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+
+            <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
+              <Text style={styles.dropdownText}>
+                {selectedRecipeName ?? 'Select recipe'} ▾
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={styles.label}>Recipe No:</Text>
+            <Text style={styles.inputBox}>
+              {recipeId !== -1 ? recipeId : '--'}
             </Text>
-          </TouchableOpacity>
 
-          <Text style={styles.label}>Recipe No:</Text>
-          <Text style={styles.inputBox}>
-            {recipeId !== -1 ? recipeId : '--'}
-          </Text>
+            <Text style={styles.label}>Recipe Name:</Text>
+            <Text style={[styles.inputBox, { minWidth: 140 }]}>
+              {recipeName ?? '--'}
+            </Text>
+          </View>
 
-          <Text style={[styles.label]}>Recipe Name:</Text>
-          <Text style={[styles.inputBox, { minWidth: 140 }]}>
-            {recipeName ?? '--'}
-          </Text>
-
-          {/* Right Side Buttons */}
-          <View style={styles.rightButtons}>
+          {/* RIGHT GROUP */}
+          <View style={styles.rightGroup}>
             <TouchableOpacity style={[styles.commonBtn, styles.uploadBtn]} onPress={onUpload}>
               <Text style={styles.btnText}>Upload</Text>
             </TouchableOpacity>
@@ -116,6 +119,7 @@ export default function HeaderBar({
               <Text style={styles.btnText}>Download</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </View>
 
@@ -148,104 +152,115 @@ export default function HeaderBar({
 
 const BUTTON_WIDTH = 150;
 const BUTTON_HEIGHT = 45;
-
 const FIELD_HEIGHT = 45;
 const FIELD_MIN_WIDTH = 150;
 
-
 const styles = StyleSheet.create({
   wrapper: {
-  width: '100%',
-  backgroundColor: '#d6e4f0',
-  height: 65,       // set a fixed header height (you can change this)
-  elevation: 5,
-},
+    width: '100%',
+    backgroundColor: '#d6e4f0',
+    height: 65,
+    elevation: 5,
+    paddingLeft: 0,
+    marginLeft: 0,
+  },
 
   content: {
-  flex: 1,
-  paddingHorizontal: 12,
-},
+    flex: 1,
+    paddingRight: 12,
+  },
 
-
+  /* MAIN LAYOUT */
   row1: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     width: '100%',
-    flexWrap: 'nowrap',
+  },
+
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   logo: {
-  height: '100%',
-  width: undefined,
-  aspectRatio: 72 / 48, // keeps the same ratio
-  resizeMode: 'contain',
-  marginRight: 10,
-},
-
-
-  dropdownTrigger: {
-                    backgroundColor: '#fff',
-                    height: FIELD_HEIGHT,
-                    minWidth: FIELD_MIN_WIDTH,
-                    paddingHorizontal: 10,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: '#ddd',
-                    justifyContent: 'center',
-                    marginRight: 8,
-                  },
-
-  dropdownText: {
-  color: '#000',
-  fontWeight: '700',
-  fontSize: 20,
-  textAlign: 'center',
-  includeFontPadding: false,
-},
-
-
-  label: { fontSize: 20, fontWeight: '500', color: '#000', marginLeft: 6, marginRight: 8 },
-
-
-  inputBox: {
-  backgroundColor: '#fff',
-  height: FIELD_HEIGHT,
-  minWidth: FIELD_MIN_WIDTH,
-  paddingHorizontal: 10,
-  borderRadius: 6,
-  fontSize: 20,
-  fontWeight: 500,
-  textAlign: 'center',
-  color: '#000',
-  justifyContent: 'center',
-  textAlignVertical: 'center',
-  marginLeft: 6,
-  marginRight: 8
-},
-
-
-  /* RIGHT BUTTONS */
-  rightButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
-    gap: 8,
+    height: '100%',
+    width: undefined,
+    aspectRatio: 72 / 48,
+    resizeMode: 'contain',
+    marginRight: 10,
   },
 
+  /* RECIPE FIELDS */
+  dropdownTrigger: {
+    backgroundColor: '#fff',
+    height: FIELD_HEIGHT,
+    minWidth: FIELD_MIN_WIDTH,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+
+  dropdownText: {
+    color: '#000',
+    fontFamily: FONT_FAMILY.regular,     // 👈 uses typography
+    fontSize: FONT_SIZE.label,
+    fontWeight: FONT_WEIGHT.bold,       // 👈 uses typography
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
+
+  label: {
+    fontFamily: FONT_FAMILY.medium,   // 👈 label style
+    fontSize: FONT_SIZE.special,
+    fontWeight: FONT_WEIGHT.regular,
+    color: '#000',
+    marginLeft: 6,
+    marginRight: 8,
+  },
+
+  inputBox: {
+    backgroundColor: '#fff',
+    height: FIELD_HEIGHT,
+    minWidth: FIELD_MIN_WIDTH,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    fontFamily: FONT_FAMILY.medium,   // 👈 same as label
+    fontSize: FONT_SIZE.header,
+    fontWeight: FONT_WEIGHT.bold,
+    textAlign: 'center',
+    color: '#000',
+    justifyContent: 'center',
+    textAlignVertical: 'center',
+    marginLeft: 6,
+    marginRight: 8,
+  },
+
+  /* RIGHT BUTTONS */
   commonBtn: {
     width: BUTTON_WIDTH,
     height: BUTTON_HEIGHT,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 6, 
-    marginRight: 8
+    marginLeft: 6,
+    marginRight: 8,
   },
 
   btnText: {
     color: '#fff',
-    fontWeight: '500',
-    fontSize: 24,
+    fontFamily: FONT_FAMILY.bold,     // 👈 buttons use bold
+    fontSize: FONT_SIZE.label,
+    fontWeight: FONT_WEIGHT.bold,
     textAlign: 'center',
   },
 
@@ -260,16 +275,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
+
   modalContent: {
     maxHeight: '70%',
     borderRadius: 8,
     padding: 8,
     backgroundColor: '#fff',
   },
-  modalTitle: { paddingVertical: 10, paddingHorizontal: 8, fontSize: 16, fontWeight: '600' },
 
-  dropdownItem: { paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  dropdownItemSelected: { backgroundColor: '#e6f0ff' },
-  dropdownItemText: { fontSize: 15 },
-  dropdownItemTextSelected: { fontWeight: '700' },
+  modalTitle: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    fontFamily: FONT_FAMILY.bold,     // 👈 title style
+    fontSize: FONT_SIZE.label,
+    fontWeight: FONT_WEIGHT.bold,
+  },
+
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+
+  dropdownItemSelected: {
+    backgroundColor: '#bad2f7ff',
+  },
+
+  dropdownItemText: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.label,
+  },
+
+  dropdownItemTextSelected: {
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZE.label,
+    fontWeight: FONT_WEIGHT.bold,
+
+  },
 });
