@@ -677,6 +677,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                         setShowGlueTap(false);
                         setShowSuctionGap(false);
                         setShowAllSpeed(false);
+                        setShowSideLay(false);
+                        setShowBlowerSettings(false);
+                        setShowRollerGap(false);
 
                         if (it === "PAPER SIZES")
                           return setShowMachine(true);
