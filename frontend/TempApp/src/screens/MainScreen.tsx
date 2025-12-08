@@ -34,6 +34,8 @@ import SideLay from '../components/SideLay';
 import BlowerSettings from '../components/BlowerSettings';
 import RollerGap from '../components/RollerGap';
 import { getCurrentApiBase } from '../config/ConfigContext';
+import FoldingTray from '../components/FoldingTray';
+
 
 
 
@@ -81,6 +83,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showSideLay, setShowSideLay] = useState(false);
   const [showBlowerSettings, setShowBlowerSettings] = useState(false);
   const [showRollerGap, setShowRollerGap] = useState(false);
+  const [showFoldingTray, setShowFoldingTray] = useState(false);
 
 
 
@@ -94,6 +97,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const sideLayRef = useRef<any>(null);
   const blowerRef = useRef<any>(null);
   const rollerRef = useRef<any>(null);
+  const foldingTrayRef = useRef<any>(null);
+
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
@@ -324,6 +329,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     else if (showSideLay) panelRef = sideLayRef;
     else if (showBlowerSettings) panelRef = blowerRef;
     else if (showRollerGap) panelRef = rollerRef;
+    else if (showFoldingTray) panelRef = foldingTrayRef;
     else panelRef = machineRef; // fallback
 
     // Collect params from the active panel
@@ -425,6 +431,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         setShowSideLay(false);
         setShowBlowerSettings(false);
         setShowRollerGap(false);
+        setShowFoldingTray(false);
+
         setSaving(false);
         return;
       }
@@ -442,6 +450,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           setShowSideLay(false);
           setShowBlowerSettings(false);
           setShowRollerGap(false);
+          setShowFoldingTray(false);
+
           Alert.alert('Exists', `Recipe already exists. Opened ${newRecipeName}`);
         } else {
           Alert.alert('Duplicate', res.message || 'Recipe already exists');
@@ -470,6 +480,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         setShowSideLay(false);
         setShowBlowerSettings(false);
         setShowRollerGap(false);
+        setShowFoldingTray(false);
 
         Alert.alert('Saved (server)', `Recipe created on server: ${newRecipeName}`);
       } else {
@@ -615,6 +626,17 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
               />
             </View>
 
+            <View style={{ flex: 1, display: showFoldingTray ? 'flex' : 'none' }}>
+              <FoldingTray
+                ref={foldingTrayRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowFoldingTray(false)}
+              />
+            </View>
+
+
             <View
               style={{
                 flex: 1,
@@ -627,7 +649,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                   !showAllSpeed &&
                   !showSideLay &&
                   !showBlowerSettings &&
-                  !showRollerGap
+                  !showRollerGap &&
+                  !showFoldingTray
                     ? 'flex'
                     : 'none',
               }}
@@ -681,6 +704,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                         setShowSideLay(false);
                         setShowBlowerSettings(false);
                         setShowRollerGap(false);
+                        setShowFoldingTray(false);
 
                         if (it === "PAPER SIZES")
                           return setShowMachine(true);
@@ -700,6 +724,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                           return setShowBlowerSettings(true);
                         if (it === "ROLLER GAP") 
                           return setShowRollerGap(true);
+                        if (it === "FOLDING TRAY")
+                          return setShowFoldingTray(true);
 
 
 

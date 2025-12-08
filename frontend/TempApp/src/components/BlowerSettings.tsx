@@ -4,377 +4,219 @@ import React, {
   useMemo,
   useState,
   useImperativeHandle,
-  useRef,
-} from 'react';
+  useRef
+} from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ImageBackground,
-  Dimensions,
-  Image,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-} from 'react-native';
-import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+  View, Text, StyleSheet, ImageBackground, Dimensions,
+  Image, TouchableOpacity, Modal, TextInput, ActivityIndicator
+} from "react-native";
+import ZoomableView from "@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView";
+import { useTheme } from "../theme/ThemeProvider";
+import { apiGet } from "../api/api";
 
-type Props = {
-  recipeId: number;
-  recipeName?: string;
-  imageUri?: string;
-  onClose?: () => void;
-  initialParams?: any[];
-  pollMs?: number;
+// EDIT THIS WHEN MORE PARAMETERS COME
+const SR_LIST = [31];
+
+// X,Y positions (percentage of image)
+const POSITIONS = {
+  31: { x: 20, y: 25 }
 };
 
-interface RecipeParam {
-  parameter_no: number;
-  section?: string;
-  parameter?: string;
-  value_01?: number | string;
-  unit?: string;
-}
+// Serial number box location
+const SERIAL_POS = [{ id: 31, x: 20, y: 32 }];
 
-// 🔢 CHANGE THIS for Blower Settings SR numbers
-const SR_LIST = [31]; // TODO: replace with real SRs
-
-// 🔁 CHANGE COORDINATES ACCORDING TO YOUR IMAGE
-const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
-  31: { x: 20, y: 25 },
-};
-
-// 🎯 SERIAL NUMBERS ON IMAGE
-const SERIAL_POSITIONS = [
-  { id: 31, x: 20, y: 32 },
-
-];
-
-const OVERLAY_WIDTH = 47;
-const OVERLAY_HEIGHT = 30;
-const OVERLAY_FONT_SIZE = 12;
-const OVERLAY_BORDER_RADIUS = 10;
+const BOX_W = 48, BOX_H = 30;
 
 function BlowerSettingsInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
-  ref: any,
+  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any,
+  ref: any
 ) {
-  const zoomRef = useRef<any>(null);
-  const [zoomKey, setZoomKey] = useState(0);
-
-  const [isLandscape, setIsLandscape] = useState(
-    Dimensions.get('window').width > Dimensions.get('window').height,
-  );
-
   const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const dark = theme === "dark";
 
-  const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
-  const [loading, setLoading] = useState<boolean>(!initialParams);
+  const zoomRef = useRef<any>(null);
+  const [params, setParams] = useState(initialParams ?? []);
+  const [loading, setLoading] = useState(!initialParams);
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
-  const [contW, setContW] = useState<number>(Dimensions.get('window').width);
-  const [contH, setContH] = useState<number>(
-    Math.round(Dimensions.get('window').height * 0.40),
-  );
-  const [dispW, setDispW] = useState<number>(contW);
-  const [dispH, setDispH] = useState<number>(contH);
+  const [contW, setContW] = useState(Dimensions.get("window").width);
+  const [contH, setContH] = useState(Math.round(Dimensions.get("window").height * 0.45));
+  const [dispW, setDispW] = useState(contW);
+  const [dispH, setDispH] = useState(contH);
 
-  const imageSource = imageUri
-    ? { uri: imageUri }
-    : require('../assets/blowersettings.jpeg'); // TODO: replace with Blower image
+  const imgSrc = imageUri ? { uri: imageUri } : require("../assets/blowersettings.jpeg");
 
-  const [editedValues, setEditedValues] = useState<
-    Record<number, string>
-  >({});
+  const [edited, setEdited] = useState<any>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
-  const [tempValue, setTempValue] = useState<string>('');
+  const [tempVal, setTempVal] = useState("");
 
+  // Fetch params
   useEffect(() => {
-    const onChange = ({ window }) => {
-      const ls = window.width > window.height;
-      setIsLandscape(ls);
-      setContW(window.width);
-      setContH(Math.round(window.height * (ls ? 0.85 : 0.40)));
-    };
-    const sub = Dimensions.addEventListener('change', onChange);
-    return () => sub?.remove();
-  }, []);
+    if (initialParams) return;
 
+    const load = async () => {
+      const res = await apiGet(`/recipes/${recipeId}`);
+      setParams(res.data?.params ?? []);
+      setLoading(false);
+    };
+    load();
+    const id = setInterval(load, pollMs);
+    return () => clearInterval(id);
+  }, [recipeId, pollMs]);
+
+  // Resolve actual image dimensions
   useEffect(() => {
-    let mounted = true;
+    try {
+      const r = Image.resolveAssetSource(imgSrc);
+      setNatW(r.width);
+      setNatH(r.height);
+    } catch {}
+  }, [imgSrc]);
 
-    const resolveLocal = (src: any) => {
-      try {
-        const res = Image.resolveAssetSource(src);
-        if (mounted) {
-          setNatW(res.width);
-          setNatH(res.height);
-        }
-      } catch {
-        if (mounted) {
-          setNatW(contW);
-          setNatH(contH);
-        }
-      }
-    };
-
-    if (imageUri) {
-      Image.getSize(
-        imageUri,
-        (w, h) => mounted && (setNatW(w), setNatH(h)),
-        () => mounted && (setNatW(contW), setNatH(contH)),
-      );
-    } else resolveLocal(imageSource);
-
-    return () => {
-      mounted = false;
-    };
-  }, [imageUri]);
-
+  // Compute scaled dimensions
   useEffect(() => {
     if (!natW || !natH) return;
-    const scale = Math.min(contW / natW, contH / natH);
-    setDispW(Math.round(natW * scale));
-    setDispH(Math.round(natH * scale));
+    const s = Math.min(contW / natW, contH / natH);
+    setDispW(natW * s);
+    setDispH(natH * s);
   }, [natW, natH, contW, contH]);
 
-  useEffect(() => setZoomKey(k => k + 1), [isLandscape]);
-
-  const fetchParams = async () => {
-    try {
-      const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
-      setParams(res.data?.params ?? []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!initialParams) {
-      fetchParams();
-      const id = setInterval(fetchParams, pollMs);
-      return () => clearInterval(id);
-    } else setParams(initialParams);
-  }, [recipeId]);
-
-  const valuesBySr = useMemo(() => {
-    const map: Record<number, RecipeParam | null> = {};
-    SR_LIST.forEach(sr => {
-      map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null;
-    });
-    return map;
+  const values = useMemo(() => {
+    const m: any = {};
+    SR_LIST.forEach(sr => (m[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null));
+    return m;
   }, [params]);
 
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       SR_LIST.map(sr => ({
         parameter_no: sr,
-        section: valuesBySr[sr]?.section ?? '',
-        parameter: valuesBySr[sr]?.parameter ?? '',
-        value_01:
-          editedValues[sr] !== undefined
-            ? editedValues[sr]
-            : valuesBySr[sr]?.value_01 ?? '',
-        unit: valuesBySr[sr]?.unit ?? '',
+        section: values[sr]?.section ?? "BLOWER SETTINGS",
+        parameter: values[sr]?.parameter ?? "",
+        value_01: edited[sr] ?? values[sr]?.value_01 ?? "",
+        unit: values[sr]?.unit ?? ""
       })),
-    clearEdits: () => {
-      setEditedValues({});
-      setEditingSr(null);
-      setTempValue('');
-    }
+    clearEdits: () => setEdited({})
   }));
 
   const [tablePopup, setTablePopup] = useState(false);
 
-  const openEditor = (sr: number, curr: string) => {
-    setEditingSr(sr);
-    setTempValue(String(curr ?? ''));
-  };
-
-  const saveEditor = () => {
-    if (editingSr === null) return;
-    setEditedValues(p => ({ ...p, [editingSr]: tempValue }));
-    setEditingSr(null);
-    setTempValue('');
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text
-          style={[styles.title, { color: isDark ? '#fff' : '#111', fontSize: 15 }]}
-        >
+    <View
+      style={styles.container}
+      onLayout={e => {
+        setContW(e.nativeEvent.layout.width);
+        setContH(e.nativeEvent.layout.height);
+      }}
+    >
+      <View style={styles.header}>
+        <Text style={[styles.title, dark && { color: "#fff" }]}>
           BLOWER SETTINGS
         </Text>
-        {onClose && (
-          <Text style={styles.closeText} onPress={onClose}>
-            Close
-          </Text>
-        )}
+        <Text style={styles.close} onPress={onClose}>Close</Text>
       </View>
 
-      <View
-        style={[
-          styles.orientationWrap,
-          { flexDirection: isLandscape ? 'row' : 'column' },
-        ]}
-      >
-        <View style={[styles.imageContainer, { width: '100%', flex: 1, justifyContent: 'center', alignItems: 'center' }]}> 
-          {/* image fills panel and is centered */}
-          <ZoomableView
-            key={zoomKey}
-            ref={zoomRef}
-            minScale={1}
-            maxScale={4}
-            doubleTapScale={2}
-            bindToBorders={true}
-            style={{ flex: 1, width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <ImageBackground source={imageSource} resizeMode="contain" style={{ flex: 1, width: '100%', height: '100%', alignSelf: 'center' }}>
-              {SR_LIST.map(sr => {
-                const pos = POSITIONS_BY_SR[sr];
-                const param = valuesBySr[sr];
-                const value = editedValues[sr] ?? param?.value_01 ?? '';
+      {/* Center image like AllSpeed */}
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
+          <ImageBackground source={imgSrc} resizeMode="contain" style={{ width: dispW, height: dispH }}>
+            {loading && (
+              <View style={styles.loading}><ActivityIndicator /></View>
+            )}
 
-                const left = Math.round((pos.x / 100) * dispW);
-                const top = Math.round((pos.y / 100) * dispH);
+            {/* Editable value box */}
+            {SR_LIST.map(sr => {
+              const p = POSITIONS[sr];
+              const val = edited[sr] ?? values[sr]?.value_01 ?? "";
+              const left = (p.x / 100) * dispW;
+              const top = (p.y / 100) * dispH;
 
-                return (
-                  <TouchableOpacity
-                    key={`ov-${sr}`}
-                    activeOpacity={0.8}
-                    onPress={() => openEditor(sr, String(value))}
-                    style={[
-                      styles.overlay,
-                      {
-                        left,
-                        top,
-                        width: OVERLAY_WIDTH,
-                        height: OVERLAY_HEIGHT,
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.15)',
-                        borderRadius: OVERLAY_BORDER_RADIUS,
-                        transform: [
-                          { translateX: -(OVERLAY_WIDTH / 2) },
-                          { translateY: -(OVERLAY_HEIGHT / 2) },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.overlayValue, { color: isDark ? '#fff' : '#000' }]}>
-                      {value}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-
-              {SERIAL_POSITIONS.map(i => (
-                <View
-                  key={`serial-${i.id}`}
-                  pointerEvents="none"
-                  style={[
-                    styles.serialOverlay,
-                    {
-                      left: Math.round((i.x / 100) * dispW),
-                      top: Math.round((i.y / 100) * dispH),
-                      width: OVERLAY_WIDTH,
-                      height: OVERLAY_HEIGHT,
-                      transform: [
-                        { translateX: -(OVERLAY_WIDTH / 2) },
-                        { translateY: -(OVERLAY_HEIGHT / 2) },
-                      ],
-                    },
-                  ]}
+              return (
+                <TouchableOpacity
+                  key={sr}
+                  style={[styles.box, {
+                    left, top, width: BOX_W, height: BOX_H,
+                    transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }]
+                  }]}
+                  onPress={() => { setEditingSr(sr); setTempVal(String(val)); }}
                 >
-                  <Text style={styles.serialText}>{i.id}</Text>
-                </View>
-              ))}
-            </ImageBackground>
-          </ZoomableView>
-        </View>
+                  <Text style={[styles.boxText, dark && { color: "#fff" }]}>{val}</Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* Serial number */}
+            {SERIAL_POS.map(s => (
+              <View key={s.id} pointerEvents="none" style={[styles.serial, {
+                left: (s.x / 100) * dispW,
+                top: (s.y / 100) * dispH,
+                width: BOX_W, height: BOX_H,
+                transform: [{ translateX: -BOX_W / 2 }, { translateY: -BOX_H / 2 }]
+              }]}>
+                <Text style={styles.serialText}>{s.id}</Text>
+              </View>
+            ))}
+          </ImageBackground>
+        </ZoomableView>
       </View>
 
-      <Modal
-        visible={editingSr !== null}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setEditingSr(null)}
-      >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.box}>
-            <Text style={modalStyles.title}>Edit Value (SR {editingSr})</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={tempValue}
-              onChangeText={setTempValue}
-              keyboardType="numeric"
-              placeholder="Enter value"
-            />
-            <View style={modalStyles.row}>
-              <TouchableOpacity
-                onPress={() => {
-                  setEditingSr(null);
-                  setTempValue('');
-                }}
+      {/* Buttons */}
+      <View style={styles.bottomBtns}>
+        <TouchableOpacity style={styles.btnBlue} onPress={() => setTablePopup(true)}>
+          <Text style={styles.btnText}>SHOW TABLE</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btnGreen}>
+          <Text style={styles.btnText}>VIDEO</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Edit modal */}
+      <Modal visible={editingSr !== null} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Edit Value</Text>
+            <TextInput style={styles.input} value={tempVal} onChangeText={setTempVal} keyboardType="numeric" />
+            <View style={styles.row}>
+              <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
+              <Text style={styles.save}
+                onPress={() => { setEdited({ ...edited, [editingSr!]: tempVal }); setEditingSr(null); }}
               >
-                <Text style={modalStyles.cancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={saveEditor}>
-                <Text style={modalStyles.save}>Save</Text>
-              </TouchableOpacity>
+                Save
+              </Text>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* SHOW TABLE + VIDEO BUTTONS */}
-      <View style={{ position: 'absolute', right: 12, bottom: 12, flexDirection: 'row' }}>
-        <TouchableOpacity
-          style={{ backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
-          onPress={() => setTablePopup(true)}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>SHOW TABLE</Text>
-        </TouchableOpacity>
+      {/* Table Modal */}
+      <Modal visible={tablePopup} transparent animationType="fade" onRequestClose={() => setTablePopup(false)}>
+        <View style={styles.tableBg}>
+          <View style={styles.tableBox}>
+            <Text style={styles.tableTitle}>Parameter Table</Text>
 
-        <TouchableOpacity
-          style={{ backgroundColor: '#28a745', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
-          onPress={() => console.log('Video clicked')}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>VIDEO</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* TABLE POPUP */}
-      <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: '92%', maxWidth: 720, backgroundColor: '#fff', borderRadius: 10, padding: 12 }}>
-            <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 8 }}>Parameter Table</Text>
-            <View style={{ flexDirection: 'row', backgroundColor: '#e8e8f5', padding: 6 }}>
-              <Text style={{ flex: 0.7, textAlign: 'center', fontWeight: '700' }}>SR</Text>
-              <Text style={{ flex: 2, textAlign: 'center', fontWeight: '700' }}>Parameter</Text>
-              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Original</Text>
-              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Changed</Text>
+            <View style={styles.tableHead}>
+              <Text style={styles.th}>SR</Text>
+              <Text style={styles.th}>Parameter</Text>
+              <Text style={styles.th}>Original</Text>
+              <Text style={styles.th}>Changed</Text>
             </View>
+
             {SR_LIST.map(sr => {
-              const orig = valuesBySr[sr]?.value_01 ?? '';
-              const paramName = valuesBySr[sr]?.parameter ?? '';
-              const changed = editedValues[sr] ?? '';
+              const orig = values[sr]?.value_01 ?? "";
+              const nm = values[sr]?.parameter ?? "";
+              const changed = edited[sr] ?? "";
               return (
-                <View key={`tbl-${sr}`} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
-                  <Text style={{ flex: 0.7, textAlign: 'center' }}>{sr}</Text>
-                  <Text style={{ flex: 2, textAlign: 'center' }}>{paramName}</Text>
-                  <Text style={{ flex: 1.3, textAlign: 'center' }}>{orig}</Text>
-                  <Text style={{ flex: 1.3, textAlign: 'center', color: changed ? 'blue' : '#111' }}>{changed || '-'}</Text>
+                <View key={sr} style={styles.tr}>
+                  <Text style={styles.td}>{sr}</Text>
+                  <Text style={styles.td}>{nm}</Text>
+                  <Text style={styles.td}>{orig}</Text>
+                  <Text style={[styles.td, { color: changed ? "blue" : "#111" }]}>{changed || "-"}</Text>
                 </View>
               );
             })}
 
-            <TouchableOpacity onPress={() => setTablePopup(false)} style={{ marginTop: 12 }}>
-              <Text style={{ color: '#007bff', fontWeight: '700', textAlign: 'center' }}>Close</Text>
-            </TouchableOpacity>
+            <Text style={styles.closeTbl} onPress={() => setTablePopup(false)}>Close</Text>
           </View>
         </View>
       </Modal>
@@ -382,144 +224,42 @@ function BlowerSettingsInner(
   );
 }
 
-/* ------------------------ STYLES ------------------------ */
+export default React.forwardRef(BlowerSettingsInner);
 
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  box: {
-    backgroundColor: '#fff',
-    width: '100%',
-    maxWidth: 420,
-    padding: 14,
-    borderRadius: 10,
-    elevation: 8,
-  },
-  title: { fontWeight: '700', fontSize: 16, marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  row: { flexDirection: 'row', justifyContent: 'flex-end' },
-  cancel: { marginRight: 20, color: '#666' },
-  save: { fontWeight: '700', color: '#007bff' },
-});
+/* ---------- Styles ---------- */
 
 const styles = StyleSheet.create({
-  imageContainer: {
-    overflow: 'hidden',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 0,
-  },
+  container: { flex: 1, backgroundColor: "#f9fafb", padding: 6 },
+  header: { flexDirection: "row", justifyContent: "space-between" },
+  title: { fontSize: 16, fontWeight: "700" },
+  close: { color: "#007bff", fontWeight: "700" },
+  loading: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
 
-  orientationWrap: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  box: { position: "absolute", backgroundColor: "rgba(255,255,255,0.15)", justifyContent: "center", alignItems: "center", borderRadius: 6 },
+  boxText: { fontSize: 12, fontWeight: "700" },
 
-  container: {
-    flex: 1,
-    minHeight: 220,
-    maxHeight: 620,
-    marginVertical: 8,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 8,
-    paddingTop: 0,
-    overflow: 'hidden',
-  },
+  serial: { position: "absolute", backgroundColor: "#000", justifyContent: "center", alignItems: "center", borderRadius: 6 },
+  serialText: { fontSize: 12, fontWeight: "700", color: "#fff" },
 
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
+  bottomBtns: { position: "absolute", bottom: 12, right: 12, flexDirection: "row" },
+  btnBlue: { backgroundColor: "#007bff", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 6 },
+  btnGreen: { backgroundColor: "#28a745", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 6 },
+  btnText: { color: "#fff", fontWeight: "700" },
 
-  closeText: {
-    color: '#007bff',
-    fontWeight: '700',
-  },
+  modalBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: 18 },
+  modal: { backgroundColor: "#fff", borderRadius: 10, padding: 12 },
+  modalTitle: { fontWeight: "700", fontSize: 16 },
+  input: { borderWidth: 1, borderColor: "#aaa", borderRadius: 6, padding: 8 },
+  row: { flexDirection: "row", justifyContent: "flex-end", marginTop: 12 },
+  cancel: { marginRight: 20, color: "#666" },
+  save: { color: "#007bff", fontWeight: "700" },
 
-  tableContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    overflow: 'hidden',
-  },
-
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#e8e8f5',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-
-  th: {
-    fontWeight: '700',
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#111',
-  },
-
-  td: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#333',
-  },
-
-  overlay: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  overlayValue: {
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingHorizontal: 4,
-  },
-
-  serialOverlay: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    borderColor: '#fff',
-    borderWidth: 1.5,
-    borderRadius: 6,
-  },
-
-  serialText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
+  tableBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" },
+  tableBox: { width: "92%", maxWidth: 720, backgroundColor: "#fff", borderRadius: 10, padding: 12 },
+  tableTitle: { fontSize: 16, fontWeight: "700", marginBottom: 8 },
+  tableHead: { flexDirection: "row", backgroundColor: "#e8e8f5", padding: 6 },
+  th: { flex: 1, textAlign: "center", fontWeight: "700" },
+  tr: { flexDirection: "row", borderBottomWidth: 1, paddingVertical: 6, borderColor: "#eee" },
+  td: { flex: 1, textAlign: "center" },
+  closeTbl: { color: "#007bff", fontWeight: "700", textAlign: "center", marginTop: 12 }
 });
-
-export default React.forwardRef(BlowerSettingsInner);
