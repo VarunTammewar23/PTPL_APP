@@ -18,6 +18,7 @@ interface BottomBarProps {
   onExit: () => void;
   onSave: () => void;
   onSettings: () => void;
+  isSaveEnabled?: boolean; //NEW
 }
 
 const BottomBar: FC<BottomBarProps> = ({
@@ -28,6 +29,7 @@ const BottomBar: FC<BottomBarProps> = ({
   onExit,
   onSave,
   onSettings,
+  isSaveEnabled, //New
 }) => {
   return (
     <View style={styles.bottomBarContainer}>
@@ -57,10 +59,21 @@ const BottomBar: FC<BottomBarProps> = ({
         })}
 
         {/* SAVE Button */}
-        <TouchableOpacity activeOpacity={0.9} onPress={onSave} style={styles.savePill}>
-          <Icon name="save" size={FONT_SIZE.header} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.saveText}>SAVE</Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+  activeOpacity={isSaveEnabled ? 0.9 : 1}
+  onPress={() => {
+    if (!isSaveEnabled) {
+      alert("No changes to save.");
+      return;
+    }
+    onSave();
+  }}
+  style={[styles.savePill, !isSaveEnabled && styles.saveDisabled]}
+>
+  <Icon name="save" size={FONT_SIZE.header} color="#ffffff" style={{ marginRight: 6 }} />
+  <Text style={[styles.saveText, !isSaveEnabled && { opacity: 0.6 }]}>SAVE</Text>
+</TouchableOpacity>
+
 
         {/* SETTINGS Button */}
         <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
@@ -149,12 +162,18 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     borderRightWidth: 1,
   },
+    saveDisabled: {
+    backgroundColor: '#9bbcf0', // Slightly faded version of blue
+  },
+
   saveText: {
     color: '#fff',
     fontFamily: FONT_FAMILY.bold,
     fontSize: FONT_SIZE.header,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
+
+
 
   /* SETTINGS BUTTON */
   settingsPill: {

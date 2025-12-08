@@ -28,6 +28,8 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  onDirtyChange?: (dirty: boolean) => void; // FIX ADDED
+  onValuesChange?: (rows: any[]) => void;
 };
 
 interface RecipeParam {
@@ -49,7 +51,6 @@ const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
 // 🎯 SERIAL NUMBERS ON IMAGE
 const SERIAL_POSITIONS = [
   { id: 31, x: 20, y: 32 },
-
 ];
 
 const OVERLAY_WIDTH = 47;
@@ -58,9 +59,10 @@ const OVERLAY_FONT_SIZE = 12;
 const OVERLAY_BORDER_RADIUS = 10;
 
 function BlowerSettingsInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange, onValuesChange }: Props,
   ref: any,
-) {
+)
+ {
   const zoomRef = useRef<any>(null);
   const [zoomKey, setZoomKey] = useState(0);
 
@@ -87,9 +89,41 @@ function BlowerSettingsInner(
     ? { uri: imageUri }
     : require('../assets/blowersettings.jpeg'); // TODO: replace with Blower image
 
-  const [editedValues, setEditedValues] = useState<
-    Record<number, string>
-  >({});
+  const [editedValues, setEditedValues] = useState<Record<number, string>>({});
+
+  const valuesBySr = useMemo(() => {
+    const map: Record<number, RecipeParam | null> = {};
+    SR_LIST.forEach(sr => {
+      map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null;
+    });
+    return map;
+  }, [params]);
+
+  useEffect(() => {
+  if (!onValuesChange) return;
+
+  const rows = SR_LIST.map(sr => ({
+    recipe_name: recipeName,
+    customer_code: undefined,
+    parameter_no: sr,
+    section: valuesBySr[sr]?.section ?? "BLOWER",
+    parameter: valuesBySr[sr]?.parameter ?? "",
+    value_01:
+      editedValues[sr] !== undefined
+        ? editedValues[sr]
+        : valuesBySr[sr]?.value_01 ?? "",
+    unit: valuesBySr[sr]?.unit ?? "",
+  }));
+
+  onValuesChange(rows);
+}, [editedValues, recipeName]);
+
+// notify MainScreen about dirty status
+useEffect(() => {
+  const dirty = Object.keys(editedValues).length > 0;
+  onDirtyChange?.(dirty);
+}, [editedValues, onDirtyChange]);
+
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
 
@@ -161,26 +195,27 @@ function BlowerSettingsInner(
     } else setParams(initialParams);
   }, [recipeId]);
 
-  const valuesBySr = useMemo(() => {
-    const map: Record<number, RecipeParam | null> = {};
-    SR_LIST.forEach(sr => {
-      map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null;
-    });
-    return map;
-  }, [params]);
+  
 
   useImperativeHandle(ref, () => ({
-    getFinalParams: () =>
-      SR_LIST.map(sr => ({
+    getFinalParams: () => {
+      return SR_LIST.map(sr => ({
+        recipe_name: undefined,
+        customer_code: undefined,
+        section: valuesBySr[sr]?.section ?? 'BLOWER',
         parameter_no: sr,
-        section: valuesBySr[sr]?.section ?? '',
         parameter: valuesBySr[sr]?.parameter ?? '',
         value_01:
           editedValues[sr] !== undefined
             ? editedValues[sr]
             : valuesBySr[sr]?.value_01 ?? '',
         unit: valuesBySr[sr]?.unit ?? '',
-      })),
+      }));
+    },
+    resetLocal: () => {
+      setEditedValues({});
+      onDirtyChange?.(false);
+    },
   }));
 
   const openEditor = (sr: number, curr: string) => {
@@ -193,6 +228,7 @@ function BlowerSettingsInner(
     setEditedValues(p => ({ ...p, [editingSr]: tempValue }));
     setEditingSr(null);
     setTempValue('');
+    // do NOT call onDirtyChange(false) here — only reset when SAVE button in BottomBar is pressed
   };
 
   return (

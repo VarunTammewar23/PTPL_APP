@@ -80,11 +80,31 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showSideLay, setShowSideLay] = useState(false);
   const [showBlowerSettings, setShowBlowerSettings] = useState(false);
   const [showRollerGap, setShowRollerGap] = useState(false);
-
-
+  const [machineCache, setMachineCache] = useState<any[] | null>(null);
 
 
   const machineRef = useRef<any>(null);
+  const foldsRef = useRef<any>(null);
+  const offsetRef = useRef<any>(null);
+  const glueTapRef = useRef<any>(null);
+  const suctionGapRef = useRef<any>(null);
+  const allSpeedRef = useRef<any>(null);
+  const sideLayRef = useRef<any>(null);
+  const blowerRef = useRef<any>(null);
+  const rollerRef = useRef<any>(null);
+
+  // track per-panel dirty state
+  const [panelDirtyMap, setPanelDirtyMap] = useState<Record<string, boolean>>({});
+  const hasUnsavedChanges = Object.values(panelDirtyMap).some(Boolean);
+
+  const setPanelDirty = (panelName: string, dirty: boolean) => {
+    setPanelDirtyMap(prev => {
+      if (prev[panelName] === dirty) return prev;
+      return { ...prev, [panelName]: dirty };
+    });
+  };
+
+  const [tempParams, setTempParams] = useState<any[]>([]);
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
@@ -94,6 +114,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [sideMenuTop, setSideMenuTop] = useState<number>(100);
 
   const rpfRef = useRef<any>(null);
+
+  const [saveLocked, setSaveLocked] = useState(false);
+
 
   const ITEM_H = 54;
   const MENU_W = 140;
@@ -267,91 +290,176 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     }
   };
 
-  function getNextVersionName(baseName: string | null, allNames: string[]) {
-    if (!baseName) return `recipe_${Date.now()}`;
+    // Get parent name of any recipe (stops at __XX)
+function getNextChildName(parent: string, all: string[]): string {
+  const base = parent.toLowerCase();
 
-    const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`^${escaped}_(\\d+)$`);
+  // Match base_#, base_##, base_### etc.
+  const regex = new RegExp(`^${base}_(\\d+)$`, "i");
 
-    let max = 0;
-    allNames.forEach(n => {
-      const m = n.match(regex);
-      if (m && m[1]) {
-        const num = parseInt(m[1], 10);
-        if (!isNaN(num) && num > max) max = num;
-      }
-    });
+  let max = 0;
+  all.forEach(n => {
+    const m = n.toLowerCase().match(regex);
+    if (m && m[1]) {
+      const num = parseInt(m[1], 10);
+      if (!isNaN(num) && num > max) max = num;
+    }
+  });
 
-    const next = (max + 1).toString().padStart(2, "0");
-    return `${baseName}_${next}`;
+  // No padding, natural numbering
+  return `${base}_${max + 1}`;
+}
+
+  // collect final params from all panels and send to backend
+const saveAllPanelsData = async () => {
+  if (saveLocked) return;
+  setSaveLocked(true);
+
+  if (!hasUnsavedChanges) {
+    Alert.alert("No changes", "There are no unsaved changes to save.");
+    setSaveLocked(false);
+    return;
   }
 
-  const saveCurrentMachineData = async () => {
-    if (!showMachine)
-      return Alert.alert("Open PAPER SIZES (MachinePanel) first before saving.");
+  const gatherFromRef = async (ref: any) => {
+    try {
+      if (!ref?.current) return [];
+      if (typeof ref.current.getFinalParams !== "function") return [];
+      const result = ref.current.getFinalParams();
+      return result instanceof Promise ? await result : result;
+    } catch (e) {
+      console.warn("gatherFromRef error", e);
+      return [];
+    }
+  };
 
-    if (
-      !machineRef.current ||
-      typeof machineRef.current.getFinalParams !== "function"
-    ) {
-      return Alert.alert("Machine data not ready");
+  try {
+    const [
+      machineRows,
+      foldsRows,
+      offsetRows,
+      glueRows,
+      suctionRows,
+      speedRows,
+      sideLayRows,
+      blowerRows,
+      rollerRows,
+    ] = await Promise.all([
+      gatherFromRef(machineRef),
+      gatherFromRef(foldsRef),
+      gatherFromRef(offsetRef),
+      gatherFromRef(glueTapRef),
+      gatherFromRef(suctionGapRef),
+      gatherFromRef(allSpeedRef),
+      gatherFromRef(sideLayRef),
+      gatherFromRef(blowerRef),
+      gatherFromRef(rollerRef),
+    ]);
+
+    const allParams = [
+      ...(machineRows || []),
+      ...(foldsRows || []),
+      ...(offsetRows || []),
+      ...(glueRows || []),
+      ...(suctionRows || []),
+      ...(speedRows || []),
+      ...(sideLayRows || []),
+      ...(blowerRows || []),
+      ...(rollerRows || []),
+    ].filter(Boolean);
+
+    if (!allParams.length) {
+      Alert.alert("No parameters", "Nothing to save.");
+      return;
     }
 
-    const finalParams = machineRef.current.getFinalParams();
-
-    if (!finalParams || finalParams.length === 0) {
-      return Alert.alert("No parameters to save");
+    if (!selectedRecipeName) {
+      Alert.alert("Error", "Please select a recipe to save.");
+      return;
     }
 
-    const allNames = recipes.map(r => r.recipe_name);
-    const baseName =
-      selectedRecipeName ?? `recipe_${Date.now()}`;
-    const newRecipeName = getNextVersionName(baseName, allNames);
+    function extractParentName(name: string): string {
+  if (!name) return "";
+  const parts = name.toLowerCase().split("_");
 
-    const rows = finalParams.map(p => ({
+  // "rcp_02_04" => parent = "rcp_02"
+  if (parts.length >= 3) return `${parts[0]}_${parts[1]}`;
+
+  // "rcp_02" stays as is
+  return name.toLowerCase();
+}
+
+    await fetchRecipes(); // refresh recipe list
+
+    await fetchRecipes();
+await new Promise(r => setTimeout(r, 50));
+const recipeNames = (
+  await apiGet("/recipes", { params: { customer_code: customerCode } })
+).data.recipes.map((r: any) => r.recipe_name);
+
+const parent = extractParentName(selectedRecipeName);
+const newRecipeName = getNextChildName(parent, recipeNames);
+
+
+    const rows = allParams.map((p: any) => ({
       recipe_name: newRecipeName,
-      customer_code: customerCode,
+      customer_code: p.customer_code ?? customerCode,
       section: p.section ?? "",
       parameter_no: p.parameter_no,
       parameter: p.parameter ?? "",
-      value_01: p.value_01 ?? "",
-      unit: p.unit ?? ""
+      value_01: (p.value_01 === "" || p.value_01 === null || p.value_01 === undefined) 
+            ? 0 
+            : p.value_01,
+      unit: p.unit ?? "",
     }));
 
-    try {
-      const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
+        // Try saving, retry if duplicate
+    let attemptName = newRecipeName;
+    let saved = false;
+    let tryCount = 0;
+
+    while (!saved && tryCount < 10) {  // up to 10 attempts
+      const attemptRows = rows.map((p: any) => ({ ...p, recipe_name: attemptName }));
+
+      const resp = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows })
+        body: JSON.stringify({ rows: attemptRows }),
       });
 
-      const res = await response.json();
+      const ans = await resp.json();
 
-      if (res.exists) {
-        Alert.alert("Duplicate", res.message || "Recipe already exists");
-        return;
-      }
-
-      if (res.success) {
-        Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
+      if (ans.success) {
+        Alert.alert("Saved", `Created new recipe: ${attemptName}`);
+        setPanelDirtyMap({});
+        setTempParams([]);
         await fetchRecipes();
+        if (ans.newRecipeId) setSelectedRecipeId(ans.newRecipeId);
+        saved = true;
+      } else if (ans.message?.includes("exists")) {
+        // compute next version and retry
+        await fetchRecipes();
+        await new Promise(r => setTimeout(r, 50)); // small wait
+        const names = (await apiGet("/recipes", { params: { customer_code: customerCode } })).data.recipes.map((r: any) => r.recipe_name);
 
-        if (res.newRecipeId) {
-          setSelectedRecipeId(res.newRecipeId);
-          setShowMachine(false);
-        } else {
-          const found = (recipes || []).find(
-            r => r.recipe_name === newRecipeName
-          );
-          if (found) setSelectedRecipeId(found.recipe_id);
-        }
+        attemptName = getNextChildName(parent, names);
+        tryCount++;
       } else {
-        Alert.alert("Error", res.message || "Failed to save recipe");
+        Alert.alert("Error", ans.message || "Failed to save");
+        break;
       }
-    } catch (err: any) {
-      Alert.alert("Network error", err?.message ?? "Failed to save");
     }
-  };
+
+    if (!saved) {
+      Alert.alert("Error", "Failed to save after multiple attempts.");
+    }
+
+  } catch (err: any) {
+    Alert.alert("Network error", err?.message ?? "Failed to save");
+  } finally {
+    setSaveLocked(false);
+  }
+};
 
   const labels = [
     "HOME/LOGIN",
@@ -397,61 +505,141 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     </View>   
   ) : showMachine ? (
     <MachinePanel
-      ref={machineRef}
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      initialParams={recipeParams}
-      onClose={() => setShowMachine(false)}
-    />
+  ref={machineRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName ?? undefined}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowMachine(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("PAPER_SIZES", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
+
   ) : showFolds ? (
     <Folds
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowFolds(false)}
-    />
+  ref={foldsRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName ?? undefined}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowFolds(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("FOLDS", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showOffset ? (
     <Offset
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowOffset(false)}
-    />
+  ref={offsetRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowOffset(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("OFFSET", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showGlueTap ? (
     <GlueTap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowGlueTap(false)}
-    />
+  ref={glueTapRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowGlueTap(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("GLUE_TAP", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showSuctionGap ? (
     <SuctionGap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowSuctionGap(false)}
-    />
+  ref={suctionGapRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowSuctionGap(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("SUCTION_GAP", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showAllSpeed ? (
     <AllSpeed
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowAllSpeed(false)}
-    />
+  ref={allSpeedRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowAllSpeed(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("ALL_SPEED", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showSideLay ? (
     <SideLay
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      initialParams={recipeParams}
-      onClose={() => setShowSideLay(false)}
-    />
+  ref={sideLayRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName ?? undefined}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowSideLay(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("SIDE_LAY", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : showBlowerSettings ? (
     <BlowerSettings
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowBlowerSettings(false)}
-    />
+  ref={blowerRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowBlowerSettings(false)}
+  onDirtyChange={(dirty) => setPanelDirty("BLOWER", dirty)}
+  onValuesChange={(rows) => {
+    setTempParams(prev => {
+      const filtered = prev.filter(p => p.section !== "BLOWER");
+      return [...filtered, ...rows];
+    });
+  }}
+/>
+
   ) : showRollerGap ? (
     <RollerGap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowRollerGap(false)}
-    />
+  ref={rollerRef}
+  recipeId={selectedRecipeId}
+  recipeName={selectedRecipeName ?? undefined}
+  initialParams={tempParams.length ? tempParams : recipeParams}
+  onClose={() => setShowRollerGap(false)}
+  onDirtyChange={(dirty: boolean) => setPanelDirty("ROLLER", dirty)}
+  onValuesChange={(rows: any[]) => {
+    setTempParams(prev => {
+      const others = prev.filter(p => p.section !== rows[0]?.section);
+      return [...others, ...rows];
+    });
+  }}
+/>
   ) : recipeParams.length === 0 ? (
     <Text>No parameters for this recipe.</Text>
   ) : (
@@ -534,10 +722,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       labels={labels}
       activePanel={activePanel}
       rpfRef={rpfRef}
-      onSave={saveCurrentMachineData}
+      onSave={() => saveAllPanelsData()}
+
       onPressItem={label => {
         // If clicking RECIPE
-        if (label === "RECIPE") {
+        if (label === "RECIPE") 
+        {
           setShowMachine(false);
           setShowFolds(false);
           setShowOffset(false);
@@ -565,6 +755,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         ])
       }
       onSettings={() => navigation.navigate("Settings")}  // 👈 ADD THIS LINE
+
+      
+      isSaveEnabled={hasUnsavedChanges}
     />
 
 

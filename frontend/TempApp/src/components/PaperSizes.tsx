@@ -1,5 +1,5 @@
 // src/components/MachinePanel.tsx
-import React, { useEffect, useMemo, useState, useImperativeHandle, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useImperativeHandle, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,9 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  onDirtyChange?: (dirty: boolean) => void; // NEW
+  onValuesChange?: (rows: any[]) => void; // NEW
+
 };
 
 interface RecipeParam {
@@ -44,8 +47,6 @@ const CLAMPED_SCALE = Math.max(0.85, Math.min(SCALE, 1.15));
 
 const OVERLAY_FONT_SIZE = 17 * CLAMPED_SCALE * PixelRatio.getFontScale();
 const SERIAL_FONT_SIZE = 17 * CLAMPED_SCALE * PixelRatio.getFontScale();
-
-const OVERLAY_BORDER_RADIUS = 10;
 
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
   1: { x: 140, y: 118 },
@@ -68,17 +69,16 @@ const SERIAL_POSITIONS = [
 ];
 
 function MachinePanelInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange, onValuesChange, recipeName }: Props,
   ref: any
-) {
+)
+ {
   const zoomRef = useRef<any>(null);
-  const [zoomKey, setZoomKey] = useState(0);
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const [loading, setLoading] = useState<boolean>(!initialParams);
-const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams) ? initialParams : []);
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
@@ -86,6 +86,18 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
   const [contH, setContH] = useState<number>(
     Math.round(Dimensions.get('window').height * 0.40)
   );
+
+  const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams) ? initialParams : []);
+  const valuesBySr = useMemo(() => {
+    const map: Record<number, RecipeParam | null> = {};
+    SR_LIST.forEach(sr => {
+      map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null;
+    });
+    return map;
+  }, [params]);
+
+  const OVERLAY_BORDER_RADIUS = 10;
+
 
   const [dispW, setDispW] = useState<number>(contW);
   const [dispH, setDispH] = useState<number>(contH);
@@ -96,17 +108,58 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
 
-  // NEW: Table popup instead of toggling
   const [tablePopup, setTablePopup] = useState(false);
 
+  // NEW dirty tracking
+  const lastDirtyRef = useRef<boolean>(false);
   useEffect(() => {
-    const onChange = ({ window }) => {
-      setContW(window.width);
-      setContH(Math.round(window.height * (window.width > window.height ? 0.85 : 0.40)));
-    };
-    const sub = Dimensions.addEventListener('change', onChange);
-    return () => sub?.remove();
-  }, []);
+    const isDirty = Object.keys(editedValues).length > 0;
+    if (lastDirtyRef.current !== isDirty) {
+      lastDirtyRef.current = isDirty;
+      if (typeof onDirtyChange === 'function') {
+        onDirtyChange(isDirty);
+      }
+    }
+  }, [editedValues, onDirtyChange]);
+
+  // NEW: live sync edited values to MainScreen
+  // NEW: live sync edited values to MainScreen (stable handler via ref)
+  const rowsForValuesChange = useMemo(() => {
+    return SR_LIST.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: valuesBySr[sr]?.section ?? '',
+      parameter: valuesBySr[sr]?.parameter ?? '',
+      value_01:
+        editedValues[sr] !== undefined
+          ? editedValues[sr]
+          : valuesBySr[sr]?.value_01 ?? '',
+      unit: valuesBySr[sr]?.unit ?? '',
+    }));
+  }, [editedValues, recipeName, valuesBySr]);
+
+  const onValuesChangeRef = useRef<typeof onValuesChange | null>(null);
+  useEffect(() => { onValuesChangeRef.current = onValuesChange ?? null; }, [onValuesChange]);
+
+  // Only call the parent handler when rows actually change to avoid render loops.
+  const prevRowsJsonRef = useRef<string | null>(null);
+  useEffect(() => {
+    try {
+      const json = JSON.stringify(rowsForValuesChange);
+      if (json === prevRowsJsonRef.current) return;
+      prevRowsJsonRef.current = json;
+      if (typeof onValuesChangeRef.current === 'function') {
+        onValuesChangeRef.current(rowsForValuesChange);
+      }
+    } catch (err) {
+      console.log('onValuesChange handler failed', err);
+    }
+  }, [rowsForValuesChange]);
+
+
+
+
 
   useEffect(() => {
     let mounted = true;
@@ -156,14 +209,23 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
     }
   }, [natW, natH, contW, contH]);
 
-  const fetchParams = async () => {
-    try {
-      const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
-      const p: RecipeParam[] = res.data?.params ?? [];
-      setParams(p);
-    } catch {}
-    finally { setLoading(false); }
-  };
+  const fetchParams = useCallback(async () => {
+  try {
+    const res = await apiGet(`/recipes/${recipeId}`, { timeout: 8000 });
+    const p: RecipeParam[] = res.data?.params ?? [];
+    setParams(p);
+
+    // NEW: log section values clearly
+    console.log("----- PAPER SIZES RAW PARAMS -----");
+    p.forEach(x => console.log(`SR ${x.parameter_no}: Section=${x.section}, Param=${x.parameter}, Value=${x.value_01}`));
+    console.log("-----------------------------------");
+
+  } catch (e) {
+    console.log("Fetch error:", e);
+  }
+  finally { setLoading(false); }
+}, [recipeId]);
+
 
   useEffect(() => {
     let alive = true;
@@ -173,23 +235,26 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
       const id = setInterval(() => alive && fetchParams(), pollMs);
       return () => { alive = false; clearInterval(id); };
     } else setParams(initialParams);
-  }, [recipeId]);
+  }, [initialParams, fetchParams, pollMs]);
 
-  const valuesBySr = useMemo(() => {
-    const map: Record<number, RecipeParam | null> = {};
-    SR_LIST.forEach(sr => {
-      map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null;
-    });
-    return map;
-  }, [params]);
+  
 
+  console.log("PAPER SIZES SECTION VALUES:", valuesBySr);
+
+
+  // NEW: Ensure backend shaped return
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       SR_LIST.map(sr => ({
+        recipe_name: recipeName ?? undefined,
+        customer_code: undefined, // MainScreen will add if needed
         parameter_no: sr,
         section: valuesBySr[sr]?.section ?? '',
         parameter: valuesBySr[sr]?.parameter ?? '',
-        value_01: editedValues[sr] !== undefined ? editedValues[sr] : valuesBySr[sr]?.value_01 ?? '',
+        value_01:
+          editedValues[sr] !== undefined
+            ? editedValues[sr]
+            : valuesBySr[sr]?.value_01 ?? '',
         unit: valuesBySr[sr]?.unit ?? '',
       })),
   }));
@@ -209,18 +274,14 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
   return (
     <View style={styles.container}>
 
-     {/* HEADER */}
+      {/* HEADER */}
       <View style={styles.headerRow}>
         <Text style={styles.title}>RPF : PAPER SIZES</Text>
       </View>
 
-
-
-
       {/* IMAGE ALWAYS VISIBLE */}
       <View style={[styles.imageContainer, { width: '100%', flex: 1 }]}>
         <ZoomableView
-          key={zoomKey}
           ref={zoomRef}
           minScale={1}
           maxScale={4}
@@ -308,24 +369,23 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
           </ImageBackground>
         </ZoomableView>
       </View>
+
       {/* FLOATING ACTION BUTTONS */}
-<View style={styles.fabContainer}>
-  <TouchableOpacity
-    style={styles.fabButton}
-    onPress={() => setTablePopup(true)}
-  >
-    <Text style={styles.fabButtonText}>SHOW TABLE</Text>
-  </TouchableOpacity>
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fabButton}
+          onPress={() => setTablePopup(true)}
+        >
+          <Text style={styles.fabButtonText}>SHOW TABLE</Text>
+        </TouchableOpacity>
 
-  <TouchableOpacity
-    style={styles.fabButton}
-    onPress={() => console.log("Video clicked")} // later replace with video logic
-  >
-    <Text style={styles.fabButtonText}>VIDEO</Text>
-  </TouchableOpacity>
-</View>
-
-
+        <TouchableOpacity
+          style={styles.fabButton}
+          onPress={() => console.log("Video clicked")}
+        >
+          <Text style={styles.fabButtonText}>VIDEO</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* MODAL: TABLE POPUP */}
       <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
@@ -341,10 +401,9 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
                 <Text style={[styles.th, { flex: 1.3 }]}>Changed</Text>
               </View>
 
-
               {SR_LIST.map(sr => {
                 const orig = valuesBySr[sr]?.value_01 ?? '';
-                const paramName = valuesBySr[sr]?.parameter ?? ''; // <-- parameter name
+                const paramName = valuesBySr[sr]?.parameter ?? '';
                 const changed = editedValues[sr] ?? '';
 
                 return (
@@ -494,35 +553,27 @@ const styles = StyleSheet.create({
   },
 
   container: {
-  flex: 1,
-  backgroundColor: '#f9fafb',
-  borderRadius: 0,
-  paddingHorizontal: 8,
-  paddingBottom: 8,
-  marginTop: 0,
-  marginBottom: 0,
-  position: 'relative',
-},
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderRadius: 0,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    marginTop: 0,
+    marginBottom: 0,
+    position: 'relative',
+  },
 
-
- headerRow: {
-  width: '100%',
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingVertical: 0,
-  marginBottom: 0,
-},
-
+  headerRow: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 0,
+    marginBottom: 0,
+  },
 
   title: {
     fontSize: 16,
     fontWeight: '700',
-  },
-
-  closeText: {
-    color: '#007bff',
-    fontWeight: '700',
-    marginLeft: 12,
   },
 
   overlay: {
@@ -530,8 +581,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    WIDTH: OVERLAY_WIDTH,
-    HEIGHT: OVERLAY_HEIGHT,
+    width: OVERLAY_WIDTH,
+    height: OVERLAY_HEIGHT,
   },
 
   overlayValue: {
@@ -541,51 +592,28 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
 
-//   tableButton: {
-//   backgroundColor: '#007bff',
-//   paddingHorizontal: 14,
-//   paddingVertical: 8,
-//   borderRadius: 6,
-//   justifyContent: 'center',
-//   alignItems: 'center',
-//   marginLeft: 10,
-//   elevation: 3,
-// },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 12,
+    left: '10%',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
 
-// tableButtonText: {
-//   color: '#fff',
-//   fontWeight: '700',
-//   fontSize: 14,
-// },
+  fabButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    elevation: 5,
+    marginRight: 10,
+  },
 
-// 
-fabContainer: {
-  position: 'absolute',
-  bottom: 12,
-  // left: 120,          // adjust this if you want more center
-  left: '10%' ,
-  flexDirection: 'row',
-  alignItems: 'center'
-},
-
-fabButton: {
-  backgroundColor: '#007bff',
-  paddingVertical: 10,
-  paddingHorizontal: 18,
-  borderRadius: 8,
-  elevation: 5,
-  marginRight: 10,    // space between SHOW TABLE and VIDEO
-},
-
-fabButtonText: {
-  color: '#fff',
-  fontWeight: '700',
-  fontSize: 14,
-},
-
-
-
-
+  fabButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
 
 });
 

@@ -22,6 +22,9 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  /** NEW */
+  onDirtyChange?: (dirty: boolean) => void;
+  onValuesChange?: (rows: any[]) => void;
 };
 
 interface RecipeParam {
@@ -58,7 +61,7 @@ const BOX_W = 30;
 const BOX_H = 24;
 
 function OffsetInner(
-  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange }: Props,
   ref: any
 ) {
   const { theme } = useTheme();
@@ -119,6 +122,29 @@ function OffsetInner(
     PARAM_SR.forEach(sr => (map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null));
     return map;
   }, [params]);
+
+  /** NEW — notify dirty flag */
+  useEffect(() => {
+    const dirty = Object.keys(edited).length > 0;
+    onDirtyChange?.(dirty);
+  }, [edited, onDirtyChange]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = PARAM_SR.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: values[sr]?.section ?? "OFFSET SETTINGS",
+      parameter: values[sr]?.parameter ?? "",
+      value_01: edited[sr] !== undefined ? edited[sr] : values[sr]?.value_01 ?? "",
+      unit: values[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [edited, recipeName]);
 
   // --- Expose save data to backend ---
   useImperativeHandle(ref, () => ({

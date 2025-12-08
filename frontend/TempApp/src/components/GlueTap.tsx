@@ -18,7 +18,8 @@ const SERIAL_POS = [
 
 const BOX_W = 30, BOX_H = 24;
 
-function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
+// ADDED onDirtyChange?: (dirty:boolean)=>void and onValuesChange
+function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange, onValuesChange }: any, ref: any) {
   const { theme } = useTheme();
   const dark = theme === 'dark';
   const [params, setParams] = useState(initialParams ?? []);
@@ -65,10 +66,33 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
   }, [natW, natH, contW, contH]);
 
   const values = useMemo(() => {
-    const map = {};
+    const map: any = {};
     PARAM_SR.forEach(sr => map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null);
     return map;
   }, [params]);
+
+  // ADDED: DIRTY TRACKER
+  useEffect(() => {
+    const dirty = Object.keys(edited).length > 0;
+    onDirtyChange?.(dirty);
+  }, [edited]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = PARAM_SR.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: values[sr]?.section ?? "GLUETAP",
+      parameter: values[sr]?.parameter ?? "",
+      value_01: edited[sr] !== undefined ? edited[sr] : values[sr]?.value_01 ?? "",
+      unit: values[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [edited, recipeName]);
 
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>

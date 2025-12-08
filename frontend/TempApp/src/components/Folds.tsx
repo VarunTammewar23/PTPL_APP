@@ -1,3 +1,5 @@
+// src/components/Folds.tsx
+
 import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
 import {
   View,
@@ -22,6 +24,8 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  onDirtyChange?: (dirty: boolean) => void;
+  onValuesChange?: (rows: any[]) => void;
 };
 
 interface RecipeParam {
@@ -51,7 +55,7 @@ const SERIAL_POS = [
 ];
 
 function FoldsInner(
-  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange }: Props,
   ref: any
 ) {
   const { theme } = useTheme();
@@ -68,9 +72,33 @@ function FoldsInner(
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/folds.jpeg'); // 📌 your image
+  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/folds.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
+
+  // NOTIFY DIRTY CHANGES
+  useEffect(() => {
+    const dirty = Object.keys(edited).length > 0;
+    onDirtyChange?.(dirty);
+  }, [edited]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = PARAM_SR.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: values[sr]?.section ?? "FOLDS",
+      parameter: values[sr]?.parameter ?? "",
+      value_01: edited[sr] !== undefined ? edited[sr] : values[sr]?.value_01 ?? "",
+      unit: values[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [edited, recipeName]);
+
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
@@ -116,6 +144,7 @@ function FoldsInner(
     return m;
   }, [params]);
 
+  // EXPOSE getFinalParams
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       PARAM_SR.map(sr => {
@@ -147,7 +176,6 @@ function FoldsInner(
       <Text style={styles.close} onPress={onClose}>Close</Text>
     </View>
 
-    {/* CENTER WRAPPER — FIXES WHITE SPACE ISSUE */}
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ZoomableView
         minScale={1}
@@ -167,7 +195,6 @@ function FoldsInner(
             </View>
           )}
 
-          {/* PARAMETER BOXES */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
             const orig = values[sr];
@@ -201,7 +228,6 @@ function FoldsInner(
             );
           })}
 
-          {/* SERIAL NUMBER LABELS */}
           {SERIAL_POS.map(p => {
             const left = Math.round((p.x / 100) * dispW);
             const top = Math.round((p.y / 100) * dispH);
@@ -233,7 +259,6 @@ function FoldsInner(
       </ZoomableView>
     </View>
 
-    {/* VALUE EDITOR */}
     <Modal visible={editingSr !== null} transparent animationType="fade">
       <View style={styles.modalBg}>
         <View style={styles.modal}>

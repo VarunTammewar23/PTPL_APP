@@ -28,6 +28,8 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  onDirtyChange?: (dirty: boolean) => void; // <<<< ADDED
+  onValuesChange?: (rows: any[]) => void;
 };
 
 interface RecipeParam {
@@ -59,7 +61,7 @@ const SERIAL_POSITIONS = [
 ];
 
 function RollerGapInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange }: Props,
   ref: any
 ) {
   const zoomRef = useRef<any>(null);
@@ -90,6 +92,32 @@ function RollerGapInner(
   const [editedValues, setEditedValues] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
+
+  // >>> DIRTY STATE HANDLER <<<
+  useEffect(() => {
+    const dirty = Object.keys(editedValues).length > 0;
+    onDirtyChange?.(dirty);
+  }, [editedValues]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = SR_LIST.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: valuesBySr[sr]?.section ?? "ROLLER GAP",
+      parameter: valuesBySr[sr]?.parameter ?? "",
+      value_01:
+        editedValues[sr] !== undefined
+          ? editedValues[sr]
+          : valuesBySr[sr]?.value_01 ?? "",
+      unit: valuesBySr[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [editedValues, recipeName]);
 
   useEffect(() => {
     const onChange = ({ window }) => {
@@ -165,11 +193,14 @@ function RollerGapInner(
     return map;
   }, [params]);
 
+  // >>> FINAL PARAMS EXPORT WITH local edits <<<
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       SR_LIST.map(sr => ({
+        recipe_name: undefined,
+        customer_code: undefined,
+        section: valuesBySr[sr]?.section ?? 'ROLLER_GAP',
         parameter_no: sr,
-        section: valuesBySr[sr]?.section ?? '',
         parameter: valuesBySr[sr]?.parameter ?? '',
         value_01:
           editedValues[sr] !== undefined
@@ -201,7 +232,6 @@ function RollerGapInner(
       </View>
 
       <View style={[styles.orientationWrap, { flexDirection: isLandscape ? 'row' : 'column' }]}>
-
         <View style={[styles.imageContainer, { width: isLandscape ? '50%' : '100%', flex: 1 }]}>
           <ZoomableView
             key={zoomKey}

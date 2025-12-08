@@ -22,7 +22,10 @@ const SERIAL_POS = [
 
 const BOX_W = 30, BOX_H = 24;
 
-function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
+function SuctionGapInner(
+  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange, onValuesChange }: any,
+  ref: any
+) {
   const { theme } = useTheme();
   const dark = theme === 'dark';
 
@@ -33,11 +36,35 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
   const [contH, setContH] = useState(Math.round(Dimensions.get('window').height * 0.45));
   const [dispW, setDispW] = useState(contW), [dispH, setDispH] = useState(contH);
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/suctiongap.jpeg'); // 🔁 IMAGE
+  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/suctiongap.jpeg');
 
   const [edited, setEdited] = useState({});
   const [editingSr, setEditingSr] = useState(null);
   const [tempVal, setTempVal] = useState('');
+
+  // ======================= NEW DIRTY HANDLER =======================
+  useEffect(() => {
+    const dirty = Object.keys(edited).length > 0;
+    onDirtyChange?.(dirty);
+  }, [edited, onDirtyChange]);
+  // ==================================================================
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = PARAM_SR.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: values[sr]?.section ?? "SUCTION GAP",
+      parameter: values[sr]?.parameter ?? "",
+      value_01: edited[sr] !== undefined ? edited[sr] : values[sr]?.value_01 ?? "",
+      unit: values[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [edited, recipeName]);
 
   useEffect(() => {
     if (!initialParams) {
@@ -69,6 +96,7 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
     return m;
   }, [params]);
 
+  // ======================= REQUIRED getFinalParams ======================
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
@@ -79,6 +107,7 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
         unit: values[sr]?.unit ?? '',
       })),
   }));
+  // ======================================================================
 
   return (
   <View
@@ -96,7 +125,6 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
       <Text style={styles.close} onPress={onClose}>Close</Text>
     </View>
 
-    {/* Center wrapper to prevent image shrinking */}
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <ZoomableView
         minScale={1}
@@ -116,7 +144,6 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
             </View>
           )}
 
-          {/* Editable Values */}
           {PARAM_SR.map(sr => {
             const pos = POSITIONS[sr];
             const val = edited[sr] ?? values[sr]?.value_01 ?? '';
@@ -148,7 +175,6 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
             );
           })}
 
-          {/* Serial Number Labels */}
           {SERIAL_POS.map(s => {
             const left = (s.x / 100) * dispW;
             const top = (s.y / 100) * dispH;
@@ -180,7 +206,6 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
       </ZoomableView>
     </View>
 
-    {/* Value Edit Modal */}
     <Modal visible={editingSr !== null} transparent animationType="fade">
       <View style={styles.modalBg}>
         <View style={styles.modal}>

@@ -22,6 +22,8 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
+  onDirtyChange?: (dirty: boolean) => void; // <-- ADDED
+  onValuesChange?: (rows: any[]) => void;
 };
 
 interface RecipeParam {
@@ -37,7 +39,7 @@ const OVERLAY_HEIGHT = 30;
 const OVERLAY_FONT_SIZE = 12;
 const OVERLAY_BORDER_RADIUS = 10;
 
-// 🟢 positions for Side Lay (YOU CAN CHANGE COORDINATES IF REQUIRED)
+// positions for Side Lay
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
   18: { x: 15, y: 10 },
 };
@@ -49,7 +51,7 @@ const SERIAL_POSITIONS = [
 ];
 
 function SideLayInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000 }: Props,
+  { recipeId, imageUri, onClose, initialParams, pollMs = 2000, onDirtyChange }: Props,
   ref: any
 ) {
   const zoomRef = useRef<any>(null);
@@ -80,6 +82,32 @@ function SideLayInner(
   const [editedValues, setEditedValues] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
+
+  // <-- NOTIFY DIRTY WHEN EDITED VALUES CHANGE
+  useEffect(() => {
+    const dirty = Object.keys(editedValues).length > 0;
+    onDirtyChange?.(dirty);
+  }, [editedValues]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = SR_LIST.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: valuesBySr[sr]?.section ?? "SIDELAY",
+      parameter: valuesBySr[sr]?.parameter ?? "",
+      value_01:
+        editedValues[sr] !== undefined
+          ? editedValues[sr]
+          : valuesBySr[sr]?.value_01 ?? "",
+      unit: valuesBySr[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [editedValues, recipeName]);
 
   useEffect(() => {
     const onChange = ({ window }) => {
@@ -155,6 +183,7 @@ function SideLayInner(
     return map;
   }, [params]);
 
+  // <-- REQUIRED IMPERATIVE HANDLE
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
       SR_LIST.map(sr => ({
@@ -324,7 +353,7 @@ const styles = StyleSheet.create({
   closeText: { color: '#007bff', fontWeight: '700' },
 
   orientationWrap: { flex: 1, width: '100%' },
-  imageContainer: {overflow: 'hidden', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  imageContainer: { overflow: 'hidden', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
 
   overlay: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   overlayValue: { fontSize: OVERLAY_FONT_SIZE, fontWeight: '700' },

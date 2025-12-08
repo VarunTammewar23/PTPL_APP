@@ -36,9 +36,11 @@ const SERIAL_POS = [
 const BOX_W = 30, BOX_H = 24;
 
 function AllSpeedInner(
-  { recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any,
+  { recipeId, recipeName, imageUri, onClose, initialParams, onDirtyChange, pollMs = 2000, onValuesChange }: any,
   ref: any
-) {
+)
+
+{
   const { theme } = useTheme();
   const dark = theme === 'dark';
 
@@ -57,6 +59,29 @@ function AllSpeedInner(
     : require('../assets/allspeed.jpeg');
 
   const [edited, setEdited] = useState<any>({});
+    // NOTIFY DIRTY WHEN EDITED CHANGES
+  useEffect(() => {
+    const dirty = Object.keys(edited).length > 0;
+    onDirtyChange?.(dirty);
+  }, [edited, onDirtyChange]);
+
+  // SEND VALUES TO PARENT
+  useEffect(() => {
+    if (!onValuesChange) return;
+
+    const rows = PARAM_SR.map(sr => ({
+      recipe_name: recipeName,
+      customer_code: undefined,
+      parameter_no: sr,
+      section: values[sr]?.section ?? "ALL SPEED",
+      parameter: values[sr]?.parameter ?? "",
+      value_01: edited[sr] !== undefined ? edited[sr] : values[sr]?.value_01 ?? "",
+      unit: values[sr]?.unit ?? "",
+    }));
+
+    onValuesChange(rows);
+  }, [edited, recipeName]);
+
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
