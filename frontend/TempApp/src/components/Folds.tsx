@@ -129,6 +129,11 @@ function FoldsInner(
           unit: orig?.unit ?? '',
         };
       }),
+    clearEdits: () => {
+      setEdited({});
+      setEditingSr(null);
+      setTempVal('');
+    }
   }));
 
   return (

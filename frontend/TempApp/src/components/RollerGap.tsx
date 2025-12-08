@@ -177,6 +177,11 @@ function RollerGapInner(
             : valuesBySr[sr]?.value_01 ?? '',
         unit: valuesBySr[sr]?.unit ?? '',
       })),
+    clearEdits: () => {
+      setEditedValues({});
+      setEditingSr(null);
+      setTempValue('');
+    }
   }));
 
   const openEditor = (sr: number, curr: string) => {

@@ -192,6 +192,11 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
         value_01: editedValues[sr] !== undefined ? editedValues[sr] : valuesBySr[sr]?.value_01 ?? '',
         unit: valuesBySr[sr]?.unit ?? '',
       })),
+    clearEdits: () => {
+      setEditedValues({});
+      setEditingSr(null);
+      setTempValue('');
+    }
   }));
 
   const openEditor = (sr: number, current: string) => {

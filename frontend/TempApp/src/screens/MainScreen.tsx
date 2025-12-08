@@ -70,6 +70,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
 
   const [showMachine, setShowMachine] = useState<boolean>(false);
   const [showFolds, setShowFolds] = useState(false);
@@ -85,6 +86,14 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 
   const machineRef = useRef<any>(null);
+  const foldsRef = useRef<any>(null);
+  const offsetRef = useRef<any>(null);
+  const glueRef = useRef<any>(null);
+  const suctionRef = useRef<any>(null);
+  const allSpeedRef = useRef<any>(null);
+  const sideLayRef = useRef<any>(null);
+  const blowerRef = useRef<any>(null);
+  const rollerRef = useRef<any>(null);
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
@@ -175,9 +184,12 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         params: { customer_code: customerCode },
         timeout: 7000
       });
-      setRecipes(res.data.recipes || []);
+      const list = res.data.recipes || [];
+      setRecipes(list);
+      return list;
     } catch (err) {
       Alert.alert("Error fetching recipes");
+      return [];
     } finally {
       setLoadingRecipes(false);
     }
@@ -270,7 +282,21 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   function getNextVersionName(baseName: string | null, allNames: string[]) {
     if (!baseName) return `recipe_${Date.now()}`;
 
-    const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Decide parent name for versioning:
+    // - If baseName has two or more trailing numeric segments (e.g. "recipe_01_01"),
+    //   treat its parent as baseName without the last numeric segment ("recipe_01").
+    // - If baseName has only one trailing numeric segment (e.g. "recipe_02"),
+    //   treat parent = baseName (so child names become "recipe_02_01", ...).
+    const parts = baseName.split("_");
+    let trailingNumeric = 0;
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (/^\d+$/.test(parts[i])) trailingNumeric++;
+      else break;
+    }
+
+    const parent = trailingNumeric >= 2 ? parts.slice(0, parts.length - 1).join("_") : baseName;
+
+    const escaped = parent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`^${escaped}_(\\d+)$`);
 
     let max = 0;
@@ -283,32 +309,39 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     });
 
     const next = (max + 1).toString().padStart(2, "0");
-    return `${baseName}_${next}`;
+    return `${parent}_${next}`;
   }
 
   const saveCurrentMachineData = async () => {
-    if (!showMachine)
-      return Alert.alert("Open PAPER SIZES (MachinePanel) first before saving.");
+    // Determine which panel is active and use its ref to collect params.
+    let panelRef: any = null;
+    if (showMachine) panelRef = machineRef;
+    else if (showFolds) panelRef = foldsRef;
+    else if (showOffset) panelRef = offsetRef;
+    else if (showGlueTap) panelRef = glueRef;
+    else if (showSuctionGap) panelRef = suctionRef;
+    else if (showAllSpeed) panelRef = allSpeedRef;
+    else if (showSideLay) panelRef = sideLayRef;
+    else if (showBlowerSettings) panelRef = blowerRef;
+    else if (showRollerGap) panelRef = rollerRef;
+    else panelRef = machineRef; // fallback
 
-    if (
-      !machineRef.current ||
-      typeof machineRef.current.getFinalParams !== "function"
-    ) {
-      return Alert.alert("Machine data not ready");
+    // Collect params from the active panel
+    let params: any[] = [];
+    try {
+      const maybe = panelRef?.current?.getFinalParams;
+      if (maybe) {
+        const result = panelRef.current.getFinalParams();
+        params = result instanceof Promise ? await result : result;
+      }
+    } catch (e) {
+      // continue with empty params
+      params = [];
     }
 
-    const finalParams = machineRef.current.getFinalParams();
+    let newRecipeName = getNextVersionName(selectedRecipeName, recipes.map(r => r.recipe_name));
 
-    if (!finalParams || finalParams.length === 0) {
-      return Alert.alert("No parameters to save");
-    }
-
-    const allNames = recipes.map(r => r.recipe_name);
-    const baseName =
-      selectedRecipeName ?? `recipe_${Date.now()}`;
-    const newRecipeName = getNextVersionName(baseName, allNames);
-
-    const rows = finalParams.map(p => ({
+    const rows = (params || []).map((p: any) => ({
       recipe_name: newRecipeName,
       customer_code: customerCode,
       section: p.section ?? "",
@@ -318,6 +351,51 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       unit: p.unit ?? ""
     }));
 
+    // Basic validation: don't send empty/invalid rows
+    const isValidRow = (r: any) => {
+      if (!r) return false;
+      // parameter_no should be a number OR parameter name or value should be present
+      const hasParamNo = typeof r.parameter_no === 'number' && !isNaN(r.parameter_no);
+      const hasParameter = typeof r.parameter === 'string' && r.parameter.trim().length > 0;
+      const hasValue = r.value_01 !== null && r.value_01 !== undefined && (`${r.value_01}`).trim().length > 0;
+      return hasParamNo || hasParameter || hasValue;
+    };
+
+    const filteredRows = rows.filter(isValidRow);
+
+    if (!newRecipeName || /^\d+$/.test(newRecipeName)) {
+      // avoid numeric-only recipe names (defensive)
+      newRecipeName = `recipe_${Date.now()}`;
+      filteredRows.forEach((rr: any) => (rr.recipe_name = newRecipeName));
+    }
+
+    if (filteredRows.length === 0) {
+      return Alert.alert('No changes', 'There are no parameter changes to save');
+    }
+
+    if (saving) return Alert.alert('Please wait', 'Save already in progress');
+    setSaving(true);
+
+    const clearAllPanelTemp = () => {
+      [
+        machineRef,
+        foldsRef,
+        offsetRef,
+        glueRef,
+        suctionRef,
+        allSpeedRef,
+        sideLayRef,
+        blowerRef,
+        rollerRef,
+      ].forEach(r => {
+        try {
+          if (r?.current?.clearEdits) r.current.clearEdits();
+        } catch (e) {
+          // ignore
+        }
+      });
+    };
+
     try {
       const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
         method: "POST",
@@ -326,30 +404,79 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       });
 
       const res = await response.json();
+      console.warn('upload-excel response', res);
 
-      if (res.exists) {
-        Alert.alert("Duplicate", res.message || "Recipe already exists");
+      // Refresh recipes and try to locate the created recipe
+      const updated = await fetchRecipes();
+      const found = (updated || []).find((r: any) => r.recipe_name === newRecipeName);
+
+      if (res && res.success) {
+        Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
+        if (res.newRecipeId) setSelectedRecipeId(res.newRecipeId);
+        else if (found) setSelectedRecipeId(found.recipe_id);
+
+        clearAllPanelTemp();
+        setShowMachine(false);
+        setShowFolds(false);
+        setShowOffset(false);
+        setShowGlueTap(false);
+        setShowSuctionGap(false);
+        setShowAllSpeed(false);
+        setShowSideLay(false);
+        setShowBlowerSettings(false);
+        setShowRollerGap(false);
+        setSaving(false);
         return;
       }
 
-      if (res.success) {
-        Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
-        await fetchRecipes();
-
-        if (res.newRecipeId) {
-          setSelectedRecipeId(res.newRecipeId);
+      if (res && res.exists) {
+        if (found) {
+          setSelectedRecipeId(found.recipe_id);
+          clearAllPanelTemp();
           setShowMachine(false);
+          setShowFolds(false);
+          setShowOffset(false);
+          setShowGlueTap(false);
+          setShowSuctionGap(false);
+          setShowAllSpeed(false);
+          setShowSideLay(false);
+          setShowBlowerSettings(false);
+          setShowRollerGap(false);
+          Alert.alert('Exists', `Recipe already exists. Opened ${newRecipeName}`);
         } else {
-          const found = (recipes || []).find(
-            r => r.recipe_name === newRecipeName
-          );
-          if (found) setSelectedRecipeId(found.recipe_id);
+          Alert.alert('Duplicate', res.message || 'Recipe already exists');
         }
-      } else {
-        Alert.alert("Error", res.message || "Failed to save recipe");
+        setSaving(false);
+        return;
       }
+
+      console.warn('upload-excel unexpected response', res);
+      Alert.alert('Error', res?.message || 'Failed to save recipe');
+      setSaving(false);
+      return;
     } catch (err: any) {
-      Alert.alert("Network error", err?.message ?? "Failed to save");
+      // On network error, refresh list to detect any side-effect creations
+      const updated = await fetchRecipes();
+      const foundAfter = (updated || []).find((r: any) => r.recipe_name === newRecipeName);
+      if (foundAfter) {
+        setSelectedRecipeId(foundAfter.recipe_id);
+        clearAllPanelTemp();
+        setShowMachine(false);
+        setShowFolds(false);
+        setShowOffset(false);
+        setShowGlueTap(false);
+        setShowSuctionGap(false);
+        setShowAllSpeed(false);
+        setShowSideLay(false);
+        setShowBlowerSettings(false);
+        setShowRollerGap(false);
+
+        Alert.alert('Saved (server)', `Recipe created on server: ${newRecipeName}`);
+      } else {
+        Alert.alert('Network error', err?.message ?? 'Failed to save');
+      }
+      setSaving(false);
+      return;
     }
   };
 
@@ -382,82 +509,137 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 
       <View style={{ flex: 1 }}>
-  {loadingParams ? (
-    <ActivityIndicator />
-  ) : selectedRecipeId === -1 ? (
-    <View style={styles.noRecipeContainer}>
-      <Image
-        source={require('../assets/company_logo.jpeg')}
-        style={styles.noRecipeLogo}
-        resizeMode="contain"
-      />
-      <Text style={[styles.noRecipeText, isDark ? styles.textLight : styles.textDark]}>
-        Select a recipe to view its parameters
-      </Text>
-    </View>   
-  ) : showMachine ? (
-    <MachinePanel
-      ref={machineRef}
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      initialParams={recipeParams}
-      onClose={() => setShowMachine(false)}
-    />
-  ) : showFolds ? (
-    <Folds
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowFolds(false)}
-    />
-  ) : showOffset ? (
-    <Offset
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowOffset(false)}
-    />
-  ) : showGlueTap ? (
-    <GlueTap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowGlueTap(false)}
-    />
-  ) : showSuctionGap ? (
-    <SuctionGap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowSuctionGap(false)}
-    />
-  ) : showAllSpeed ? (
-    <AllSpeed
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName}
-      onClose={() => setShowAllSpeed(false)}
-    />
-  ) : showSideLay ? (
-    <SideLay
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      initialParams={recipeParams}
-      onClose={() => setShowSideLay(false)}
-    />
-  ) : showBlowerSettings ? (
-    <BlowerSettings
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowBlowerSettings(false)}
-    />
-  ) : showRollerGap ? (
-    <RollerGap
-      recipeId={selectedRecipeId}
-      recipeName={selectedRecipeName ?? undefined}
-      onClose={() => setShowRollerGap(false)}
-    />
-  ) : recipeParams.length === 0 ? (
-    <Text>No parameters for this recipe.</Text>
-  ) : (
-    <RecipeTable data={recipeParams} darkMode={isDark} />
-  )}
-</View>
+        {loadingParams ? (
+          <ActivityIndicator />
+        ) : selectedRecipeId === -1 ? (
+          <View style={styles.noRecipeContainer}>
+            <Image
+              source={require('../assets/company_logo.jpeg')}
+              style={styles.noRecipeLogo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.noRecipeText, isDark ? styles.textLight : styles.textDark]}>
+              Select a recipe to view its parameters
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={{ flex: 1, display: showMachine ? 'flex' : 'none' }}>
+              <MachinePanel
+                ref={machineRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowMachine(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showFolds ? 'flex' : 'none' }}>
+              <Folds
+                ref={foldsRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowFolds(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showOffset ? 'flex' : 'none' }}>
+              <Offset
+                ref={offsetRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName}
+                initialParams={recipeParams}
+                onClose={() => setShowOffset(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showGlueTap ? 'flex' : 'none' }}>
+              <GlueTap
+                ref={glueRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName}
+                initialParams={recipeParams}
+                onClose={() => setShowGlueTap(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showSuctionGap ? 'flex' : 'none' }}>
+              <SuctionGap
+                ref={suctionRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName}
+                initialParams={recipeParams}
+                onClose={() => setShowSuctionGap(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showAllSpeed ? 'flex' : 'none' }}>
+              <AllSpeed
+                ref={allSpeedRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName}
+                initialParams={recipeParams}
+                onClose={() => setShowAllSpeed(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showSideLay ? 'flex' : 'none' }}>
+              <SideLay
+                ref={sideLayRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowSideLay(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showBlowerSettings ? 'flex' : 'none' }}>
+              <BlowerSettings
+                ref={blowerRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowBlowerSettings(false)}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showRollerGap ? 'flex' : 'none' }}>
+              <RollerGap
+                ref={rollerRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onClose={() => setShowRollerGap(false)}
+              />
+            </View>
+
+            <View
+              style={{
+                flex: 1,
+                display:
+                  !showMachine &&
+                  !showFolds &&
+                  !showOffset &&
+                  !showGlueTap &&
+                  !showSuctionGap &&
+                  !showAllSpeed &&
+                  !showSideLay &&
+                  !showBlowerSettings &&
+                  !showRollerGap
+                    ? 'flex'
+                    : 'none',
+              }}
+            >
+              {recipeParams.length === 0 ? (
+                <Text>No parameters for this recipe.</Text>
+              ) : (
+                <RecipeTable data={recipeParams} darkMode={isDark} />
+              )}
+            </View>
+          </>
+        )}
+      </View>
 
       {showSideMenu && activePanel === "RPF" && (
         <TouchableWithoutFeedback

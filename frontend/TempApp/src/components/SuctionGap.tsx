@@ -78,6 +78,12 @@ function SuctionGapInner({ recipeId, recipeName, imageUri, onClose, initialParam
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
       })),
+    clearEdits: () => {
+      // edited is an object keyed by sr
+      setEdited({});
+      setEditingSr(null);
+      setTempVal('');
+    }
   }));
 
   return (

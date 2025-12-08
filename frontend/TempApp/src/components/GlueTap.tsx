@@ -79,6 +79,11 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
       })),
+    clearEdits: () => {
+      setEdited({});
+      setEditingSr(null);
+      setTempVal('');
+    }
   }));
 
   return (

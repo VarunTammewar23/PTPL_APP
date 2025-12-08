@@ -134,6 +134,11 @@ function OffsetInner(
           unit: orig?.unit ?? '',
         };
       }),
+    clearEdits: () => {
+      setEdited({});
+      setEditingSr(null);
+      setTempVal('');
+    }
   }));
 
   return (
