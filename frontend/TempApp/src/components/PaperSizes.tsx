@@ -47,24 +47,25 @@ const SERIAL_FONT_SIZE = 17 * CLAMPED_SCALE * PixelRatio.getFontScale();
 
 const OVERLAY_BORDER_RADIUS = 10;
 
+
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
-  1: { x: 140, y: 118 },
-  2: { x: 42, y: 103 },
-  3: { x: 60, y: 35 },
-  4: { x: 58, y: 15 },
-  5: { x: 197, y: 170 },
-  6: { x: 195, y: 112 },
+  1: { x: 25, y: 7 },
+  2: { x: 10, y: 56 },
+  3: { x: 20, y: 20 },
+  4: { x: 63, y: 63 },
+  5: { x: 90, y: 58 },
+  6: { x: 90, y: 90 },
 };
 
-const SR_LIST = [1, 2, 3, 4, 5, 6];
 
+const SR_LIST = [1, 2, 3, 4, 5, 6];
 const SERIAL_POSITIONS = [
-  { id: 1, x: 125, y: 130 },
-  { id: 2, x: 42, y: 117 },
-  { id: 3, x: 41, y: 47 },
-  { id: 4, x: 77, y: 15 },
-  { id: 5, x: 193, y: 183 },
-  { id: 6, x: 189, y: 99 },
+  { id: 1, x: 35, y: 7 },
+  { id: 2, x: 10,  y: 65 },
+  { id: 3, x: 30, y: 20 },
+  { id: 4, x: 55, y: 65 },
+  { id: 5, x: 88, y: 50 },
+  { id: 6, x: 93, y: 81 },
 ];
 
 function MachinePanelInner(
@@ -530,8 +531,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    WIDTH: OVERLAY_WIDTH,
-    HEIGHT: OVERLAY_HEIGHT,
+
   },
 
   overlayValue: {
