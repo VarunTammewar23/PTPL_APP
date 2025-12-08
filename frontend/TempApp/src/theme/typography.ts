@@ -5,8 +5,8 @@ export const FONT_FAMILY = {
 };
 
 export const FONT_SIZE = {
-  header: 20,
-  label: 19,
+  header: 16,
+  label: 16,
   text: 18,
   small: 16,
   special: 21,

@@ -28,6 +28,7 @@ interface Props {
   selectedRecipeName?: string | null;
   onSelectRecipe?: (id: number) => void;
   onDownload?: () => void;
+  screenTitle?: string;
 }
 
 export default function HeaderBar({
@@ -39,6 +40,7 @@ export default function HeaderBar({
   selectedRecipeName = null,
   onSelectRecipe,
   onDownload,
+  screenTitle,
 }: Props) {
   const navigation = useNavigation<any>();
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -84,6 +86,8 @@ export default function HeaderBar({
               resizeMode="contain"
             />
 
+            <Text style={styles.label}>Select recipe:</Text>
+
             <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
               <Text style={styles.dropdownText}>
                 {selectedRecipeName ?? 'Select recipe'} ▾
@@ -95,10 +99,11 @@ export default function HeaderBar({
               {recipeId !== -1 ? recipeId : '--'}
             </Text>
 
-            <Text style={styles.label}>Recipe Name:</Text>
-            <Text style={[styles.inputBox, { minWidth: 140 }]}>
-              {recipeName ?? '--'}
-            </Text>
+            {screenTitle && (
+            <View style={styles.screenBox}>
+                  <Text style={styles.screenText}>{screenTitle}</Text>
+              </View>
+            )}
           </View>
 
           {/* RIGHT GROUP */}
@@ -156,19 +161,18 @@ const FIELD_HEIGHT = 45;
 const FIELD_MIN_WIDTH = 150;
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-    backgroundColor: '#d6e4f0',
-    height: 65,
-    elevation: 5,
-    paddingLeft: 0,
-    marginLeft: 0,
-  },
+wrapper: {
+  width: '100%',
+  backgroundColor: '#d6e4f0',
+  height: 65,
+  elevation: 5,
+  paddingHorizontal: 0,  // remove all side padding
+},
 
-  content: {
-    flex: 1,
-    paddingRight: 12,
-  },
+content: {
+  flex: 1,
+  paddingRight: 0,       // remove right padding
+},
 
   /* MAIN LAYOUT */
   row1: {
@@ -178,24 +182,25 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  leftGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-  },
+leftGroup: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flexShrink: 1,
+  marginLeft: 0,          // ensure start from left edge
+},
 
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
   },
 
-  logo: {
-    height: '100%',
-    width: undefined,
-    aspectRatio: 72 / 48,
-    resizeMode: 'contain',
-    marginRight: 10,
-  },
+logo: {
+  height: '100%',
+  width: undefined,
+  aspectRatio: 72 / 48,
+  resizeMode: 'contain',
+  marginRight: 8,          // keep small spacing only after logo
+},
 
   /* RECIPE FIELDS */
   dropdownTrigger: {
@@ -313,4 +318,19 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.bold,
 
   },
+
+      screenBox: {
+      backgroundColor: '#0047ba',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+      marginLeft: 2,
+    },
+    screenText: {
+      color: '#fff',
+      fontFamily: FONT_FAMILY.bold,
+      fontSize: FONT_SIZE.header,
+      fontWeight: FONT_WEIGHT.bold,
+    },
+
 });

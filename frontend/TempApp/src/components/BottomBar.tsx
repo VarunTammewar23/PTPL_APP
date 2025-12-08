@@ -13,6 +13,7 @@ import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // �
 interface BottomBarProps {
   labels: string[];
   activePanel: string | null;
+  activeRpfSub: string | null; 
   onPressItem: (label: string) => void;
   rpfRef?: any;
   onExit: () => void;
@@ -23,6 +24,7 @@ interface BottomBarProps {
 const BottomBar: FC<BottomBarProps> = ({
   labels,
   activePanel,
+  activeRpfSub,
   onPressItem,
   rpfRef,
   onExit,
@@ -37,7 +39,10 @@ const BottomBar: FC<BottomBarProps> = ({
         contentContainerStyle={styles.bottomBarScroll}
       >
         {labels.map((label, idx) => {
-          const isActive = activePanel === label;
+          const isActive =
+          activePanel === label ||
+          (label === "RPF" && activeRpfSub !== null);
+
           return (
             <TouchableOpacity
               key={label + idx}
@@ -56,11 +61,6 @@ const BottomBar: FC<BottomBarProps> = ({
           );
         })}
 
-        {/* SAVE Button */}
-        <TouchableOpacity activeOpacity={0.9} onPress={onSave} style={styles.savePill}>
-          <Icon name="save" size={FONT_SIZE.header} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.saveText}>SAVE</Text>
-        </TouchableOpacity>
 
         {/* SETTINGS Button */}
         <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
@@ -85,7 +85,7 @@ export default BottomBar;
 ============================================================ */
 
 const BUTTON_HEIGHT = 50;
-const BUTTON_WIDTH = 120;
+const BUTTON_WIDTH = 119;
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9e5f6',
     width: BUTTON_WIDTH,
     height: BUTTON_HEIGHT,
-    borderRadius: 1,
+    borderRadius: 5,
     borderTopColor: '#7f8294ff',
     borderLeftColor: '#7f8294ff',
     borderBottomColor: '#7f8294ff',
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
 
   pillButtonActive: {
-    backgroundColor: '#d6d6d8',
+    backgroundColor: '#3C78D8',
     borderTopColor: '#bdbdbf',
     borderLeftColor: '#bdbdbf',
     borderBottomColor: '#bdbdbf',
@@ -138,24 +138,6 @@ const styles = StyleSheet.create({
     color: '#000',
   },
 
-  /* SAVE BUTTON */
-  savePill: {
-    backgroundColor: '#006edc',
-    width: BUTTON_WIDTH,
-    height: BUTTON_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 0,
-    borderRightWidth: 1,
-  },
-  saveText: {
-    color: '#fff',
-    fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.header,
-    fontWeight: FONT_WEIGHT.bold,        // 👈 added
-  },
-
   /* SETTINGS BUTTON */
   settingsPill: {
     backgroundColor: '#444',
@@ -164,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 0,
+    borderRadius: 5,
     borderRightWidth: 1,
      borderTopColor: '#7f8294ff',
     borderBottomColor: '#7f8294ff',
@@ -174,7 +156,7 @@ const styles = StyleSheet.create({
   settingsText: {
     color: '#fff',
     fontFamily: FONT_FAMILY.regular,
-    fontSize: 18,
+    fontSize: FONT_SIZE.header,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 
@@ -186,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 0,
+    borderRadius: 5,
     borderTopColor: '#fff',
     borderBottomColor: '#df9aa6',
     borderRightColor: '#df9aa6',

@@ -101,7 +101,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [activeRpfSub, setActiveRpfSub] = useState<string | null>(null);
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
+
+  useEffect(() => {
+  setActivePanel("HOME");
+}, []);
+
 
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [sideMenuLeft, setSideMenuLeft] = useState<number>(8);
@@ -492,7 +498,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   };
 
   const labels = [
-    "HOME/LOGIN",
+    "HOME",
     "RECIPE",
     "RPF",
     "RT ANGLE",
@@ -502,6 +508,22 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     "STP TRAY",
     "CREASING"
   ];
+
+    // 🟢 ADD THIS FUNCTION HERE — BELOW labels[] and ABOVE return()
+  function getScreenTitle() {
+    if (showMachine) return "RPF : PAPER SIZES";
+    if (showFolds) return "RPF : NO OF FOLDS";
+    if (showOffset) return "RPF : OFFSET SETTINGS";
+    if (showGlueTap) return "RPF : GLUE/TAP QTY";
+    if (showSuctionGap) return "RPF : SUCTION / GAP SET";
+    if (showAllSpeed) return "RPF : ALL SPEED";
+    if (showSideLay) return "RPF : SIDE LAY";
+    if (showBlowerSettings) return "RPF : BLOWER SETTINGS";
+    if (showRollerGap) return "RPF : ROLLER GAP";
+    if (showFoldingTray) return "RPF : FOLDING TRAY";
+    return null;
+  }
+
 
   return (
     <SafeAreaView
@@ -516,6 +538,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         selectedRecipeName={selectedRecipeName}
         onSelectRecipe={onSelectRecipe}
         onDownload={downloadRecipeExcel}
+        screenTitle={getScreenTitle()}
       />
 
 
@@ -542,6 +565,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowMachine(false)}
+                onSave={saveCurrentMachineData}   // 👈 ADD THIS LINE
+
               />
             </View>
 
@@ -691,10 +716,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                           Alert.alert("Select a recipe first");
                           return;
                         }
+                        // Highlight RPF pill
+                        setActivePanel("RPF");
+
+                        // Highlight sub item
+                        setActiveRpfSub(it);
 
                         setShowSideMenu(false);
-                        setActivePanel(null);
-
                         setShowMachine(false);
                         setShowFolds(false);
                         setShowOffset(false);
@@ -745,10 +773,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       <BottomBar
       labels={labels}
       activePanel={activePanel}
+      activeRpfSub={activeRpfSub}
       rpfRef={rpfRef}
       onSave={saveCurrentMachineData}
       onPressItem={label => {
-        // If clicking RECIPE
+        // Highlight the pressed pill
+        setActivePanel(label);
+
         if (label === "RECIPE") {
           setShowMachine(false);
           setShowFolds(false);
@@ -759,16 +790,23 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
           setShowSideLay(false);
           setShowBlowerSettings(false);
           setShowRollerGap(false);
+          setShowFoldingTray(false);
 
-          setActivePanel(null); // close bottom panel
-          return; // this will show RecipeTable because nothing else is active
+          return; // Recipe table will show
         }
 
-        // existing RPF logic
+        if (label === "HOME") {
+          // Close everything and show company logo screen
+          setShowMachine(false);
+          setActivePanel("HOME");
+          return;
+        }
+
         const isActive = activePanel === label;
         if (isActive && label !== "RPF") closePanel();
         else openPanel(label);
       }}
+
 
       onExit={() =>
         Alert.alert("Exit", "Do you want to exit?", [
