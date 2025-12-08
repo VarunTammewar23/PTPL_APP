@@ -131,18 +131,24 @@ function AllSpeedInner(
       }}
     >
       <View style={styles.header}>
-        <Text style={[styles.title, dark && { color: '#fff' }]}>{recipeName ?? 'All Speed'}</Text>
+        <Text style={[styles.title, dark && { color: '#fff' }]}>
+          RPF : ALL SPEED
+        </Text>
         <Text style={styles.close} onPress={onClose}>Close</Text>
       </View>
 
+
       {/* Center wrapper (critical) */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent:'center' }}>
-        <ZoomableView
-          minScale={1}
-          maxScale={4}
-          doubleTapScale={2}
-          style={{ width: dispW, height: dispH }}
-        >
+        {/* CENTER WRAPPER */}
+        <View style={styles.zoomArea}>
+          <ZoomableView
+            minScale={1}
+            maxScale={4}
+            doubleTapScale={2}
+            bindToBorders={true}     // 🚀 prevents image from moving over header
+            style={{ width: dispW, height: dispH }}
+          >
+
           <ImageBackground
             source={imgSrc}
             style={{ width: dispW, height: dispH }}
@@ -303,27 +309,11 @@ function AllSpeedInner(
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 6,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    overflow: 'hidden'
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6
-  },
-  title: { fontSize: 16, fontWeight: '700' },
-  close: { color: '#007bff', fontWeight: '700' },
-
-  loading: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-
+  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
+  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
+  title: { fontSize: 16, fontWeight: '700', color: '#111' },
+  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
+  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   paramBox: {
     position: 'absolute',
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -362,7 +352,16 @@ const styles = StyleSheet.create({
     borderColor: '#aaa',
     borderRadius: 6,
     padding: 8
-  }
+  },
+
+zoomArea: {
+  flex: 1,
+  marginTop: 0,  // height of header area
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
 });
 
 export default React.forwardRef(AllSpeedInner);

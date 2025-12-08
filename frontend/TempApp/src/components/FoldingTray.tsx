@@ -131,14 +131,21 @@ function FoldingTrayInner(
     >
       <View style={styles.header}>
         <Text style={[styles.title, dark && { color: '#fff' }]}>
-          {recipeName ?? 'Folding Tray'}
+            RPF : FOLDING TRAY
         </Text>
         <Text style={styles.close} onPress={onClose}>Close</Text>
       </View>
 
       {/* CENTER WRAPPER */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
+        <View style={styles.zoomArea}>
+            <ZoomableView
+                minScale={1}
+                maxScale={4}
+                doubleTapScale={2}
+                bindToBorders={true}     // 🚀 prevents image from moving over header
+                style={{ width: dispW, height: dispH }}
+            >
+
           <ImageBackground source={imgSrc} style={{ width: dispW, height: dispH }} resizeMode="contain">
 
             {loading && (
@@ -268,12 +275,11 @@ function FoldingTrayInner(
 
 // ---------- STYLES ----------
 const styles = StyleSheet.create({
-  container:{ flex:1,padding:6,backgroundColor:'#f9fafb',borderRadius:8 },
-  header:{ flexDirection:'row',justifyContent:'space-between',marginBottom:6 },
-  title:{ fontSize:16,fontWeight:'700' },
-  close:{ fontWeight:'700',color:'#007bff' },
-
-  loading:{ position:'absolute',justifyContent:'center',alignItems:'center' },
+  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
+  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
+  title: { fontSize: 16, fontWeight: '700', color: '#111' },
+  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
+  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
 
   paramBox:{ position:'absolute',backgroundColor:'rgba(255,255,255,0.2)',justifyContent:'center',alignItems:'center',borderRadius:6 },
   paramText:{ fontSize:10,fontWeight:'700' },
@@ -304,7 +310,17 @@ const styles = StyleSheet.create({
   tblRow:{ flexDirection:'row',paddingVertical:8,borderBottomWidth:1,borderColor:'#eee' },
   td:{ flex:1,textAlign:'center' },
 
-  closeTable:{ marginTop:12,textAlign:'center',color:'#007bff',fontWeight:'700' }
+  closeTable:{ marginTop:12,textAlign:'center',color:'#007bff',fontWeight:'700' },
+
+  zoomArea: {
+  flex: 1,
+  marginTop: 0,  // height of header area
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+  
 });
 
 export default React.forwardRef(FoldingTrayInner);

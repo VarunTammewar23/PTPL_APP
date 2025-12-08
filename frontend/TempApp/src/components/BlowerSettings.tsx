@@ -112,14 +112,22 @@ function BlowerSettingsInner(
     >
       <View style={styles.header}>
         <Text style={[styles.title, dark && { color: "#fff" }]}>
-          BLOWER SETTINGS
+          RPF : BLOWER SETTINGS
         </Text>
         <Text style={styles.close} onPress={onClose}>Close</Text>
       </View>
 
       {/* Center image like AllSpeed */}
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ZoomableView minScale={1} maxScale={4} doubleTapScale={2} style={{ width: dispW, height: dispH }}>
+{/* CENTER WRAPPER */}
+        <View style={styles.zoomArea}>
+          <ZoomableView
+            minScale={1}
+            maxScale={4}
+            doubleTapScale={2}
+            bindToBorders={true}     // 🚀 prevents image from moving over header
+            style={{ width: dispW, height: dispH }}
+          >
+
           <ImageBackground source={imgSrc} resizeMode="contain" style={{ width: dispW, height: dispH }}>
             {loading && (
               <View style={styles.loading}><ActivityIndicator /></View>
@@ -227,13 +235,12 @@ function BlowerSettingsInner(
 export default React.forwardRef(BlowerSettingsInner);
 
 /* ---------- Styles ---------- */
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb", padding: 6 },
-  header: { flexDirection: "row", justifyContent: "space-between" },
-  title: { fontSize: 16, fontWeight: "700" },
-  close: { color: "#007bff", fontWeight: "700" },
-  loading: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
+  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
+  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
+  title: { fontSize: 16, fontWeight: '700', color: '#111' },
+  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
+  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
 
   box: { position: "absolute", backgroundColor: "rgba(255,255,255,0.15)", justifyContent: "center", alignItems: "center", borderRadius: 6 },
   boxText: { fontSize: 12, fontWeight: "700" },
@@ -261,5 +268,14 @@ const styles = StyleSheet.create({
   th: { flex: 1, textAlign: "center", fontWeight: "700" },
   tr: { flexDirection: "row", borderBottomWidth: 1, paddingVertical: 6, borderColor: "#eee" },
   td: { flex: 1, textAlign: "center" },
-  closeTbl: { color: "#007bff", fontWeight: "700", textAlign: "center", marginTop: 12 }
+  closeTbl: { color: "#007bff", fontWeight: "700", textAlign: "center", marginTop: 12 },
+
+  zoomArea: {
+  flex: 1,
+  marginTop: 0,  // height of header area
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
 });

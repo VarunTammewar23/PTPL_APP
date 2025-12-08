@@ -152,21 +152,25 @@ function OffsetInner(
       if (height) setContH(height);
     }}
   >
-    <View style={styles.header}>
-      <Text style={[styles.title, dark && { color: '#fff' }]}>
-        {recipeName ?? 'Offset Settings'}
-      </Text>
-      <Text style={styles.close} onPress={onClose}>Close</Text>
-    </View>
+ <View style={styles.header}>
+  <Text style={[styles.title, dark && { color: '#fff' }]}>
+    RPF : OFFSET SETTINGS
+  </Text>
+  <Text style={styles.close} onPress={onClose}>Close</Text>
+</View>
+
 
     {/* CENTER FIX — prevents image from shrinking */}
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <ZoomableView
-        minScale={1}
-        maxScale={4}
-        doubleTapScale={2}
-        style={{ width: dispW, height: dispH }}
-      >
+      {/* CENTER WRAPPER */}
+      <View style={styles.zoomArea}>
+        <ZoomableView
+          minScale={1}
+          maxScale={4}
+          doubleTapScale={2}
+          bindToBorders={true}     // 🚀 prevents image from moving over header
+          style={{ width: dispW, height: dispH }}
+        >
+
         <ImageBackground
           source={imgSrc}
           resizeMode="contain"
@@ -329,10 +333,10 @@ function OffsetInner(
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8, overflow: 'hidden' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
+  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
   title: { fontSize: 16, fontWeight: '700', color: '#111' },
-  close: { color: '#0066ff', fontWeight: '700' },
+  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
   loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
 
   paramBox: {
@@ -362,6 +366,14 @@ const styles = StyleSheet.create({
   cancel: { marginRight: 20, color: '#555' },
   save: { color: '#007bff', fontWeight: '700' },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 6 },
+  zoomArea: {
+  flex: 1,
+  marginTop: 0,  // height of header area
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
 });
 
 export default React.forwardRef(OffsetInner);

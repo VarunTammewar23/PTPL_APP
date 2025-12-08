@@ -105,19 +105,21 @@ function SideLayInner(
     >
       <View style={styles.header}>
         <Text style={[styles.title, dark && { color: "#fff" }]}>
-          SIDE LAY SETTINGS
+          RPF : SIDE LAY SETTINGS
         </Text>
         <Text style={styles.close} onPress={onClose}>Close</Text>
       </View>
 
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ZoomableView
-          ref={zoomRef}
-          minScale={1}
-          maxScale={4}
-          doubleTapScale={2}
-          style={{ width: dispW, height: dispH }}
-        >
+              {/* CENTER WRAPPER */}
+        <View style={styles.zoomArea}>
+          <ZoomableView
+            minScale={1}
+            maxScale={4}
+            doubleTapScale={2}
+            bindToBorders={true}     // 🚀 prevents image from moving over header
+            style={{ width: dispW, height: dispH }}
+          >
+
           <ImageBackground
             source={imgSrc}
             style={{ width: dispW, height: dispH }}
@@ -249,11 +251,11 @@ function SideLayInner(
 export default React.forwardRef(SideLayInner);
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb", padding: 6 },
-  header: { flexDirection: "row", justifyContent: "space-between" },
-  title: { fontSize: 16, fontWeight: "700" },
-  close: { color: "#007bff", fontWeight: "700" },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
+  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
+  title: { fontSize: 16, fontWeight: '700', color: '#111' },
+  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
+  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
 
   box: { position: "absolute", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 6 },
   boxText: { fontSize: 12, fontWeight: "700" },
@@ -281,5 +283,14 @@ const styles = StyleSheet.create({
   th: { flex: 1, textAlign: "center", fontWeight: "700" },
   tr: { flexDirection: "row", paddingVertical: 6, borderBottomWidth: 1, borderColor: "#eee" },
   td: { flex: 1, textAlign: "center" },
-  closeTbl: { color: "#007bff", fontWeight: "700", textAlign: "center", marginTop: 12 }
+  closeTbl: { color: "#007bff", fontWeight: "700", textAlign: "center", marginTop: 12 },
+
+  zoomArea: {
+  flex: 1,
+  marginTop: 0,  // height of header area
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
 });
