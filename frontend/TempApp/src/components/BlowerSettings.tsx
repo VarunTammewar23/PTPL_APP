@@ -188,6 +188,8 @@ function BlowerSettingsInner(
     }
   }));
 
+  const [tablePopup, setTablePopup] = useState(false);
+
   const openEditor = (sr: number, curr: string) => {
     setEditingSr(sr);
     setTempValue(String(curr ?? ''));
@@ -221,27 +223,22 @@ function BlowerSettingsInner(
           { flexDirection: isLandscape ? 'row' : 'column' },
         ]}
       >
-        <View style={[styles.imageContainer, { width: isLandscape ? '50%' : '100%', flex: 1 }]}>
+        <View style={[styles.imageContainer, { width: '100%', flex: 1, justifyContent: 'center', alignItems: 'center' }]}> 
+          {/* image fills panel and is centered */}
           <ZoomableView
             key={zoomKey}
             ref={zoomRef}
             minScale={1}
             maxScale={4}
             doubleTapScale={2}
-            bindToBorders
-            style={{ width: dispW, height: dispH }}
+            bindToBorders={true}
+            style={{ flex: 1, width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ImageBackground
-              source={imageSource}
-              resizeMode="contain"
-              style={{ width: dispW, height: dispH }}
-            >
+            <ImageBackground source={imageSource} resizeMode="contain" style={{ flex: 1, width: '100%', height: '100%', alignSelf: 'center' }}>
               {SR_LIST.map(sr => {
                 const pos = POSITIONS_BY_SR[sr];
-                const value =
-                  editedValues[sr] ??
-                  valuesBySr[sr]?.value_01 ??
-                  '';
+                const param = valuesBySr[sr];
+                const value = editedValues[sr] ?? param?.value_01 ?? '';
 
                 const left = Math.round((pos.x / 100) * dispW);
                 const top = Math.round((pos.y / 100) * dispH);
@@ -258,9 +255,7 @@ function BlowerSettingsInner(
                         top,
                         width: OVERLAY_WIDTH,
                         height: OVERLAY_HEIGHT,
-                        backgroundColor: isDark
-                          ? 'rgba(0,0,0,0.6)'
-                          : 'rgba(255,255,255,0.15)',
+                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.15)',
                         borderRadius: OVERLAY_BORDER_RADIUS,
                         transform: [
                           { translateX: -(OVERLAY_WIDTH / 2) },
@@ -269,12 +264,7 @@ function BlowerSettingsInner(
                       },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.overlayValue,
-                        { color: isDark ? '#fff' : '#000' },
-                      ]}
-                    >
+                    <Text style={[styles.overlayValue, { color: isDark ? '#fff' : '#000' }]}>
                       {value}
                     </Text>
                   </TouchableOpacity>
@@ -304,39 +294,6 @@ function BlowerSettingsInner(
               ))}
             </ImageBackground>
           </ZoomableView>
-        </View>
-
-        <View
-          style={[
-            styles.tableContainer,
-            { flex: 1, width: isLandscape ? '50%' : '100%', marginTop: isLandscape ? 0 : 8 },
-          ]}
-        >
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 1 }]}>SR</Text>
-            <Text style={[styles.th, { flex: 1.5 }]}>Original</Text>
-            <Text style={[styles.th, { flex: 1.5 }]}>Changed</Text>
-          </View>
-
-          {SR_LIST.map(sr => {
-            const orig = valuesBySr[sr]?.value_01 ?? '';
-            const changed = editedValues[sr] ?? '';
-
-            return (
-              <View key={`row-${sr}`} style={styles.tableRow}>
-                <Text style={[styles.td, { flex: 1 }]}>{sr}</Text>
-                <Text style={[styles.td, { flex: 1.5 }]}>{orig}</Text>
-                <Text
-                  style={[
-                    styles.td,
-                    { flex: 1.5, color: changed ? 'blue' : '#111' },
-                  ]}
-                >
-                  {changed || '-'}
-                </Text>
-              </View>
-            );
-          })}
         </View>
       </View>
 
@@ -369,6 +326,55 @@ function BlowerSettingsInner(
                 <Text style={modalStyles.save}>Save</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* SHOW TABLE + VIDEO BUTTONS */}
+      <View style={{ position: 'absolute', right: 12, bottom: 12, flexDirection: 'row' }}>
+        <TouchableOpacity
+          style={{ backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+          onPress={() => setTablePopup(true)}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>SHOW TABLE</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ backgroundColor: '#28a745', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+          onPress={() => console.log('Video clicked')}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>VIDEO</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* TABLE POPUP */}
+      <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '92%', maxWidth: 720, backgroundColor: '#fff', borderRadius: 10, padding: 12 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 8 }}>Parameter Table</Text>
+            <View style={{ flexDirection: 'row', backgroundColor: '#e8e8f5', padding: 6 }}>
+              <Text style={{ flex: 0.7, textAlign: 'center', fontWeight: '700' }}>SR</Text>
+              <Text style={{ flex: 2, textAlign: 'center', fontWeight: '700' }}>Parameter</Text>
+              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Original</Text>
+              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Changed</Text>
+            </View>
+            {SR_LIST.map(sr => {
+              const orig = valuesBySr[sr]?.value_01 ?? '';
+              const paramName = valuesBySr[sr]?.parameter ?? '';
+              const changed = editedValues[sr] ?? '';
+              return (
+                <View key={`tbl-${sr}`} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+                  <Text style={{ flex: 0.7, textAlign: 'center' }}>{sr}</Text>
+                  <Text style={{ flex: 2, textAlign: 'center' }}>{paramName}</Text>
+                  <Text style={{ flex: 1.3, textAlign: 'center' }}>{orig}</Text>
+                  <Text style={{ flex: 1.3, textAlign: 'center', color: changed ? 'blue' : '#111' }}>{changed || '-'}</Text>
+                </View>
+              );
+            })}
+
+            <TouchableOpacity onPress={() => setTablePopup(false)} style={{ marginTop: 12 }}>
+              <Text style={{ color: '#007bff', fontWeight: '700', textAlign: 'center' }}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

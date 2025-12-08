@@ -118,7 +118,7 @@ function SideLayInner(
       resolveLocal(imageSource);
     }
     return () => { mounted = false };
-  }, [imageUri]);
+  }, [imageUri, contW, contH]);
 
   useEffect(() => {
     if (!natW || !natH) return;
@@ -174,6 +174,8 @@ function SideLayInner(
     }
   }));
 
+  const [tablePopup, setTablePopup] = useState(false);
+
   const openEditor = (sr: number, curr: string) => {
     setEditingSr(sr);
     setTempValue(curr ?? '');
@@ -197,7 +199,8 @@ function SideLayInner(
 
       <View style={[styles.orientationWrap, { flexDirection: isLandscape ? 'row' : 'column' }]}>
 
-        <View style={[styles.imageContainer, { width: isLandscape ? '50%' : '100%', flex: 1 }]}>
+        <View style={[styles.imageContainer, { width: '100%', flex: 1 }]}>
+          {/* Make zoom container match the whole panel area (so zoom/pan feels natural) */}
           <ZoomableView
             key={zoomKey}
             ref={zoomRef}
@@ -205,83 +208,73 @@ function SideLayInner(
             maxScale={4}
             doubleTapScale={2}
             bindToBorders={true}
-            style={{ width: dispW, height: dispH }}
+            style={{ flex: 1, width: '100%', height: '100%' }}
           >
-            <ImageBackground source={imageSource} resizeMode="contain" style={{ width: dispW, height: dispH }}>
-              {SR_LIST.map(sr => {
-                const pos = POSITIONS_BY_SR[sr];
-                const param = valuesBySr[sr];
-                const value = editedValues[sr] ?? param?.value_01 ?? '';
+            <ImageBackground
+              source={imageSource}
+              resizeMode="contain"
+              style={{ flex: 1, width: '100%', height: '100%' }}
+            >
+                {SR_LIST.map(sr => {
+                  const pos = POSITIONS_BY_SR[sr];
+                  const param = valuesBySr[sr];
+                  const value = editedValues[sr] ?? param?.value_01 ?? '';
 
-                const left = Math.round((pos.x / 100) * dispW);
-                const top = Math.round((pos.y / 100) * dispH);
+                  // position inside the image box (dispW/dispH)
+                  const left = Math.round((pos.x / 100) * dispW);
+                  const top = Math.round((pos.y / 100) * dispH);
 
-                return (
-                  <TouchableOpacity
-                    key={`ov-${sr}`}
-                    activeOpacity={0.8}
-                    onPress={() => openEditor(sr, String(value))}
+                  return (
+                    <TouchableOpacity
+                      key={`ov-${sr}`}
+                      activeOpacity={0.8}
+                      onPress={() => openEditor(sr, String(value))}
+                      style={[
+                        styles.overlay,
+                        {
+                          left,
+                          top,
+                          width: OVERLAY_WIDTH,
+                          height: OVERLAY_HEIGHT,
+                          backgroundColor: isDark ? '#0009' : '#fff9',
+                          borderRadius: OVERLAY_BORDER_RADIUS,
+                          transform: [
+                            { translateX: -(OVERLAY_WIDTH / 2) },
+                            { translateY: -(OVERLAY_HEIGHT / 2) },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.overlayValue, { color: isDark ? '#fff' : '#000' }]}>
+                        {value}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {SERIAL_POSITIONS.map(i => (
+                  <View
+                    key={`serial-${i.id}`}
+                    pointerEvents="none"
                     style={[
-                      styles.overlay,
+                      styles.serialOverlay,
                       {
-                        left,
-                        top,
-                        backgroundColor: isDark ? '#0009' : '#fff9',
+                        left: Math.round((i.x / 100) * dispW),
+                        top: Math.round((i.y / 100) * dispH),
                         width: OVERLAY_WIDTH,
                         height: OVERLAY_HEIGHT,
-                        borderRadius: OVERLAY_BORDER_RADIUS,
-                        transform: [{ translateX: -23.5 }, { translateY: -15 }],
+                        transform: [
+                          { translateX: -(OVERLAY_WIDTH / 2) },
+                          { translateY: -(OVERLAY_HEIGHT / 2) },
+                        ],
                       },
                     ]}
                   >
-                    <Text style={[styles.overlayValue, { color: isDark ? '#fff' : '#000' }]}>
-                      {value}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-
-              {SERIAL_POSITIONS.map(i => (
-                <View
-                  key={`serial-${i.id}`}
-                  pointerEvents="none"
-                  style={[
-                    styles.serialOverlay,
-                    {
-                      left: Math.round((i.x / 100) * dispW),
-                      top: Math.round((i.y / 100) * dispH),
-                      width: OVERLAY_WIDTH,
-                      height: OVERLAY_HEIGHT,
-                    },
-                  ]}
-                >
-                  <Text style={styles.serialText}>{i.id}</Text>
-                </View>
-              ))}
-            </ImageBackground>
+                    <Text style={styles.serialText}>{i.id}</Text>
+                  </View>
+                ))}
+              </ImageBackground>
           </ZoomableView>
-        </View>
-
-        {/* Side table */}
-        <View style={[styles.tableContainer, { flex: 1, width: isLandscape ? '50%' : '100%' }]}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 1 }]}>SR</Text>
-            <Text style={[styles.th, { flex: 1.5 }]}>Original</Text>
-            <Text style={[styles.th, { flex: 1.5 }]}>Changed</Text>
-          </View>
-
-          {SR_LIST.map(sr => {
-            const orig = valuesBySr[sr]?.value_01 ?? '';
-            const changed = editedValues[sr] ?? '';
-
-            return (
-              <View key={`row-${sr}`} style={styles.tableRow}>
-                <Text style={[styles.td, { flex: 1 }]}>{sr}</Text>
-                <Text style={[styles.td, { flex: 1.5 }]}>{orig}</Text>
-                <Text style={[styles.td, { flex: 1.5, color: changed ? 'blue' : '#111' }]}>{changed || '-'}</Text>
-              </View>
-            );
-          })}
         </View>
       </View>
 
@@ -308,6 +301,55 @@ function SideLayInner(
           </View>
         </View>
       </Modal>
+
+      {/* SHOW TABLE + VIDEO BUTTONS */}
+      <View style={{ position: 'absolute', right: 12, bottom: 12, flexDirection: 'row' }}>
+        <TouchableOpacity
+          style={{ backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+          onPress={() => setTablePopup(true)}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>SHOW TABLE</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ backgroundColor: '#28a745', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+          onPress={() => console.log('Video clicked')}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700' }}>VIDEO</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* TABLE POPUP */}
+      <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '92%', maxWidth: 720, backgroundColor: '#fff', borderRadius: 10, padding: 12 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 8 }}>Parameter Table</Text>
+            <View style={{ flexDirection: 'row', backgroundColor: '#e8e8f5', padding: 6 }}>
+              <Text style={{ flex: 0.7, textAlign: 'center', fontWeight: '700' }}>SR</Text>
+              <Text style={{ flex: 2, textAlign: 'center', fontWeight: '700' }}>Parameter</Text>
+              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Original</Text>
+              <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Changed</Text>
+            </View>
+            {SR_LIST.map(sr => {
+              const orig = valuesBySr[sr]?.value_01 ?? '';
+              const paramName = valuesBySr[sr]?.parameter ?? '';
+              const changed = editedValues[sr] ?? '';
+              return (
+                <View key={`tbl-${sr}`} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+                  <Text style={{ flex: 0.7, textAlign: 'center' }}>{sr}</Text>
+                  <Text style={{ flex: 2, textAlign: 'center' }}>{paramName}</Text>
+                  <Text style={{ flex: 1.3, textAlign: 'center' }}>{orig}</Text>
+                  <Text style={{ flex: 1.3, textAlign: 'center', color: changed ? 'blue' : '#111' }}>{changed || '-'}</Text>
+                </View>
+              );
+            })}
+
+            <TouchableOpacity onPress={() => setTablePopup(false)} style={{ marginTop: 12 }}>
+              <Text style={{ color: '#007bff', fontWeight: '700', textAlign: 'center' }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -329,7 +371,7 @@ const styles = StyleSheet.create({
   closeText: { color: '#007bff', fontWeight: '700' },
 
   orientationWrap: { flex: 1, width: '100%' },
-  imageContainer: {overflow: 'hidden', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  imageContainer: { overflow: 'hidden', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
 
   overlay: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   overlayValue: { fontSize: OVERLAY_FONT_SIZE, fontWeight: '700' },

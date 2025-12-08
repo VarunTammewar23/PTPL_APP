@@ -86,6 +86,8 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
     }
   }));
 
+  const [tablePopup, setTablePopup] = useState(false);
+
   return (
   <View
     style={styles.container}
@@ -209,6 +211,55 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
               Save
             </Text>
           </View>
+        </View>
+      </View>
+    </Modal>
+
+    {/* SHOW TABLE + VIDEO BUTTONS */}
+    <View style={{ position: 'absolute', right: 12, bottom: 12, flexDirection: 'row' }}>
+      <TouchableOpacity
+        style={{ backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+        onPress={() => setTablePopup(true)}
+      >
+        <Text style={{ color: '#fff', fontWeight: '700' }}>SHOW TABLE</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={{ backgroundColor: '#28a745', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
+        onPress={() => console.log('Video clicked')}
+      >
+        <Text style={{ color: '#fff', fontWeight: '700' }}>VIDEO</Text>
+      </TouchableOpacity>
+    </View>
+
+    {/* TABLE POPUP */}
+    <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ width: '92%', maxWidth: 720, backgroundColor: '#fff', borderRadius: 10, padding: 12 }}>
+          <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 8 }}>Parameter Table</Text>
+          <View style={{ flexDirection: 'row', backgroundColor: '#e8e8f5', padding: 6 }}>
+            <Text style={{ flex: 0.7, textAlign: 'center', fontWeight: '700' }}>SR</Text>
+            <Text style={{ flex: 2, textAlign: 'center', fontWeight: '700' }}>Parameter</Text>
+            <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Original</Text>
+            <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Changed</Text>
+          </View>
+          {PARAM_SR.map(sr => {
+            const orig = values[sr]?.value_01 ?? '';
+            const paramName = values[sr]?.parameter ?? '';
+            const changed = edited[sr] ?? '';
+            return (
+              <View key={`tbl-${sr}`} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+                <Text style={{ flex: 0.7, textAlign: 'center' }}>{sr}</Text>
+                <Text style={{ flex: 2, textAlign: 'center' }}>{paramName}</Text>
+                <Text style={{ flex: 1.3, textAlign: 'center' }}>{orig}</Text>
+                <Text style={{ flex: 1.3, textAlign: 'center', color: changed ? 'blue' : '#111' }}>{changed || '-'}</Text>
+              </View>
+            );
+          })}
+
+          <TouchableOpacity onPress={() => setTablePopup(false)} style={{ marginTop: 12 }}>
+            <Text style={{ color: '#007bff', fontWeight: '700', textAlign: 'center' }}>Close</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>

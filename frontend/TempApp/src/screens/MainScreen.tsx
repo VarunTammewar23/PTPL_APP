@@ -611,6 +611,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowRollerGap(false)}
+                imageScale={2}
               />
             </View>
 
