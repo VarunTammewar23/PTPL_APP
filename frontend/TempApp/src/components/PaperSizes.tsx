@@ -36,19 +36,13 @@ interface RecipeParam {
 
 const OVERLAY_WIDTH = 80;
 const OVERLAY_HEIGHT = 30;
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const BASE_WIDTH = 360;
-const SCALE = SCREEN_W / BASE_WIDTH;
-const CLAMPED_SCALE = Math.max(0.85, Math.min(SCALE, 1.15));
-
-const OVERLAY_FONT_SIZE = 17 * CLAMPED_SCALE * PixelRatio.getFontScale();
-const SERIAL_FONT_SIZE = 17 * CLAMPED_SCALE * PixelRatio.getFontScale();
-
 const OVERLAY_BORDER_RADIUS = 10;
+const OVERLAY_FONT_SIZE = 16;
+const SERIAL_FONT_SIZE = 14;
+
 
 const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
-  1: { x: 140, y: 118 },
+  1: { x: 14, y: 118 },
   2: { x: 42, y: 103 },
   3: { x: 60, y: 35 },
   4: { x: 58, y: 15 },
@@ -59,12 +53,12 @@ const POSITIONS_BY_SR: Record<number, { x: number; y: number }> = {
 const SR_LIST = [1, 2, 3, 4, 5, 6];
 
 const SERIAL_POSITIONS = [
-  { id: 1, x: 125, y: 130 },
-  { id: 2, x: 42, y: 117 },
-  { id: 3, x: 41, y: 47 },
-  { id: 4, x: 77, y: 15 },
-  { id: 5, x: 193, y: 183 },
-  { id: 6, x: 189, y: 99 },
+  { id: 1, x: 28, y: 7 },
+  { id: 2, x: 10,  y: 65 },
+  { id: 3, x: 30, y: 20 },
+  { id: 4, x: 55, y: 65 },
+  { id: 5, x: 88, y: 50 },
+  { id: 6, x: 93, y: 81 },
 ];
 
 function MachinePanelInner(
@@ -82,10 +76,8 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
-  const [contW, setContW] = useState<number>(Dimensions.get('window').width);
-  const [contH, setContH] = useState<number>(
-    Math.round(Dimensions.get('window').height * 0.40)
-  );
+  const [contW, setContW] = useState(0);
+  const [contH, setContH] = useState(0);
 
   const [dispW, setDispW] = useState<number>(contW);
   const [dispH, setDispH] = useState<number>(contH);
@@ -98,15 +90,6 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
 
   // NEW: Table popup instead of toggling
   const [tablePopup, setTablePopup] = useState(false);
-
-  useEffect(() => {
-    const onChange = ({ window }) => {
-      setContW(window.width);
-      setContH(Math.round(window.height * (window.width > window.height ? 0.85 : 0.40)));
-    };
-    const sub = Dimensions.addEventListener('change', onChange);
-    return () => sub?.remove();
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -212,7 +195,12 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container}
+     onLayout={(e) => {
+      const { width, height } = e.nativeEvent.layout;
+      setContW(width);
+      setContH(height);
+    }}>
 
      {/* HEADER */}
       <View style={styles.headerRow}>
@@ -239,12 +227,15 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
             {/* PARAMETER OVERLAYS */}
             {SR_LIST.map(sr => {
               if (dispW <= 0 || dispH <= 0) return null;
+
               const pos = POSITIONS_BY_SR[sr];
               const param = valuesBySr[sr];
-              const display = editedValues[sr] !== undefined
-                ? String(editedValues[sr])
-                : param ? String(param.value_01 ?? '') : '';
+              const display =
+                editedValues[sr] !== undefined
+                  ? String(editedValues[sr])
+                  : param ? String(param.value_01 ?? '') : '';
 
+              // 👉 Only ONE declaration
               const leftPx = Math.round((pos.x / 100) * dispW);
               const topPx = Math.round((pos.y / 100) * dispH);
 
@@ -258,7 +249,9 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
                     {
                       left: leftPx,
                       top: topPx,
-                      backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.15)',
+                      backgroundColor: isDark
+                        ? 'rgba(0,0,0,0.6)'
+                        : 'rgba(255,255,255,0.15)',
                       transform: [
                         { translateX: -(OVERLAY_WIDTH / 2) },
                         { translateY: -(OVERLAY_HEIGHT / 2) },
@@ -269,15 +262,18 @@ const [params, setParams] = useState<RecipeParam[]>(Array.isArray(initialParams)
                     },
                   ]}
                 >
-                  <Text style={[
-                    styles.overlayValue,
-                    { color: isDark ? '#fff' : '#000', fontSize: OVERLAY_FONT_SIZE }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.overlayValue,
+                      { color: isDark ? '#fff' : '#000', fontSize: OVERLAY_FONT_SIZE },
+                    ]}
+                  >
                     {display}
                   </Text>
                 </TouchableOpacity>
               );
             })}
+
 
             {/* SERIAL LABELS */}
             {SERIAL_POSITIONS.map(item => {
@@ -535,8 +531,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    WIDTH: OVERLAY_WIDTH,
-    HEIGHT: OVERLAY_HEIGHT,
   },
 
   overlayValue: {
