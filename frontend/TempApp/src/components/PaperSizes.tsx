@@ -24,25 +24,25 @@ import { useWindowDimensions } from 'react-native';
 const PARAM_SR = [1, 2, 3, 4, 5, 6];
 
 const POSITIONS = {
-  1: { x: 62, y: 63 },
-  2: { x: 16, y: 57 },
-  3: { x: 24, y: 18.5 },
-  4: { x: 23, y: 7.5 },
-  5: { x: 85, y: 90 },
-  6: { x: 83, y: 58 },
+  1: { x: 61, y: 61.5 },
+  2: { x: 16.5, y: 54.5 },
+  3: { x: 24.9, y: 18.5 },
+  4: { x: 24, y: 7 },
+  5: { x: 84.1, y: 87.3 },
+  6: { x: 83, y: 56.5 },
 };
 
 const SERIAL_POS = [
-  { id: 1, x: 62, y: 71 },
+  { id: 1, x: 60, y: 70.5 },
   { id: 2, x: 16, y: 63 },
-  { id: 3, x: 19, y: 26 },
-  { id: 4, x: 30, y: 7.5 },
-  { id: 5, x: 85, y: 98 },
-  { id: 6, x: 83, y: 53 },
+  { id: 3, x: 18.5, y: 26.5 },
+  { id: 4, x: 31.8, y: 7.5 },
+  { id: 5, x: 83.5, y: 95.3 },
+  { id: 6, x: 83, y: 52.5 },
 ];
 
-const BOX_W = 50,
-  BOX_H = 30;
+const BOX_W = 80,
+  BOX_H = 50;
 
 function MachinePanelInner(
   { recipeId, imageUri, onClose, initialParams, pollMs = 2000, onSave }: any,
@@ -61,7 +61,7 @@ function MachinePanelInner(
   const isPortrait = height > width;
 
   const [contW, setContW] = useState(width);
-  const [contH, setContH] = useState(Math.round(height * 0.75));
+  const [contH, setContH] = useState(Math.round(height*.75));
 
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
@@ -99,12 +99,16 @@ function MachinePanelInner(
   }, [imgSrc]);
 
   // scale image
-  useEffect(() => {
-    if (!natW || !natH) return;
-    const scale = Math.min(contW / natW, contH / natH);
-    setDispW(Math.round(natW * scale));
-    setDispH(Math.round(natH * scale));
-  }, [natW, natH, contW, contH]);
+  // scale image
+   useEffect(() => {
+     if (!natW || !natH) return;
+
+    // Calculate scale based *only* on the container height (contH) 
+    // and the image's natural height (natH) to ensure vertical fit.
+     const scale = contH / natH; 
+     setDispW(Math.round(natW * scale)); // This will maintain the aspect ratio
+     setDispH(Math.round(natH * scale)); // This will be equal to contH
+   }, [natW, natH, contH]); // Removed contW as it's no longer the primary constraint
 
   const values = useMemo(() => {
     const m: any = {};
@@ -132,6 +136,9 @@ function MachinePanelInner(
 
   const [tablePopup, setTablePopup] = useState(false);
 
+  const IMG_W = 1300;
+  const IMG_H = 620;
+
   return (
     <View style={styles.container}>
       {/* HEADER */}
@@ -144,93 +151,122 @@ function MachinePanelInner(
         <View
           style={styles.leftArea}
           onLayout={(e) => {
-            const { width } = e.nativeEvent.layout;
+            const { width, height } = e.nativeEvent.layout;
             if (width) setContW(width);
+            if (height) setContH(height);
           }}
+
         >
           <ZoomableView
-            minScale={1}
-            maxScale={4}
-            doubleTapScale={2}
-            bindToBorders
-            style={{ width: dispW, height: dispH }}
-          >
-            <ImageBackground
-              source={imgSrc}
-              style={{ width: dispW, height: dispH }}
-              resizeMode="contain"
+              minScale={1}
+              maxScale={4}
+              doubleTapScale={2}
+              bindToBorders
+              style={{ width: contW, height: contH }}
             >
-              {loading && (
-                <View
-                  style={[styles.loading, { width: dispW, height: dispH }]}
+              {/* ALIGNMENT LAYER — THIS IS REQUIRED */}
+              <View
+                style={{
+                  width: contW,
+                  height: contH,
+                  alignItems: 'center',        // horizontal centering
+                  justifyContent: 'center' // vertical centering
+                }}
+              >
+                <ImageBackground
+                  source={imgSrc}
+                  style={{ width: 1300, height: 600 }}
+                  resizeMode="contain"
                 >
-                  <ActivityIndicator size="large" />
-                </View>
-              )}
+                  {loading && (
+                    <View style={[styles.loading, { width: dispW, height: dispH }]}>
+                      <ActivityIndicator size="large" />
+                    </View>
+                  )}
 
               {/* PARAM BOXES */}
-              {PARAM_SR.map((sr) => {
-                const pos = POSITIONS[sr];
-                const val = edited[sr] ?? values[sr]?.value_01 ?? '';
-                const left = Math.round((pos.x / 100) * dispW);
-                const top = Math.round((pos.y / 100) * dispH);
+{PARAM_SR.map((sr) => {
+  const pos = POSITIONS[sr];
+  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
 
-                return (
-                  <TouchableOpacity
-                    key={sr}
-                    onPress={() => {
-                      setEditingSr(sr);
-                      setTempVal(String(val));
-                    }}
-                    style={[
-                      styles.paramBox,
-                      {
-                        left,
-                        top,
-                        width: BOX_W,
-                        height: BOX_H,
-                        transform: [
-                          { translateX: -BOX_W / 2 },
-                          { translateY: -BOX_H / 2 },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.paramText, dark && { color: '#fff' }]}>
-                      {val}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+  // Clamp percentages
+  const xPct = Math.max(0, Math.min(pos.x, 100));
+  const yPct = Math.max(0, Math.min(pos.y, 100));
+
+  // Compute CENTER position
+  let cx = (xPct / 100) * IMG_W;
+  let cy = (yPct / 100) * IMG_H;
+
+  // Clamp CENTER so box stays fully visible
+  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+  cy = Math.max(0, Math.min(cy, IMG_H));
+
+
+  return (
+    <TouchableOpacity
+      key={sr}
+      onPress={() => {
+        setEditingSr(sr);
+        setTempVal(String(val));
+      }}
+      style={[
+        styles.paramBox,
+        {
+          left: cx,
+          top: cy,
+          width: BOX_W,
+          height: BOX_H,
+          transform: [
+            { translateX: -BOX_W / 2 },
+            { translateY: -BOX_H / 2 },
+          ],
+        },
+      ]}
+    >
+      <Text style={[styles.paramText, dark && { color: '#fff' }]}>
+        {val}
+      </Text>
+    </TouchableOpacity>
+  );
+})}
+
 
               {/* SERIAL BOXES */}
-              {SERIAL_POS.map((p) => {
-                const left = Math.round((p.x / 100) * dispW);
-                const top = Math.round((p.y / 100) * dispH);
+{SERIAL_POS.map((p) => {
+  const xPct = Math.max(0, Math.min(p.x, 100));
+  const yPct = Math.max(0, Math.min(p.y, 100));
 
-                return (
-                  <View
-                    key={p.id}
-                    pointerEvents="none"
-                    style={[
-                      styles.serialBox,
-                      {
-                        left,
-                        top,
-                        width: BOX_W,
-                        height: BOX_H,
-                        transform: [
-                          { translateX: -BOX_W / 2 },
-                          { translateY: -BOX_H / 2 },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Text style={styles.serialText}>{p.id}</Text>
-                  </View>
-                );
-              })}
+  let cx = (xPct / 100) * IMG_W;
+  let cy = (yPct / 100) * IMG_H;
+
+  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+
+  return (
+    <View
+      key={p.id}
+      pointerEvents="none"
+      style={[
+        styles.serialBox,
+        {
+          left: cx,
+          top: cy,
+          width: 50,
+          height: 30,
+          transform: [
+            { translateX: -BOX_W / 2 },
+            { translateY: -BOX_H / 2 },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.serialText}>{p.id}</Text>
+    </View>
+  );
+})}
+
             </ImageBackground>
+          </View>
           </ZoomableView>
         </View>
 
@@ -348,10 +384,10 @@ function MachinePanelInner(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 6,
-    backgroundColor: '#f9fafb',
+    padding: 0,
+    backgroundColor: '#ffffffff',
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
 
   header: {
@@ -374,12 +410,11 @@ const styles = StyleSheet.create({
   bodyRow: { flex: 1, flexDirection: 'row' },
 
   leftArea: {
-    flex: 1,
+    flex: .85,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     overflow: 'hidden',
-    backgroundColor: '#fff',
-    borderRadius: 6,
+    backgroundColor: '#ffffffff',
   },
 
   rightButtons: {
@@ -387,9 +422,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingVertical: 10,
-    backgroundColor: '#eef3ff',
+    backgroundColor: '#ffffffff',
     borderLeftWidth: 1,
-    borderLeftColor: '#ccc',
+    borderLeftColor: '#ffffffff',
   },
 
   portraitButtons: {
@@ -430,15 +465,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  paramBox: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 6,
-  },
+ paramBox: {
+  position: 'absolute',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: 6,
+  zIndex: 10,
+}
+,
+
   paramText: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: '700',
     color: '#000',
   },

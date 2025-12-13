@@ -42,7 +42,7 @@ export default function RecipeTable({ data, darkMode = false }: RecipeTableProps
       >
         <Text
           style={{
-            width: 50,
+            width: 80,
             textAlign: 'center',
             fontWeight: '1000',
             ...baseText,
@@ -125,7 +125,7 @@ export default function RecipeTable({ data, darkMode = false }: RecipeTableProps
         {/* Sr No */}
         <Text
           style={{
-            width: 50,
+            width: 80,
             textAlign: 'center',
             ...baseText,
             paddingVertical: 10,

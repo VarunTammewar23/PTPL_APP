@@ -85,13 +85,13 @@ export default BottomBar;
 ============================================================ */
 
 const BUTTON_HEIGHT = 50;
-const BUTTON_WIDTH = 119;
+const BUTTON_WIDTH = 115;
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
-    borderTopWidth: 1,
-    borderTopColor: '#cfcfcf',
-    backgroundColor: '#e6e6e8',
+    borderTopWidth: 0,
+    borderTopColor: '#ffffffff',
+    backgroundColor: '#ffffffff',
     paddingVertical: 4,
   },
 
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 1,
   },
 
   pillButtonActive: {
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   pillText: {
     color: '#211f2e',
     fontFamily: FONT_FAMILY.regular,
-    fontSize: FONT_SIZE.label,
+    fontSize: FONT_SIZE.button,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
     textAlign: 'center',
     width: BUTTON_WIDTH - 10,
@@ -148,15 +149,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 5,
     borderRightWidth: 1,
-     borderTopColor: '#7f8294ff',
-    borderBottomColor: '#7f8294ff',
-    borderRightColor: '#7f8294ff',
-     borderLeftColor: '#7f8294ff',
+     borderTopColor: '#414141ff',
+    borderBottomColor: '#414141ff',
+    borderRightColor: '#414141ff',
+     borderLeftColor: '#414141ff',
+    marginRight: 1,
   },
   settingsText: {
     color: '#fff',
     fontFamily: FONT_FAMILY.regular,
-    fontSize: FONT_SIZE.header,
+    fontSize: FONT_SIZE.button,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 
@@ -169,15 +171,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 5,
-    borderTopColor: '#fff',
-    borderBottomColor: '#df9aa6',
-    borderRightColor: '#df9aa6',
+    borderTopColor: '#ff798fff',
+    borderBottomColor: '#ff798fff',
+    borderRightColor: '#ff798fff',
+    borderLeftColor: '#ff798fff',
     borderWidth: 1,
   },
   exitText: {
     color: '#6b0f1a',
     fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.header,
+    fontSize: FONT_SIZE.button,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 });

@@ -10,6 +10,7 @@ export const FONT_SIZE = {
   text: 18,
   small: 16,
   special: 21,
+  button: 17,
 };
 
 
