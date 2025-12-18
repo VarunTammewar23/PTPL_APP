@@ -42,15 +42,15 @@ interface RecipeParam {
 const PARAM_SR = [7, 8, 9];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  7: { x: 81, y: 21 },
-  8: { x: 81, y: 45 },
-  9: { x: 81, y: 70 },
+  7: { x: 75, y: 21 },
+  8: { x: 75, y: 45 },
+  9: { x: 75, y: 70 },
 };
 
 const SERIAL_POS = [
-  { id: 7, x: 5, y: 21 },
-  { id: 8, x: 5, y: 47 },
-  { id: 9, x: 5, y: 72 },
+  { id: 7, x: 13, y: 21 },
+  { id: 8, x: 13, y: 47 },
+  { id: 9, x: 13, y: 72 },
 ];
 
 const BOX_W = 80;

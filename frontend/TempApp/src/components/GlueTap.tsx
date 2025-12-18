@@ -42,11 +42,11 @@ interface RecipeParam {
 const PARAM_SR = [12];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  12: { x: 30, y: 55 },
+  12: { x: 34, y: 55 },
 };
 
 const SERIAL_POS = [
-  { id: 12, x: 30, y: 45 },
+  { id: 12, x: 32, y: 47 },
 ];
 
 const BOX_W = 80;

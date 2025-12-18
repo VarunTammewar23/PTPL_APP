@@ -43,14 +43,14 @@ const PARAM_SR = [1, 13, 14];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
   1: { x: 55, y: 72 },
-  13: { x: 72, y: 53 },
-  14: { x: 10, y: 38 },
+  13: { x: 69, y: 53 },
+  14: { x: 16, y: 38 },
 };
 
 const SERIAL_POS = [
   { id: 1, x: 55, y: 80 },
-  { id: 13, x: 72, y: 62 },
-  { id: 14, x: 5, y: 48 },
+  { id: 13, x: 70, y: 62 },
+  { id: 14, x: 14, y: 45 },
 ];
 
 const BOX_W = 80;

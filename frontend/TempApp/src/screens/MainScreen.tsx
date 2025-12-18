@@ -718,7 +718,10 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                   {RPF_ITEMS.map((it, i) => (
                     <TouchableOpacity
                       key={it + i}
-                      style={styles.sideMenuButton}
+                      style={[
+                        styles.sideMenuButton,
+                        activeRpfSub === it && styles.sideMenuButtonActive
+                      ]}
                       activeOpacity={0.9}
                       onPress={() => {
                         if (selectedRecipeId === -1) {
@@ -769,7 +772,15 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                       }}
                     >
                       <View style={styles.sideMenuGloss} />
-                      <Text style={styles.sideMenuText}>{it}</Text>
+                      <Text
+                      style={[
+                        styles.sideMenuText,
+                        activeRpfSub === it && styles.sideMenuTextActive
+                      ]}
+                    >
+                      {it}
+                    </Text>
+
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -790,6 +801,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
         setActivePanel(label);
 
         if (label === "RECIPE") {
+          setActiveRpfSub(null);
           setShowMachine(false);
           setShowFolds(false);
           setShowOffset(false);
@@ -956,13 +968,18 @@ noRecipeText: {
     backgroundColor: "rgba(255,255,255,0.55)"
   },
 
-  sideMenuText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#1b1730",
-    textAlign: "center",
-    paddingHorizontal: 6
-  },
+sideMenuText: {
+  fontSize: 12,
+  fontWeight: "700",
+  color: "#1b1730",
+  textAlign: "center",
+  paddingHorizontal: 6
+},
+
+sideMenuTextActive: {
+  color: "#ffffff"
+},
+
 
   panel: {
     position: "absolute",
@@ -994,5 +1011,14 @@ noRecipeText: {
     fontSize: 16,
     borderBottomWidth: 1,
     borderColor: "#ddd"
-  }
+  },
+
+  sideMenuButtonActive: {
+  backgroundColor: "#4b6bff",   // same blue feel as bottom bar
+  borderTopColor: "#8fa0ff",
+  borderLeftColor: "#8fa0ff",
+  borderBottomColor: "#2f3fd6",
+  borderRightColor: "#2f3fd6",
+},
+
 });
