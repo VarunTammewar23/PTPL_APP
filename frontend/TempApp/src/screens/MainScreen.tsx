@@ -577,6 +577,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowFolds(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -587,6 +588,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName}
                 initialParams={recipeParams}
                 onClose={() => setShowOffset(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -597,6 +599,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName}
                 initialParams={recipeParams}
                 onClose={() => setShowGlueTap(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -607,6 +610,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName}
                 initialParams={recipeParams}
                 onClose={() => setShowSuctionGap(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -617,6 +621,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName}
                 initialParams={recipeParams}
                 onClose={() => setShowAllSpeed(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -627,6 +632,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowSideLay(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -637,6 +643,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowBlowerSettings(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -648,6 +655,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowRollerGap(false)}
                 imageScale={2}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 
@@ -658,6 +666,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 recipeName={selectedRecipeName ?? undefined}
                 initialParams={recipeParams}
                 onClose={() => setShowFoldingTray(false)}
+                onSave={saveCurrentMachineData} //save
               />
             </View>
 

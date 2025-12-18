@@ -10,7 +10,7 @@ type ConfigContextType = {
   setApiBase: (url: string) => Promise<void>;
   resetToDefault: () => Promise<void>;
 };
-
+ 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 // in-memory cache so other sync modules can read quickly

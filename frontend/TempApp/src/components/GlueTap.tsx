@@ -1,74 +1,112 @@
 // src/components/GlueTap.tsx
-import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useImperativeHandle,
+} from 'react';
 import {
-  View, Text, StyleSheet, ActivityIndicator, ImageBackground,
-  Dimensions, Image, TouchableOpacity, Modal, TextInput
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ImageBackground,
+  TouchableOpacity,
+  Modal,
+  TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api';
+import { useWindowDimensions } from 'react-native';
 
-const PARAM_SR = [12];  // 🔁 CHANGE SERIALS
-const POSITIONS = {
+type Props = {
+  recipeId: number;
+  recipeName?: string;
+  imageUri?: string;
+  onClose?: () => void;
+  initialParams?: any[];
+  pollMs?: number;
+  onSave?: (params: any[]) => void;
+};
+
+interface RecipeParam {
+  parameter_no: number;
+  section?: string;
+  parameter?: string;
+  value_01?: number | string;
+  unit?: string;
+}
+
+/* ---------- GLUE TAP CONFIG ---------- */
+
+const PARAM_SR = [12];
+
+const POSITIONS: Record<number, { x: number; y: number }> = {
   12: { x: 30, y: 55 },
 };
+
 const SERIAL_POS = [
   { id: 12, x: 30, y: 45 },
 ];
 
-const BOX_W = 30, BOX_H = 24;
+const BOX_W = 80;
+const BOX_H = 50;
 
-function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, pollMs = 2000 }: any, ref: any) {
-  const { theme } = useTheme();
-  const dark = theme === 'dark';
-  const [params, setParams] = useState(initialParams ?? []);
+const IMG_W = 1300;
+const IMG_H = 600;
+
+/* ---------- COMPONENT ---------- */
+
+function GlueTapInner(
+  { recipeId, imageUri, initialParams, pollMs = 2000, onSave }: Props,
+  ref: any
+) {
+  const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
   const [loading, setLoading] = useState(!initialParams);
 
-  const [natW, setNatW] = useState<number | null>(null);
-  const [natH, setNatH] = useState<number | null>(null);
-  const [contW, setContW] = useState(Dimensions.get('window').width);
-  const [contH, setContH] = useState(Math.round(Dimensions.get('window').height * 0.45));
-  const [dispW, setDispW] = useState(contW);
-  const [dispH, setDispH] = useState(contH);
+  const { width, height } = useWindowDimensions();
+  const isPortrait = height > width;
 
-  const imgSrc = imageUri ? { uri: imageUri } : require('../assets/gluetap.jpeg'); // 🔁 CHANGE IMAGE
+  const [contW, setContW] = useState(width);
+  const [contH, setContH] = useState(Math.round(height * 0.75));
 
-  const [edited, setEdited] = useState({});
-  const [editingSr, setEditingSr] = useState(null);
+  const imgSrc = imageUri
+    ? { uri: imageUri }
+    : require('../assets/gluetap.jpeg');
+
+  const [edited, setEdited] = useState<Record<number, string>>({});
+  const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
-  useEffect(() => {
-    if (!initialParams) {
-      const load = async () => {
-        try {
-          const res = await apiGet(`/recipes/${recipeId}`);
-          setParams(res.data?.params ?? []);
-        } finally {
-          setLoading(false);
-        }
-      };
-      load();
-      const id = setInterval(load, pollMs);
-      return () => clearInterval(id);
-    }
-  }, [recipeId, initialParams]);
+  /* ---------- FETCH PARAMS ---------- */
 
   useEffect(() => {
-    const uri = imgSrc.uri ?? Image.resolveAssetSource(imgSrc).uri;
-    Image.getSize(uri, (w, h) => { setNatW(w); setNatH(h); });
-  }, [imgSrc]);
+    if (initialParams) return;
 
-  useEffect(() => {
-    if (!natW || !natH) return;
-    const sc = Math.min(contW / natW, contH / natH);
-    setDispW(natW * sc); setDispH(natH * sc);
-  }, [natW, natH, contW, contH]);
+    const fetchData = async () => {
+      try {
+        const res = await apiGet(`/recipes/${recipeId}`);
+        setParams(res.data?.params ?? []);
+      } catch {}
+      setLoading(false);
+    };
+
+    fetchData();
+    const id = setInterval(fetchData, pollMs);
+    return () => clearInterval(id);
+  }, [recipeId, pollMs]);
+
+  /* ---------- MAP VALUES ---------- */
 
   const values = useMemo(() => {
-    const map = {};
-    PARAM_SR.forEach(sr => map[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null);
-    return map;
+    const m: Record<number, RecipeParam | null> = {};
+    PARAM_SR.forEach(
+      sr => (m[sr] = params.find(p => Number(p.parameter_no) === sr) ?? null)
+    );
+    return m;
   }, [params]);
+
+  /* ---------- REF API ---------- */
 
   useImperativeHandle(ref, () => ({
     getFinalParams: () =>
@@ -83,224 +121,289 @@ function GlueTapInner({ recipeId, recipeName, imageUri, onClose, initialParams, 
       setEdited({});
       setEditingSr(null);
       setTempVal('');
-    }
+    },
   }));
 
   const [tablePopup, setTablePopup] = useState(false);
 
+  /* ---------- UI ---------- */
+
   return (
-  <View
-    style={styles.container}
-    onLayout={(e) => {
-      const { width, height } = e.nativeEvent.layout;
-      if (width) setContW(width);
-      if (height) setContH(height);
-    }}
-  >
-<View style={styles.header}>
-  <Text style={[styles.title, dark && { color: '#fff' }]}>
-    RPF : GLUE / TAP QTY
-  </Text>
-  <Text style={styles.close} onPress={onClose}>Close</Text>
-</View>
-
-
-    {/* CENTER WRAPPER — FIXES WHITE SPACE */}
-{/* CENTER WRAPPER */}
-      <View style={styles.zoomArea}>
-        <ZoomableView
-          minScale={1}
-          maxScale={4}
-          doubleTapScale={2}
-          bindToBorders={true}     // 🚀 prevents image from moving over header
-          style={{ width: dispW, height: dispH }}
+    <View style={styles.container}>
+      <View style={[styles.bodyRow, isPortrait && { flexDirection: 'column' }]}>
+        {/* IMAGE AREA */}
+        <View
+          style={styles.leftArea}
+          onLayout={e => {
+            const { width, height } = e.nativeEvent.layout;
+            if (width) setContW(width);
+            if (height) setContH(height);
+          }}
         >
-
-        <ImageBackground
-          source={imgSrc}
-          style={{ width: dispW, height: dispH }}
-          resizeMode="contain"
-        >
-
-          {loading && (
-            <View style={[styles.loading, { width: dispW, height: dispH }]}>
-              <ActivityIndicator size="large" />
-            </View>
-          )}
-
-          {PARAM_SR.map(sr => {
-            const pos = POSITIONS[sr];
-            const val = edited[sr] ?? values[sr]?.value_01 ?? '';
-            const left = (pos.x / 100) * dispW;
-            const top = (pos.y / 100) * dispH;
-
-            return (
-              <TouchableOpacity
-                key={sr}
-                onPress={() => { setEditingSr(sr); setTempVal(String(val)); }}
-                style={[
-                  styles.paramBox,
-                  {
-                    left,
-                    top,
-                    width: BOX_W,
-                    height: BOX_H,
-                    transform: [
-                      { translateX: -BOX_W / 2 },
-                      { translateY: -BOX_H / 2 }
-                    ]
-                  }
-                ]}
-              >
-                <Text style={[styles.paramText, dark && { color: '#fff' }]}>
-                  {val}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          {SERIAL_POS.map(s => {
-            const left = (s.x / 100) * dispW;
-            const top = (s.y / 100) * dispH;
-
-            return (
-              <View
-                key={s.id}
-                pointerEvents="none"
-                style={[
-                  styles.serialBox,
-                  {
-                    left,
-                    top,
-                    width: BOX_W,
-                    height: BOX_H,
-                    transform: [
-                      { translateX: -BOX_W / 2 },
-                      { translateY: -BOX_H / 2 }
-                    ]
-                  }
-                ]}
-              >
-                <Text style={styles.serialText}>{s.id}</Text>
-              </View>
-            );
-          })}
-
-        </ImageBackground>
-      </ZoomableView>
-    </View>
-
-    {/* EDIT MODAL */}
-    <Modal visible={editingSr !== null} transparent animationType="fade">
-      <View style={styles.modalBg}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>Edit Value</Text>
-
-          <TextInput
-            value={tempVal}
-            onChangeText={setTempVal}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-
-          <View style={styles.row}>
-            <Text style={styles.cancel} onPress={() => setEditingSr(null)}>Cancel</Text>
-            <Text
-              style={styles.save}
-              onPress={() => {
-                setEdited({ ...edited, [editingSr!]: tempVal });
-                setEditingSr(null);
+          <ZoomableView
+            minScale={1}
+            maxScale={4}
+            doubleTapScale={2}
+            bindToBorders
+            style={{ width: contW, height: contH }}
+          >
+            <View
+              style={{
+                width: contW,
+                height: contH,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              Save
-            </Text>
-          </View>
+              <ImageBackground
+                source={imgSrc}
+                style={{ width: IMG_W, height: IMG_H }}
+                resizeMode="contain"
+              >
+                {loading && (
+                  <View style={styles.loading}>
+                    <ActivityIndicator size="large" />
+                  </View>
+                )}
+
+                {/* PARAM BOX */}
+                {PARAM_SR.map(sr => {
+                  const pos = POSITIONS[sr];
+                  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+
+                  let cx = (pos.x / 100) * IMG_W;
+                  let cy = (pos.y / 100) * IMG_H;
+
+                  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+                  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+
+                  return (
+                    <TouchableOpacity
+                      key={sr}
+                      onPress={() => {
+                        setEditingSr(sr);
+                        setTempVal(String(val));
+                      }}
+                      style={[
+                        styles.paramBox,
+                        {
+                          left: cx,
+                          top: cy,
+                          width: BOX_W,
+                          height: BOX_H,
+                          transform: [
+                            { translateX: -BOX_W / 2 },
+                            { translateY: -BOX_H / 2 },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={styles.paramText}>{val}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {/* SERIAL NUMBER */}
+                {SERIAL_POS.map(p => {
+                  let cx = (p.x / 100) * IMG_W;
+                  let cy = (p.y / 100) * IMG_H;
+
+                  return (
+                    <View
+                      key={p.id}
+                      pointerEvents="none"
+                      style={[
+                        styles.serialBox,
+                        {
+                          left: cx,
+                          top: cy,
+                          width: 50,
+                          height: 30,
+                          transform: [
+                            { translateX: -25 },
+                            { translateY: -15 },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={styles.serialText}>{p.id}</Text>
+                    </View>
+                  );
+                })}
+              </ImageBackground>
+            </View>
+          </ZoomableView>
         </View>
-      </View>
-    </Modal>
 
-    {/* SHOW TABLE + VIDEO BUTTONS */}
-    <View style={{ position: 'absolute', right: 12, bottom: 12, flexDirection: 'row' }}>
-      <TouchableOpacity
-        style={{ backgroundColor: '#007bff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
-        onPress={() => setTablePopup(true)}
-      >
-        <Text style={{ color: '#fff', fontWeight: '700' }}>SHOW TABLE</Text>
-      </TouchableOpacity>
+        {/* BUTTONS */}
+        <View style={[styles.rightButtons, isPortrait && styles.portraitButtons]}>
+          <TouchableOpacity style={styles.btnBlue} onPress={() => setTablePopup(true)}>
+            <Text style={styles.btnText}>SHOW TABLE</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={{ backgroundColor: '#28a745', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginLeft: 8 }}
-        onPress={() => console.log('Video clicked')}
-      >
-        <Text style={{ color: '#fff', fontWeight: '700' }}>VIDEO</Text>
-      </TouchableOpacity>
-    </View>
+          <TouchableOpacity style={styles.btnGreen}>
+            <Text style={styles.btnText}>VIDEO</Text>
+          </TouchableOpacity>
 
-    {/* TABLE POPUP */}
-    <Modal visible={tablePopup} animationType="fade" transparent onRequestClose={() => setTablePopup(false)}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ width: '92%', maxWidth: 720, backgroundColor: '#fff', borderRadius: 10, padding: 12 }}>
-          <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 8 }}>Parameter Table</Text>
-          <View style={{ flexDirection: 'row', backgroundColor: '#e8e8f5', padding: 6 }}>
-            <Text style={{ flex: 0.7, textAlign: 'center', fontWeight: '700' }}>SR</Text>
-            <Text style={{ flex: 2, textAlign: 'center', fontWeight: '700' }}>Parameter</Text>
-            <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Original</Text>
-            <Text style={{ flex: 1.3, textAlign: 'center', fontWeight: '700' }}>Changed</Text>
-          </View>
-          {PARAM_SR.map(sr => {
-            const orig = values[sr]?.value_01 ?? '';
-            const paramName = values[sr]?.parameter ?? '';
-            const changed = edited[sr] ?? '';
-            return (
-              <View key={`tbl-${sr}`} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
-                <Text style={{ flex: 0.7, textAlign: 'center' }}>{sr}</Text>
-                <Text style={{ flex: 2, textAlign: 'center' }}>{paramName}</Text>
-                <Text style={{ flex: 1.3, textAlign: 'center' }}>{orig}</Text>
-                <Text style={{ flex: 1.3, textAlign: 'center', color: changed ? 'blue' : '#111' }}>{changed || '-'}</Text>
-              </View>
-            );
-          })}
-
-          <TouchableOpacity onPress={() => setTablePopup(false)} style={{ marginTop: 12 }}>
-            <Text style={{ color: '#007bff', fontWeight: '700', textAlign: 'center' }}>Close</Text>
+          <TouchableOpacity
+            style={styles.btnBlue}
+            onPress={() => {
+              const params = ref?.current?.getFinalParams?.() ?? [];
+              onSave?.(params);
+            }}
+          >
+            <Text style={styles.btnText}>SAVE</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </Modal>
 
-  </View>
-);
+      {/* EDIT MODAL */}
+      <Modal visible={editingSr !== null} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Edit Value</Text>
+            <TextInput
+              style={styles.input}
+              value={tempVal}
+              onChangeText={setTempVal}
+              keyboardType="numeric"
+            />
+            <View style={styles.row}>
+              <Text onPress={() => setEditingSr(null)} style={styles.cancel}>
+                Cancel
+              </Text>
+              <Text
+                style={styles.save}
+                onPress={() => {
+                  setEdited({ ...edited, [editingSr!]: tempVal });
+                  setEditingSr(null);
+                }}
+              >
+                Save
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* TABLE POPUP */}
+      <Modal visible={tablePopup} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Parameter Table</Text>
+            {PARAM_SR.map(sr => (
+              <Text key={sr}>
+                {sr} : {edited[sr] ?? values[sr]?.value_01 ?? '-'}
+              </Text>
+            ))}
+            <TouchableOpacity onPress={() => setTablePopup(false)}>
+              <Text style={styles.save}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 }
 
+/* ---------- STYLES (SAME AS FOLDS / OFFSET) ---------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 6, backgroundColor: '#f9fafb', borderRadius: 8 , overflow: 'hidden',},
-  header: { flexDirection: 'row', justifyContent: 'center', marginBottom: 6 },
-  title: { fontSize: 16, fontWeight: '700', color: '#111' },
-  close: { color: '#0066ff', fontWeight: '700', position: 'absolute', right: 0 },
-  loading: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#fff' },
+  bodyRow: { flex: 1, flexDirection: 'row' },
 
-  paramBox: { position: 'absolute', borderRadius: 6, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)' },
-  paramText: { fontSize: 10, fontWeight: '700' },
-  serialBox: { position: 'absolute', backgroundColor: '#000', borderColor: '#fff', borderWidth: 1.3,
-    justifyContent: 'center', alignItems: 'center', borderRadius: 6 },
-  serialText: { fontWeight: '700', color: '#fff', fontSize: 10 },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 18 },
-  modal: { backgroundColor: '#fff', borderRadius: 10, padding: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '700' },
-  row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
-  cancel: { color: '#666', marginRight: 20 },
+  leftArea: { flex: 0.85, backgroundColor: '#fff' ,overflow: 'hidden'},
+
+  rightButtons: {
+    flex: 0.15,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+
+  portraitButtons: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderColor: '#ccc',
+  },
+
+  btnBlue: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    borderRadius: 6,
+    width: '90%',
+    marginTop: 10,
+  },
+
+  btnGreen: {
+    backgroundColor: '#28a745',
+    paddingVertical: 10,
+    borderRadius: 6,
+    width: '90%',
+    marginTop: 10,
+  },
+
+  btnText: { color: '#fff', textAlign: 'center', fontWeight: '700' },
+
+  paramBox: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 6,
+    zIndex: 10,
+  },
+
+  paramText: { fontSize: 28, fontWeight: '700' },
+
+  serialBox: {
+    position: 'absolute',
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+
+  serialText: { color: '#fff', fontWeight: '700' },
+
+  loading: {
+    position: 'absolute',
+    top: '45%',
+    left: '45%',
+  },
+
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+
+  modal: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 10,
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 6,
+    padding: 8,
+  },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+  },
+
+  cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
-  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 6, padding: 8 },
-  zoomArea: {
-  flex: 1,
-  marginTop: 0,  // height of header area
-  overflow: 'hidden',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
 });
 
 export default React.forwardRef(GlueTapInner);
