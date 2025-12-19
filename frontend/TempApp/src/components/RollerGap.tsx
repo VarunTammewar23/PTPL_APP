@@ -19,6 +19,8 @@ import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZ
 import { apiGet } from '../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from './VideoModal';
+import { ScrollView } from 'react-native';
+
 
 type Props = {
   recipeId: number;
@@ -43,69 +45,69 @@ interface RecipeParam {
 const PARAM_SR = [58,83,81,79,77,75,73,71,69,67,65,63,61,60,62,64,66,68,70,72,74,76,78,80,82,84];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  58: { x: 14, y: 10 },
-  83: { x: 14, y: 14 },
-  81: { x: 14, y: 18 },
-  79: { x: 14, y: 22 },
-  77: { x: 14, y: 26 },
-  75: { x: 14, y: 30 },
-  73: { x: 14, y: 34 },
-  71: { x: 14, y: 38 },
-  69: { x: 14, y: 42 },
-  67: { x: 14, y: 46 },
-  65: { x: 14, y: 50 },
-  63: { x: 14, y: 54 },
-  61: { x: 14, y: 58 },
-  60: { x: 14, y: 62 },
-  62: { x: 14, y: 66 },
-  64: { x: 14, y: 70 },
-  66: { x: 14, y: 74 },
-  68: { x: 14, y: 78 },
-  70: { x: 14, y: 82 },
-  72: { x: 14, y: 86 },
-  74: { x: 14, y: 90 },
-  76: { x: 14, y: 94 },
-  78: { x: 14, y: 98 },
-  80: { x: 14, y: 102 },
-  82: { x: 14, y: 106 },
-  84: { x: 14, y: 110 },
+  58: { x: 23, y: 60.1 },
+  83: { x: 24, y: 54.8 },
+  81: { x: 27, y: 49 },
+  79: { x: 30, y: 44 },
+  77: { x: 32, y: 38.3 },
+  75: { x: 33, y: 33 },
+  73: { x: 35, y: 27 },
+  71: { x: 37, y: 22 },
+  69: { x: 39, y: 16 },
+  67: { x: 42, y: 10.5 },
+  65: { x: 45, y: 6 },
+  63: { x: 50, y: 6 },
+  61: { x: 57, y: 6 },
+  60: { x: 68, y: 5 },
+  62: { x: 75, y: 33 },
+  64: { x: 74, y: 38.5 },
+  66: { x: 72, y: 43.6 },
+  68: { x: 69, y: 49 },
+  70: { x: 67, y: 54.5 },
+  72: { x: 65, y: 60 },
+  74: { x: 63, y: 65 },
+  76: { x: 60, y: 71 },
+  78: { x: 58, y: 76.4 },
+  80: { x: 56, y: 82 },
+  82: { x: 54, y: 87.5 },
+  84: { x: 52, y: 92.8 },
 };
 
 
 
 const SERIAL_POS = [
-  { id: 58, x: 10, y: 10 },
-  { id: 83, x: 10, y: 14 },
-  { id: 81, x: 10, y: 18 },
-  { id: 79, x: 10, y: 22 },
-  { id: 77, x: 10, y: 26 },
-  { id: 75, x: 10, y: 30 },
-  { id: 73, x: 10, y: 34 },
-  { id: 71, x: 10, y: 38 },
-  { id: 69, x: 10, y: 42 },
-  { id: 67, x: 10, y: 46 },
-  { id: 65, x: 10, y: 50 },
-  { id: 63, x: 10, y: 54 },
-  { id: 61, x: 10, y: 58 },
-  { id: 60, x: 10, y: 62 },
-  { id: 62, x: 10, y: 66 },
-  { id: 64, x: 10, y: 70 },
-  { id: 66, x: 10, y: 74 },
-  { id: 68, x: 10, y: 78 },
-  { id: 70, x: 10, y: 82 },
-  { id: 72, x: 10, y: 86 },
-  { id: 74, x: 10, y: 90 },
-  { id: 76, x: 10, y: 94 },
-  { id: 78, x: 10, y: 98 },
-  { id: 80, x: 10, y: 102 },
-  { id: 82, x: 10, y: 106 },
-  { id: 84, x: 10, y: 110 },
+  { id: 58, x: 16, y: 60 },
+  { id: 83, x: 16, y: 55 },
+  { id: 81, x: 18, y: 50 },
+  { id: 79, x: 20, y: 45 },
+  { id: 77, x: 22, y: 40 },
+  { id: 75, x: 24, y: 34 },
+  { id: 73, x: 26, y: 27 },
+  { id: 71, x: 29, y: 22 },
+  { id: 69, x: 31, y: 16 },
+  { id: 67, x: 33, y: 10.5 },
+  { id: 65, x: 37, y: 6 },
+  { id: 63, x: 47, y: 1 },
+  { id: 61, x: 60, y: 1 },
+  { id: 60, x: 75, y: 5 },
+  { id: 62, x: 82, y: 33 },
+  { id: 64, x: 81, y: 38.5 },
+  { id: 66, x: 80, y: 43.6 },
+  { id: 68, x: 78, y: 49 },
+  { id: 70, x: 76, y: 54.5 },
+  { id: 72, x: 74, y: 60 },
+  { id: 74, x: 72, y: 65 },
+  { id: 76, x: 70, y: 71 },
+  { id: 78, x: 68, y: 74.6 },
+  { id: 80, x: 66, y: 82 },
+  { id: 82, x: 64, y: 87.5 },
+  { id: 84, x: 62, y: 92.8 },
 ];
 
 
 
 const BOX_W = 80;
-const BOX_H = 50;
+const BOX_H = 45;
 
 const IMG_W = 1300;
 const IMG_H = 600;
@@ -354,20 +356,52 @@ function RollerGapInner(
 
       {/* TABLE POPUP */}
       <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Parameter Table</Text>
-            {PARAM_SR.map(sr => (
-              <Text key={sr}>
-                {sr} : {edited[sr] ?? values[sr]?.value_01 ?? '-'}
+  <View style={styles.modalBg}>
+    <View style={[styles.modal, { maxHeight: '80%' }]}>
+
+      <Text style={styles.modalTitle}>Parameter Table</Text>
+
+      <View style={styles.tblHead}>
+        <Text style={styles.th}>SR</Text>
+        <Text style={styles.th}>Parameter</Text>
+        <Text style={styles.th}>Original</Text>
+        <Text style={styles.th}>Changed</Text>
+      </View>
+
+      <ScrollView>
+        {PARAM_SR.map((sr) => {
+          const param = values[sr]?.parameter ?? '';
+          const orig = values[sr]?.value_01 ?? '';
+          const changed = edited[sr] ?? '-';
+
+          return (
+            <View style={styles.tblRow} key={sr}>
+              <Text style={styles.td}>{sr}</Text>
+              <Text style={styles.td}>{param}</Text>
+              <Text style={styles.td}>{orig}</Text>
+              <Text
+                style={[
+                  styles.td,
+                  { color: changed !== '-' ? '#007bff' : '#111' },
+                ]}
+              >
+                {changed}
               </Text>
-            ))}
-            <TouchableOpacity onPress={() => setTablePopup(false)}>
-              <Text style={styles.save}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      <TouchableOpacity onPress={() => setTablePopup(false)}>
+        <Text style={[styles.save, { textAlign: 'center', marginTop: 10 }]}>
+          Close
+        </Text>
+      </TouchableOpacity>
+
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 }
@@ -478,6 +512,27 @@ const styles = StyleSheet.create({
 
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
+
+   tblHead: {
+  flexDirection: 'row',
+  backgroundColor: '#e8e8f5',
+  padding: 6,
+},
+th: {
+  flex: 1,
+  textAlign: 'center',
+  fontWeight: '700',
+},
+tblRow: {
+  flexDirection: 'row',
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderColor: '#eee',
+},
+td: {
+  flex: 1,
+  textAlign: 'center',
+},
 });
 
 export default React.forwardRef(RollerGapInner);

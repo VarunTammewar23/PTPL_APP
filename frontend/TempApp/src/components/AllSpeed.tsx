@@ -308,25 +308,49 @@ function AllSpeedInner(
       </Modal>
 
       {/* TABLE POPUP */}
-      <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Parameter Table</Text>
-            {PARAM_SR.map(sr => (
-              <Text key={sr}>
-                {sr} : {edited[sr] ?? values[sr]?.value_01 ?? '-'}
-              </Text>
-            ))}
-            <TouchableOpacity onPress={() => setTablePopup(false)}>
-              <Text style={styles.save}>Close</Text>
-            </TouchableOpacity>
+            <Modal visible={tablePopup} transparent animationType="fade">
+              <View style={styles.modalBg}>
+                <View style={styles.modal}>
+                  <Text style={styles.modalTitle}>Parameter Table</Text>
+      
+                  <View style={styles.tblHead}>
+                    <Text style={styles.th}>SR</Text>
+                    <Text style={styles.th}>Parameter</Text>
+                    <Text style={styles.th}>Original</Text>
+                    <Text style={styles.th}>Changed</Text>
+                  </View>
+      
+                  {PARAM_SR.map((sr) => {
+                    const orig = values[sr]?.value_01 ?? '';
+                    const param = values[sr]?.parameter ?? '';
+                    const changed = edited[sr] ?? '-';
+      
+                    return (
+                      <View style={styles.tblRow} key={sr}>
+                        <Text style={styles.td}>{sr}</Text>
+                        <Text style={styles.td}>{param}</Text>
+                        <Text style={styles.td}>{orig}</Text>
+                        <Text
+                          style={[
+                            styles.td,
+                            { color: changed !== '-' ? 'blue' : '#111' },
+                          ]}
+                        >
+                          {changed}
+                        </Text>
+                      </View>
+                    );
+                  })}
+      
+                  <TouchableOpacity onPress={() => setTablePopup(false)}>
+                    <Text style={styles.save}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
-
+        );
+      }
 /* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
@@ -433,6 +457,27 @@ const styles = StyleSheet.create({
 
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
+
+   tblHead: {
+    flexDirection: 'row',
+    backgroundColor: '#e8e8f5',
+    padding: 6,
+  },
+  th: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+  tblRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  td: {
+    flex: 1,
+    textAlign: 'center',
+  },
 });
 
 export default React.forwardRef(AllSpeedInner);

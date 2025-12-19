@@ -19,6 +19,8 @@ import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZ
 import { apiGet } from '../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from './VideoModal';
+import { ScrollView } from 'react-native';
+
 
 type Props = {
   recipeId: number;
@@ -40,20 +42,73 @@ interface RecipeParam {
 
 /* ---------- CONFIG ---------- */
 
-const PARAM_SR = [301, 302, 303, 304];
+const PARAM_SR = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,57];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  301: { x: 70, y: 20 },
-  302: { x: 70, y: 45 },
-  303: { x: 70, y: 65 },
-  304: { x: 70, y: 85 },
+ 34: { x: 55, y: 5 },
+
+  35: { x: 78, y: 30.5 },
+  36: { x: 53, y: 10 },
+
+  37: { x: 74, y: 36.5 },
+  38: { x: 50, y: 16 },
+
+  39: { x: 72, y: 42.5 },
+  40: { x: 47, y: 21.5 },
+
+  41: { x: 70, y: 48.5 },
+  42: { x: 45, y: 28 },
+
+  43: { x: 66, y: 54.5 },
+  44: { x: 42, y: 34 },
+
+  45: { x: 63, y: 60.5 },
+  46: { x: 38, y: 40 },
+
+  47: { x: 60, y: 66.5 },
+  48: { x: 36, y: 46 },
+
+  49: { x: 57, y: 72.5 },
+  50: { x: 33, y: 52 },
+
+  51: { x: 55, y: 79 },
+  52: { x: 30, y: 57 },
+
+  53: { x: 52, y: 84.5 },
+  54: { x: 28, y: 63 },
+
+  55: { x: 50, y: 90.5 },
+  56: { x: 25, y: 69 },
+
+  57: { x: 48, y: 96.5 },
+
 };
 
 const SERIAL_POS = [
-  { id: 301, x: 10, y: 20 },
-  { id: 302, x: 10, y: 45 },
-  { id: 303, x: 10, y: 65 },
-  { id: 304, x: 10, y: 85 },
+  { id: 34, x: 47, y: 5 },
+  { id: 35, x: 85, y: 30.5 },
+  { id: 36, x: 45, y: 10 },
+  { id: 37, x: 82, y: 36.5 },
+  { id: 38, x: 42, y: 16 },
+  { id: 39, x: 80, y: 42.5 },
+  { id: 40, x: 39, y: 21.5 },
+  { id: 41, x: 77, y: 48.5 },
+  { id: 42, x: 37, y: 28 },
+  { id: 43, x: 74, y: 54.5 },
+  { id: 44, x: 34, y: 34 },
+  { id: 45, x: 72, y: 60.5 },
+  { id: 46, x: 31, y: 40 },
+  { id: 47, x: 69, y: 66.5 },
+  { id: 48, x: 28, y: 46 },
+  { id: 49, x: 66, y: 72.5 },
+  { id: 50, x: 25, y: 52 },
+  { id: 51, x: 63, y: 79 },
+  { id: 52, x: 22, y: 58 },
+  { id: 53, x: 60, y: 84.5 },
+  { id: 54, x: 20, y: 63 },
+  { id: 55, x: 57.5, y: 90.5 },
+  { id: 56, x: 17, y: 69 },
+  { id: 57, x: 55, y: 96.5 },
 ];
 
 const BOX_W = 80;
@@ -79,7 +134,7 @@ function FoldingTrayInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/foldingtray.jpeg');
+    : require('../assets/foldingtray.png');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -305,20 +360,52 @@ function FoldingTrayInner(
 
       {/* TABLE POPUP */}
       <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Parameter Table</Text>
-            {PARAM_SR.map(sr => (
-              <Text key={sr}>
-                {sr} : {edited[sr] ?? values[sr]?.value_01 ?? '-'}
+  <View style={styles.modalBg}>
+    <View style={[styles.modal, { maxHeight: '80%' }]}>
+
+      <Text style={styles.modalTitle}>Parameter Table</Text>
+
+      <View style={styles.tblHead}>
+        <Text style={styles.th}>SR</Text>
+        <Text style={styles.th}>Parameter</Text>
+        <Text style={styles.th}>Original</Text>
+        <Text style={styles.th}>Changed</Text>
+      </View>
+
+      <ScrollView>
+        {PARAM_SR.map((sr) => {
+          const param = values[sr]?.parameter ?? '';
+          const orig = values[sr]?.value_01 ?? '';
+          const changed = edited[sr] ?? '-';
+
+          return (
+            <View style={styles.tblRow} key={sr}>
+              <Text style={styles.td}>{sr}</Text>
+              <Text style={styles.td}>{param}</Text>
+              <Text style={styles.td}>{orig}</Text>
+              <Text
+                style={[
+                  styles.td,
+                  { color: changed !== '-' ? '#007bff' : '#111' },
+                ]}
+              >
+                {changed}
               </Text>
-            ))}
-            <TouchableOpacity onPress={() => setTablePopup(false)}>
-              <Text style={styles.save}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      <TouchableOpacity onPress={() => setTablePopup(false)}>
+        <Text style={[styles.save, { textAlign: 'center', marginTop: 10 }]}>
+          Close
+        </Text>
+      </TouchableOpacity>
+
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 }
@@ -429,6 +516,28 @@ const styles = StyleSheet.create({
 
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
+
+  tblHead: {
+  flexDirection: 'row',
+  backgroundColor: '#e8e8f5',
+  padding: 6,
+},
+th: {
+  flex: 1,
+  textAlign: 'center',
+  fontWeight: '700',
+},
+tblRow: {
+  flexDirection: 'row',
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderColor: '#eee',
+},
+td: {
+  flex: 1,
+  textAlign: 'center',
+},
+
 });
 
 export default React.forwardRef(FoldingTrayInner);
