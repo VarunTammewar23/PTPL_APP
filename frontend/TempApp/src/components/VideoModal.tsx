@@ -8,12 +8,6 @@ import {
   Dimensions,
 } from 'react-native';
 import Video from 'react-native-video';
-import { Platform } from 'react-native';
-
-const ANDROID_VIDEO_URI = __DEV__
-  ? 'android.resource://com.tempapp.debug/raw/samplevideo'
-  : 'android.resource://com.tempapp/raw/samplevideo';
-
 
 type Props = {
   visible: boolean;
