@@ -69,10 +69,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     paddingBottom: 1,
+    paddingTop: 10,
   },
   video: {
     width: '95%',
-    height: 620,
+    height: 560,
     backgroundColor: '#ffffffff',
     alignSelf: 'center',
   },
