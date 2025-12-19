@@ -84,6 +84,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showBlowerSettings, setShowBlowerSettings] = useState(false);
   const [showRollerGap, setShowRollerGap] = useState(false);
   const [showFoldingTray, setShowFoldingTray] = useState(false);
+  const [customerName, setCustomerName] = useState<string | null>(null);
+
 
 
 
@@ -217,6 +219,24 @@ const onParamEdit = (p: any) => {
       setLoadingRecipes(false);
     }
   }, [customerCode]);
+
+  useEffect(() => {
+  if (!customerCode) return;
+
+  const fetchCustomerName = async () => {
+    try {
+      const res = await apiGet('/customers/by-code', {
+        params: { customer_code: customerCode },
+      });
+      setCustomerName(res.data?.customer_name ?? null);
+    } catch {
+      setCustomerName(null);
+    }
+  };
+
+  fetchCustomerName();
+}, [customerCode]);
+
 
   const fetchRecipeParams = useCallback(async (id: number) => {
     setLoadingParams(true);
@@ -388,12 +408,14 @@ const mergedParams = recipeParams.map((orig) => {
 const rows = mergedParams.map((p: any) => ({
   recipe_name: newRecipeName,
   customer_code: customerCode,
+  customer_name: customerName ?? "",   // 🔴 ADD THIS
   section: p.section ?? "",
   parameter_no: p.parameter_no,
   parameter: p.parameter ?? "",
   value_01: p.value_01 ?? "",
   unit: p.unit ?? ""
 }));
+console.log('FIRST ROW BEING SAVED:', rows[0]);
 
 
     // Basic validation: don't send empty/invalid rows

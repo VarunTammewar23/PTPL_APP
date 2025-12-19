@@ -38,7 +38,7 @@ async function fetchAndCacheRecipesFor(customerCode) {
   if (!customerCode) return;
   try {
     const [rows] = await pool.query(
-      'SELECT sr_no AS recipe_id, recipe_name, customer_code FROM recipe_list WHERE customer_code = ? ORDER BY recipe_name',
+      'SELECT sr_no AS recipe_id, recipe_name, customer_code, customer_name FROM recipe_list WHERE customer_code = ? ORDER BY recipe_name',
       [customerCode]
     );
     cache.recipesByCustomer[customerCode] = {
@@ -145,7 +145,7 @@ app.get('/recipes', async (req, res) => {
   // Fallback: fetch now and populate cache
   try {
     const [rows] = await pool.query(
-      'SELECT sr_no AS recipe_id, recipe_name, customer_code FROM recipe_list WHERE customer_code = ? ORDER BY recipe_name',
+      'SELECT sr_no AS recipe_id, recipe_name, customer_code, customer_name FROM recipe_list WHERE customer_code = ? ORDER BY recipe_name',
       [customerCode]
     );
     cache.recipesByCustomer[customerCode] = { data: rows, lastUpdated: Date.now() };
@@ -164,7 +164,7 @@ app.get('/recipes/:id', async (req, res) => {
 
   try {
     const [recipeRows] = await pool.query(
-      'SELECT recipe_name, customer_code FROM recipe_list WHERE sr_no = ? LIMIT 1',
+      'SELECT recipe_name, customer_code,customer_name FROM recipe_list WHERE sr_no = ? LIMIT 1',
       [recipeId]
     );
     if (!recipeRows.length) return res.status(404).json({ error: 'Recipe not found' });
@@ -176,7 +176,7 @@ app.get('/recipes/:id', async (req, res) => {
     );
 
     res.json({
-      recipe: { recipe_id: recipeId, recipe_name: recipeName, customer_code: recipeRows[0].customer_code },
+      recipe: { recipe_id: recipeId, recipe_name: recipeName, customer_code: recipeRows[0].customer_code, customer_name: recipeRows[0].customer_name },
       params,
     });
   } catch (err) {
@@ -275,6 +275,13 @@ app.post("/api/upload-excel", async (req, res) => {
 
   const recipeName = rows[0].recipe_name;
   const customerCode = rows[0].customer_code || null; // Make sure Excel has this
+  if (!customerCode) {
+  return res.json({
+    success: false,
+    message: 'customer_code missing in upload payload'
+  });
+}
+
 
   try {
     // 1️⃣ Check if recipe already exists
@@ -291,11 +298,28 @@ app.post("/api/upload-excel", async (req, res) => {
       });
     }
 
+    // 🔴 FETCH CUSTOMER NAME FROM DB
+const [[cust]] = await pool.query(
+  'SELECT customer_name FROM customer_master WHERE customer_code = ? LIMIT 1',
+  [customerCode]
+);
+
+if (!cust) {
+  return res.json({
+    success: false,
+    message: 'Invalid customer_code'
+  });
+}
+
+const customerName = cust.customer_name;
+
+
     // 2️⃣ Insert into recipe_list (MAIN RECIPE TABLE)
     const [recipeInsert] = await pool.query(
-      "INSERT INTO recipe_list (recipe_name, customer_code) VALUES (?, ?)",
-      [recipeName, customerCode]
-    );
+  "INSERT INTO recipe_list (recipe_name, customer_code, customer_name) VALUES (?, ?, ?)",
+  [recipeName, customerCode, customerName]
+);
+
 
     const newRecipeId = recipeInsert.insertId;
 
