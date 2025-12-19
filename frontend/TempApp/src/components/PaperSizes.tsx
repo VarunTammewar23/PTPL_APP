@@ -45,10 +45,39 @@ const SERIAL_POS = [
 const BOX_W = 80,
   BOX_H = 50;
 
+  type Props = {
+  recipeId: number;
+  recipeName?: string;
+  imageUri?: string;
+  onClose?: () => void;
+  initialParams?: any[];
+  pollMs?: number;
+  onSave?: (params: any[]) => void;
+
+  // 🔴 THIS IS THE NEW PART
+  onParamEdit?: (param: {
+    parameter_no: number;
+    value_01: string | number;
+    section?: string;
+    parameter?: string;
+    unit?: string;
+  }) => void;
+};
+
+
 function MachinePanelInner(
-  { recipeId, imageUri, onClose, initialParams, pollMs = 2000, onSave }: any,
+  {
+    recipeId,
+    imageUri,
+    onClose,
+    initialParams,
+    pollMs = 2000,
+    onSave,
+    onParamEdit,        // 🔴 ADD THIS
+  }: any,
   ref: any
 ) {
+
   const { theme } = useTheme();
   const dark = theme === 'dark';
 
@@ -333,14 +362,30 @@ function MachinePanelInner(
                 Cancel
               </Text>
               <Text
-                style={styles.save}
-                onPress={() => {
-                  setEdited({ ...edited, [editingSr!]: tempVal });
-                  setEditingSr(null);
-                }}
-              >
-                Save
-              </Text>
+  style={styles.save}
+  onPress={() => {
+    const sr = editingSr!;
+    const newVal = tempVal;
+
+    // 1️⃣ Update local UI state (unchanged behavior)
+    setEdited({ ...edited, [sr]: newVal });
+
+    // 2️⃣ 🔴 REPORT EDIT TO MAINSCREEN (THIS WAS MISSING)
+    onParamEdit?.({
+      parameter_no: sr,
+      value_01: newVal,
+      section: values[sr]?.section ?? 'PAPER SIZES',
+      parameter: values[sr]?.parameter ?? '',
+      unit: values[sr]?.unit ?? '',
+    });
+
+    // 3️⃣ Close editor
+    setEditingSr(null);
+  }}
+>
+  Save
+</Text>
+
             </View>
           </View>
         </View>

@@ -98,6 +98,18 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const blowerRef = useRef<any>(null);
   const rollerRef = useRef<any>(null);
   const foldingTrayRef = useRef<any>(null);
+  // 🔴 Holds unsaved changes across ALL panels
+  const pendingEditsRef = useRef<Map<number, any>>(new Map());
+
+// 🔴 Capture edits from ANY panel, ANY time
+const onParamEdit = (p: any) => {
+  if (!p || typeof p.parameter_no !== 'number') return;
+
+  pendingEditsRef.current.set(p.parameter_no, {
+    ...pendingEditsRef.current.get(p.parameter_no),
+    ...p,
+  });
+};
 
 
   const [activePanel, setActivePanel] = useState<string | null>(null);
@@ -338,30 +350,51 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
     else if (showFoldingTray) panelRef = foldingTrayRef;
     else panelRef = machineRef; // fallback
 
-    // Collect params from the active panel
-    let params: any[] = [];
-    try {
-      const maybe = panelRef?.current?.getFinalParams;
-      if (maybe) {
-        const result = panelRef.current.getFinalParams();
-        params = result instanceof Promise ? await result : result;
-      }
-    } catch (e) {
-      // continue with empty params
-      params = [];
-    }
+
+    // 1️⃣ Get changed params ONLY from active panel
+let changedParams: any[] = [];
+try {
+  const maybe = panelRef?.current?.getFinalParams;
+  if (maybe) {
+    const result = panelRef.current.getFinalParams();
+    changedParams = result instanceof Promise ? await result : result;
+  }
+} catch {
+  changedParams = [];
+}
+
+// 2️⃣ Build lookup of changed params by parameter_no
+const changedMap = new Map<number, any>();
+changedParams.forEach((p: any) => {
+  if (typeof p?.parameter_no === 'number') {
+    changedMap.set(p.parameter_no, p);
+  }
+});
+
+// 3️⃣ Merge ALL recipe params (1–300) with changes
+// 🔴 Merge full recipe (1–300) with ALL pending edits
+const mergedParams = recipeParams.map((orig) => {
+  const changed = pendingEditsRef.current.get(orig.parameter_no);
+  return changed
+    ? { ...orig, ...changed }
+    : orig;
+});
+
+
 
     let newRecipeName = getNextVersionName(selectedRecipeName, recipes.map(r => r.recipe_name));
 
-    const rows = (params || []).map((p: any) => ({
-      recipe_name: newRecipeName,
-      customer_code: customerCode,
-      section: p.section ?? "",
-      parameter_no: p.parameter_no,
-      parameter: p.parameter ?? "",
-      value_01: p.value_01 ?? "",
-      unit: p.unit ?? ""
-    }));
+    // 4️⃣ Build backend rows from FULL merged params
+const rows = mergedParams.map((p: any) => ({
+  recipe_name: newRecipeName,
+  customer_code: customerCode,
+  section: p.section ?? "",
+  parameter_no: p.parameter_no,
+  parameter: p.parameter ?? "",
+  value_01: p.value_01 ?? "",
+  unit: p.unit ?? ""
+}));
+
 
     // Basic validation: don't send empty/invalid rows
     const isValidRow = (r: any) => {
@@ -422,28 +455,34 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       const updated = await fetchRecipes();
       const found = (updated || []).find((r: any) => r.recipe_name === newRecipeName);
 
-      if (res && res.success) {
-        Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
-        if (res.newRecipeId) setSelectedRecipeId(res.newRecipeId);
-        else if (found) setSelectedRecipeId(found.recipe_id);
+     if (res && res.success) {
+  // 🔴 CLEAR accumulated edits AFTER successful save
+  pendingEditsRef.current.clear();
 
-        clearAllPanelTemp();
-        setShowMachine(false);
-        setShowFolds(false);
-        setShowOffset(false);
-        setShowGlueTap(false);
-        setShowSuctionGap(false);
-        setShowAllSpeed(false);
-        setShowSideLay(false);
-        setShowBlowerSettings(false);
-        setShowRollerGap(false);
-        setShowFoldingTray(false);
+  Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
+  if (res.newRecipeId) setSelectedRecipeId(res.newRecipeId);
+  else if (found) setSelectedRecipeId(found.recipe_id);
 
-        setSaving(false);
-        return;
-      }
+  clearAllPanelTemp();
+  setShowMachine(false);
+  setShowFolds(false);
+  setShowOffset(false);
+  setShowGlueTap(false);
+  setShowSuctionGap(false);
+  setShowAllSpeed(false);
+  setShowSideLay(false);
+  setShowBlowerSettings(false);
+  setShowRollerGap(false);
+  setShowFoldingTray(false);
+
+  setSaving(false);
+  return;
+}
+
 
       if (res && res.exists) {
+        pendingEditsRef.current.clear(); // 🔴 IMPORTANT
+
         if (found) {
           setSelectedRecipeId(found.recipe_id);
           clearAllPanelTemp();
@@ -475,6 +514,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
       const updated = await fetchRecipes();
       const foundAfter = (updated || []).find((r: any) => r.recipe_name === newRecipeName);
       if (foundAfter) {
+
+        // 🔴 IMPORTANT: clear accumulated cross-panel edits
+    pendingEditsRef.current.clear();
         setSelectedRecipeId(foundAfter.recipe_id);
         clearAllPanelTemp();
         setShowMachine(false);
@@ -566,6 +608,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowMachine(false)}
                 onSave={saveCurrentMachineData}   // 👈 ADD THIS LINE
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
 
               />
             </View>
@@ -578,6 +621,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowFolds(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -589,6 +633,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowOffset(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -600,6 +645,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowGlueTap(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -611,6 +657,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowSuctionGap(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -622,6 +669,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowAllSpeed(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -633,6 +681,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowSideLay(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -644,6 +693,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowBlowerSettings(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -656,6 +706,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 onClose={() => setShowRollerGap(false)}
                 imageScale={2}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 
@@ -667,6 +718,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
                 initialParams={recipeParams}
                 onClose={() => setShowFoldingTray(false)}
                 onSave={saveCurrentMachineData} //save
+                onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
 

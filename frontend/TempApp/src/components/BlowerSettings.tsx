@@ -29,6 +29,13 @@ type Props = {
   initialParams?: any[];
   pollMs?: number;
   onSave?: (params: any[]) => void;
+  onParamEdit?: (param: {
+    parameter_no: number;
+    value_01: string | number;
+    section?: string;
+    parameter?: string;
+    unit?: string;
+  }) => void;
 };
 
 interface RecipeParam {
@@ -60,7 +67,7 @@ const IMG_H = 600;
 /* ---------- COMPONENT ---------- */
 
 function BlowerSettingsInner(
-  { recipeId, imageUri, initialParams, pollMs = 2000, onSave }: Props,
+  { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
   const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
@@ -286,14 +293,30 @@ function BlowerSettingsInner(
                 Cancel
               </Text>
               <Text
-                style={styles.save}
-                onPress={() => {
-                  setEdited({ ...edited, [editingSr!]: tempVal });
-                  setEditingSr(null);
-                }}
-              >
-                Save
-              </Text>
+  style={styles.save}
+  onPress={() => {
+    const sr = editingSr!;
+    const newVal = tempVal;
+
+    // 1️⃣ Update local UI state (unchanged behavior)
+    setEdited({ ...edited, [sr]: newVal });
+
+    // 2️⃣ 🔴 REPORT EDIT TO MAINSCREEN (THIS WAS MISSING)
+    onParamEdit?.({
+      parameter_no: sr,
+      value_01: newVal,
+      section: values[sr]?.section ?? 'Blower Settings',
+      parameter: values[sr]?.parameter ?? '',
+      unit: values[sr]?.unit ?? '',
+    });
+
+    // 3️⃣ Close editor
+    setEditingSr(null);
+  }}
+>
+  Save
+</Text>
+
             </View>
           </View>
         </View>
