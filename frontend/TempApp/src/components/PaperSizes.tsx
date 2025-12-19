@@ -1,4 +1,4 @@
-// src/components/MachinePanel.tsx
+// src/components/PaperSizes.tsx
 import React, {
   useEffect,
   useMemo,
@@ -20,6 +20,7 @@ import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZ
 import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api';
 import { useWindowDimensions } from 'react-native';
+import VideoModal from './VideoModal';
 
 const PARAM_SR = [1, 2, 3, 4, 5, 6];
 
@@ -53,6 +54,7 @@ function MachinePanelInner(
 
   const [params, setParams] = useState(initialParams ?? []);
   const [loading, setLoading] = useState(!initialParams);
+  const [videoPopup, setVideoPopup] = useState(false);
 
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
@@ -284,9 +286,14 @@ function MachinePanelInner(
             <Text style={styles.btnText}>SHOW TABLE</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.btnGreen}>
+
+          <TouchableOpacity
+            style={styles.btnGreen}
+            onPress={() => setVideoPopup(true)}
+          >
             <Text style={styles.btnText}>VIDEO</Text>
           </TouchableOpacity>
+
 
           <TouchableOpacity
             style={styles.btnBlue}
@@ -301,6 +308,11 @@ function MachinePanelInner(
 
         </View>
       </View>
+      
+      <VideoModal
+            visible={videoPopup}
+            onClose={() => setVideoPopup(false)}
+          />
 
       {/* VALUE EDITOR */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
@@ -378,6 +390,9 @@ function MachinePanelInner(
     </View>
   );
 }
+
+
+
 
 /* ---------- STYLES ---------- */
 
