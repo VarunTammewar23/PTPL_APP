@@ -18,6 +18,7 @@ import {
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
 import { apiGet } from '../api/api';
 import { useWindowDimensions } from 'react-native';
+import VideoModal from './VideoModal';
 
 type Props = {
   recipeId: number;
@@ -125,6 +126,7 @@ function SideLayInner(
   }));
 
   const [tablePopup, setTablePopup] = useState(false);
+  const [videoPopup, setVideoPopup] = useState(false);
 
   /* ---------- UI ---------- */
 
@@ -241,9 +243,12 @@ function SideLayInner(
             <Text style={styles.btnText}>SHOW TABLE</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.btnGreen}>
-            <Text style={styles.btnText}>VIDEO</Text>
-          </TouchableOpacity>
+          <TouchableOpacity
+                      style={styles.btnGreen}
+                      onPress={() => setVideoPopup(true)}
+                    >
+                      <Text style={styles.btnText}>VIDEO</Text>
+                    </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.btnBlue}
@@ -256,6 +261,11 @@ function SideLayInner(
           </TouchableOpacity>
         </View>
       </View>
+
+      <VideoModal
+                visible={videoPopup}
+                onClose={() => setVideoPopup(false)}
+              />
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
