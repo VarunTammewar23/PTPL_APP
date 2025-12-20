@@ -50,12 +50,12 @@ interface RecipeParam {
 const PARAM_SR = [15, 16, 17, 118, 102, 134];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  15:  { x: 71, y: 13 },
+  15:  { x: 71, y: 12.5 },
   16:  { x: 71, y: 34 },
   17:  { x: 71, y: 55 },
-  118: { x: 71, y: 73 },
+  118: { x: 71, y: 73.5 },
   102: { x: 71, y: 84 },
-  134: { x: 71, y: 93 },
+  134: { x: 71, y: 93.5 },
 };
 
 const SERIAL_POS = [
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  paramText: { fontSize: 28, fontWeight: '700' },
+  paramText: { fontSize: 34, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',

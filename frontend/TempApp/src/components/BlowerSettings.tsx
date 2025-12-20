@@ -48,7 +48,7 @@ interface RecipeParam {
 
 /* ---------- CONFIG ---------- */
 
-const PARAM_SR = [31];
+const PARAM_SR = [];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
   31: { x: 20, y: 120 },

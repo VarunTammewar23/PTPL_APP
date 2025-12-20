@@ -50,8 +50,8 @@ interface RecipeParam {
 const PARAM_SR = [2, 6, 10, 11];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  2: { x: 58, y: 50 },
-  6: { x: 34, y: 89.3 },
+  2: { x: 57.3, y: 50 },
+  6: { x: 34.3, y: 89.3 },
   10: { x: 83, y: 75 },
   11: { x: 53.5, y: 89.3 },
 };

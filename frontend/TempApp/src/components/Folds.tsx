@@ -56,9 +56,9 @@ const POSITIONS: Record<number, { x: number; y: number }> = {
 };
 
 const SERIAL_POS = [
-  { id: 7, x: 73.5, y: 14 },
-  { id: 8, x: 73.5, y: 37 },
-  { id: 9, x: 73.5, y: 62 },
+  { id: 7, x: 13, y: 21 },
+  { id: 8, x: 13, y: 47 },
+  { id: 9, x: 13, y: 73 },
 ];
 
 const BOX_W = 80;

@@ -331,17 +331,51 @@ const onParamEdit = (p: any) => {
   };
 
   const openPicker = async () => {
-    try {
-      const uri = await FilePickerModule.openFilePicker();
-      const base64 = await RNFS.readFile(uri, "base64");
-      const workbook = XLSX.read(base64, { type: "base64" });
-      const sheetName = workbook.SheetNames[0];
-      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-      sendToBackend(jsonData);
-    } catch {
-      Alert.alert("Excel Parse Error");
+  try {
+    if (!customerCode) {
+      Alert.alert('Import failed', 'Customer not selected');
+      return;
     }
-  };
+
+    const uri = await FilePickerModule.openFilePicker();
+    const destPath = `${RNFS.CachesDirectoryPath}/import.xlsx`;
+
+    await RNFS.copyFile(uri, destPath);
+
+    const base64 = await RNFS.readFile(destPath, 'base64');
+    const workbook = XLSX.read(base64, { type: 'base64' });
+
+    const sheetName = workbook.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      defval: '',
+    });
+
+    if (!rows.length) {
+      Alert.alert('Import failed', 'Excel is empty');
+      return;
+    }
+
+    const recipeName =
+      rows[0]?.recipe_name || `recipe_${Date.now()}`;
+
+    const enrichedRows = rows.map(({ __rowNum__, ...r }: any) => ({
+      recipe_name: recipeName,
+      section: r.section ?? '',
+      parameter_no: Number(r.parameter_no),
+      parameter: r.parameter ?? '',
+      value_01: r.value_01 ?? '',
+      unit: r.unit ?? '',
+      customer_code: customerCode,
+    }));
+
+    sendToBackend(enrichedRows);
+
+  } catch (e: any) {
+    console.error('IMPORT FAILED:', e);
+    Alert.alert('Import failed', e.message || 'Unknown error');
+  }
+};
+
 
   function getNextVersionName(baseName: string | null, allNames: string[]) {
     if (!baseName) return `recipe_${Date.now()}`;
