@@ -268,14 +268,19 @@ function BlowerSettingsInner(
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.btnBlue}
-            onPress={() => {
-              const params = ref?.current?.getFinalParams?.() ?? [];
-              onSave?.(params);
-            }}
-          >
-            <Text style={styles.btnText}>SAVE</Text>
-          </TouchableOpacity>
+  style={styles.btnBlue}
+  onPress={() => onSave?.({ mode: 'save' })}
+>
+  <Text style={styles.btnText}>SAVE</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.btnGreen}
+  onPress={() => onSave?.({ mode: 'saveAs' })}
+>
+  <Text style={styles.btnText}>SAVE AS</Text>
+</TouchableOpacity>
+
         </View>
       </View>
 
