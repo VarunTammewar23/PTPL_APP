@@ -251,6 +251,27 @@ const onParamEdit = (p: any) => {
   }, []);
 
   useEffect(() => {
+  if (selectedRecipeId === -1) return;
+
+  const interval = setInterval(async () => {
+    // 🔴 VERY IMPORTANT: do not overwrite while user has edits
+    if (pendingEditsRef.current.size > 0) return;
+
+    try {
+      const res = await apiGet(`/recipes/${selectedRecipeId}`, {
+        timeout: 5000,
+      });
+      setRecipeParams(res.data.params || []);
+    } catch {
+      // silent fail
+    }
+  }, 2000); // 2 seconds
+
+  return () => clearInterval(interval);
+}, [selectedRecipeId]);
+
+
+  useEffect(() => {
     fetchRecipes();
   }, [fetchRecipes]);
 
