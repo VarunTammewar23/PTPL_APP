@@ -324,13 +324,18 @@ function MachinePanelInner(
 
           <TouchableOpacity
             style={styles.btnBlue}
-            onPress={() => {
-              const params = ref?.current?.getFinalParams?.() ?? [];
-              onSave(params);
-            }}
+            onPress={() => onSave?.({ mode: 'save' })}
           >
             <Text style={styles.btnText}>SAVE</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.btnGreen}
+            onPress={() => onSave?.({ mode: 'saveAs' })}
+          >
+            <Text style={styles.btnText}>SAVE AS</Text>
+          </TouchableOpacity>
+
 
 
         </View>

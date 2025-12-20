@@ -376,7 +376,11 @@ const onParamEdit = (p: any) => {
     return `${parent}_${next}`;
   }
 
-  const saveCurrentMachineData = async () => {
+  const saveCurrentMachineData = async (
+  opts?: { mode?: 'save' | 'saveAs' }
+    ) => {
+        const mode = opts?.mode ?? 'saveAs';
+
     // Determine which panel is active and use its ref to collect params.
     let panelRef: any = null;
     if (showMachine) panelRef = machineRef;
@@ -404,13 +408,7 @@ try {
   changedParams = [];
 }
 
-// 2️⃣ Build lookup of changed params by parameter_no
-const changedMap = new Map<number, any>();
-changedParams.forEach((p: any) => {
-  if (typeof p?.parameter_no === 'number') {
-    changedMap.set(p.parameter_no, p);
-  }
-});
+
 
 // 3️⃣ Merge ALL recipe params (1–300) with changes
 // 🔴 Merge full recipe (1–300) with ALL pending edits
@@ -421,11 +419,85 @@ const mergedParams = recipeParams.map((orig) => {
     : orig;
 });
 
+// 🟢 SAVE = UPDATE EXISTING RECIPE
+if (mode === 'save') {
+  if (selectedRecipeId === -1) {
+    Alert.alert('No recipe selected');
+    return;
+  }
+
+  const rows = mergedParams.map((p: any) => ({
+    section: p.section ?? '',
+    parameter_no: p.parameter_no,
+    parameter: p.parameter ?? '',
+    value_01: p.value_01 ?? '',
+    unit: p.unit ?? '',
+  }));
+
+  setSaving(true);
+
+  try {
+    const response = await fetch(
+      `${getCurrentApiBase()}/api/update-recipe`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipe_id: selectedRecipeId,
+          rows,
+        }),
+      }
+    );
+
+    const res = await response.json();
+
+    if (res.success) if (res.success) {
+  // 1️⃣ clear global pending edits
+  pendingEditsRef.current.clear();
+
+  // 2️⃣ 🔴 CLEAR PANEL-LOCAL EDIT STATES (THIS WAS MISSING)
+  [
+    machineRef,
+    foldsRef,
+    offsetRef,
+    glueRef,
+    suctionRef,
+    allSpeedRef,
+    sideLayRef,
+    blowerRef,
+    rollerRef,
+    foldingTrayRef,
+  ].forEach(r => {
+    try {
+      r?.current?.clearEdits?.();
+    } catch {}
+  });
+
+  // 3️⃣ notify user
+  Alert.alert('Saved', 'Recipe updated successfully');
+
+  // 4️⃣ refresh data from backend
+  await fetchRecipeParams(selectedRecipeId);
+} else {
+  Alert.alert('Error', res.message || 'Update failed');
+}
+else {
+      Alert.alert('Error', res.message || 'Update failed');
+    }
+  } catch (e: any) {
+    Alert.alert('Network error', e.message);
+  } finally {
+    setSaving(false);
+  }
+
+  return;
+}
 
 
-    let newRecipeName = getNextVersionName(selectedRecipeName, recipes.map(r => r.recipe_name));
-
-    // 4️⃣ Build backend rows from FULL merged params
+// 🔵 SAVE AS = create new recipe
+if (mode === 'saveAs') {
+  let newRecipeName = getNextVersionName(selectedRecipeName, recipes.map(r => r.recipe_name));
+  // 4️⃣ Build backend rows from FULL merged params
 const rows = mergedParams.map((p: any) => ({
   recipe_name: newRecipeName,
   customer_code: customerCode,
@@ -582,6 +654,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     }
   };
 
+}
+
+
+    
+
+    
   const labels = [
     "HOME",
     "RECIPE",

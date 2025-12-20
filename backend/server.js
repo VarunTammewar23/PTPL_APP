@@ -347,6 +347,67 @@ const customerName = cust.customer_name;
   }
 });
 
+app.post('/api/update-recipe', async (req, res) => {
+  const { recipe_id, rows } = req.body;
+
+  if (!recipe_id || !rows || !rows.length) {
+    return res.status(400).json({ success: false, message: 'Invalid payload' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1️⃣ Get recipe_name from recipe_list
+    const [[recipe]] = await conn.query(
+      'SELECT recipe_name FROM recipe_list WHERE sr_no = ? LIMIT 1',
+      [recipe_id]
+    );
+
+    if (!recipe) {
+      await conn.rollback();
+      return res.json({ success: false, message: 'Recipe not found' });
+    }
+
+    const recipeName = recipe.recipe_name;
+
+    // 2️⃣ Delete old params
+    await conn.query(
+      'DELETE FROM recipe_master WHERE recipe_name = ?',
+      [recipeName]
+    );
+
+    // 3️⃣ Insert new params
+    for (const r of rows) {
+      await conn.query(
+        `INSERT INTO recipe_master
+         (section, parameter_no, parameter, value_01, unit, recipe_name)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          r.section,
+          r.parameter_no,
+          r.parameter,
+          r.value_01,
+          r.unit,
+          recipeName,
+        ]
+      );
+    }
+
+    await conn.commit();
+
+    // 4️⃣ Clear cache
+    cache.recipesByCustomer = {};
+
+    res.json({ success: true });
+  } catch (e) {
+    await conn.rollback();
+    console.error('UPDATE ERROR:', e);
+    res.status(500).json({ success: false, error: e.message });
+  } finally {
+    conn.release();
+  }
+});
 
 
 
