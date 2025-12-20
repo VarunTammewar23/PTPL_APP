@@ -70,6 +70,14 @@ function SideLayInner(
   ref: any
 ) {
   const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
+
+  useEffect(() => {
+  if (initialParams) {
+    setParams(initialParams);
+  }
+}, [initialParams]);
+
+
   const [loading, setLoading] = useState(!initialParams);
 
   const { width, height } = useWindowDimensions();

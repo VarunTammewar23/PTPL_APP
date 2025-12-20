@@ -82,6 +82,15 @@ function MachinePanelInner(
   const dark = theme === 'dark';
 
   const [params, setParams] = useState(initialParams ?? []);
+
+  useEffect(() => {
+    if (initialParams) {
+      setParams(initialParams);
+      setLoading(false);
+    }
+  }, [initialParams]);
+
+
   const [loading, setLoading] = useState(!initialParams);
   const [videoPopup, setVideoPopup] = useState(false);
 
@@ -105,18 +114,7 @@ function MachinePanelInner(
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
-  // fetch params
-  useEffect(() => {
-    if (initialParams) return;
-    const fetchData = async () => {
-      const res = await apiGet(`/recipes/${recipeId}`);
-      setParams(res.data?.params ?? []);
-      setLoading(false);
-    };
-    fetchData();
-    const id = setInterval(fetchData, pollMs);
-    return () => clearInterval(id);
-  }, [recipeId, pollMs]);
+  
 
   // get image natural size
   useEffect(() => {
