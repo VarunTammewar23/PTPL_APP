@@ -114,15 +114,11 @@ const onParamEdit = (p: any) => {
 };
 
 
-  const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<string>("HOME");
   const [activeRpfSub, setActiveRpfSub] = useState<string | null>(null);
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
 
-  useEffect(() => {
-  setActivePanel("HOME");
-}, []);
-
-
+  
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [sideMenuLeft, setSideMenuLeft] = useState<number>(8);
   const [sideMenuTop, setSideMenuTop] = useState<number>(100);
@@ -148,59 +144,68 @@ const onParamEdit = (p: any) => {
 
   // 🔥 FIXED RPF SUBMENU LOGIC — NOTHING ELSE CHANGED
   const openPanel = (name: string) => {
-    if (name === "RPF") {
-      if (showSideMenu) {
-        setShowSideMenu(false);
-        setActivePanel(null);
-        return;
-      }
-
-      rpfRef.current?.measure(
-        (fx: number, fy: number, width: number, height: number, px: number, py: number) => {
-          const ITEM_H_NEW = 38;
-          const ITEM_GAP = 4;
-
-          const menuHeight =
-            RPF_ITEMS.length * (ITEM_H_NEW + ITEM_GAP) -
-            ITEM_GAP +
-            MENU_PADDING * 2;
-
-          let left = Math.round(px);
-          left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
-
-          let top = Math.round(py - menuHeight);
-          if (top < 8) top = 8;
-
-          setSideMenuLeft(left);
-          setSideMenuTop(top);
-
-          setShowSideMenu(true);
-          setActivePanel("RPF");
-
-          panelAnim.setValue(SCREEN_H);
-        }
-      );
-
+  if (name === "RPF") {
+    // If submenu already open → just close it
+    if (showSideMenu) {
+      setShowSideMenu(false);
+      setActivePanel("RPF"); // ✅ keep highlight
       return;
     }
 
-    setShowSideMenu(false);
-    setActivePanel(name);
-    Animated.timing(panelAnim, {
-      toValue: 0,
-      duration: 250,
-      useNativeDriver: true
-    }).start();
-  };
+    // Measure RPF button to position submenu correctly
+    rpfRef.current?.measure(
+      (fx: number, fy: number, width: number, height: number, px: number, py: number) => {
+        const ITEM_H_NEW = 38;
+        const ITEM_GAP = 5;
 
-  const closePanel = () => {
-    setShowSideMenu(false);
-    Animated.timing(panelAnim, {
-      toValue: SCREEN_H,
-      duration: 250,
-      useNativeDriver: true
-    }).start(() => setActivePanel(null));
-  };
+        const menuHeight =
+          RPF_ITEMS.length * (ITEM_H_NEW + ITEM_GAP) -
+          ITEM_GAP +
+          MENU_PADDING * 2;
+
+        let left = Math.round(px);
+        left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
+
+        let top = Math.round(py - menuHeight);
+        if (top < 8) top = 8;
+
+        setSideMenuLeft(left);
+        setSideMenuTop(top);
+
+        setShowSideMenu(true);
+        setActivePanel("RPF"); // ✅ highlight RPF
+        setActiveRpfSub(null);
+
+        panelAnim.setValue(SCREEN_H);
+      }
+    );
+    return;
+  }
+
+  // ---------- NORMAL PANELS ----------
+  setShowSideMenu(false);
+  setActivePanel(name);
+
+  Animated.timing(panelAnim, {
+    toValue: 0,
+    duration: 250,
+    useNativeDriver: true,
+  }).start();
+};
+
+const closePanel = () => {
+  setShowSideMenu(false);
+
+  Animated.timing(panelAnim, {
+    toValue: SCREEN_H,
+    duration: 250,
+    useNativeDriver: true,
+  }).start();
+
+  // ❌ DO NOT touch activePanel here
+};
+
+
 
   const fetchRecipes = useCallback(async () => {
     setLoadingRecipes(true);
@@ -289,16 +294,22 @@ const onParamEdit = (p: any) => {
       : recipes.find(r => r.recipe_id === selectedRecipeId)?.recipe_name ?? null;
 
   const onSelectRecipe = (id: number) => {
-    setSelectedRecipeId(id);
-    setShowMachine(false);
-  };
+  setSelectedRecipeId(id);
+
+  // 🔴 CRITICAL: sync bottom bar highlight
+  setActivePanel("RECIPE");
+  setActiveRpfSub(null);
+
+  setShowMachine(false);
+};
+
 
   // Excel download
   const downloadRecipeExcel = async () => {
     if (selectedRecipeId === -1) return Alert.alert("Select recipe first");
     try {
       const url = `${getCurrentApiBase()}/recipes/${selectedRecipeId}/download`;
-      const filePath = `${RNFS.DownloadDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
+      const filePath = `${RNFS.DocumentDirectoryPath}/recipe_${selectedRecipeId}.xlsx`;
       const result = await RNFS.downloadFile({
         fromUrl: url,
         toFile: filePath
@@ -909,9 +920,9 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
       {showSideMenu && activePanel === "RPF" && (
         <TouchableWithoutFeedback
           onPress={() => {
-            setShowSideMenu(false);
-            setActivePanel(null);
-          }}
+          setShowSideMenu(false);
+          setActivePanel("RPF"); // keep RPF highlighted
+        }}
         >
           <View style={styles.sideMenuOverlay}>
             <TouchableWithoutFeedback>
@@ -990,38 +1001,60 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
       labels={labels}
       activePanel={activePanel}
       activeRpfSub={activeRpfSub}
+      disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
       rpfRef={rpfRef}
       onSave={saveCurrentMachineData}
       onPressItem={label => {
-        // Highlight the pressed pill
-        setActivePanel(label);
+  // 🔴 HOME
+  if (label === "HOME") {
+    setActivePanel("HOME");
+    setActiveRpfSub(null);
 
-        if (label === "RECIPE") {
-          setShowMachine(false);
-          setShowFolds(false);
-          setShowOffset(false);
-          setShowGlueTap(false);
-          setShowSuctionGap(false);
-          setShowAllSpeed(false);
-          setShowSideLay(false);
-          setShowBlowerSettings(false);
-          setShowRollerGap(false);
-          setShowFoldingTray(false);
+    setShowMachine(false);
+    setShowFolds(false);
+    setShowOffset(false);
+    setShowGlueTap(false);
+    setShowSuctionGap(false);
+    setShowAllSpeed(false);
+    setShowSideLay(false);
+    setShowBlowerSettings(false);
+    setShowRollerGap(false);
+    setShowFoldingTray(false);
+    setShowSideMenu(false);
+    return;
+  }
 
-          return; // Recipe table will show
-        }
+  // 🔴 RECIPE
+  if (label === "RECIPE") {
+    setActivePanel("RECIPE");
+    setActiveRpfSub(null);
+    setShowSideMenu(false);
 
-        if (label === "HOME") {
-          // Close everything and show company logo screen
-          setShowMachine(false);
-          setActivePanel("HOME");
-          return;
-        }
+    setShowMachine(false);
+    setShowFolds(false);
+    setShowOffset(false);
+    setShowGlueTap(false);
+    setShowSuctionGap(false);
+    setShowAllSpeed(false);
+    setShowSideLay(false);
+    setShowBlowerSettings(false);
+    setShowRollerGap(false);
+    setShowFoldingTray(false);
+    return;
+  }
 
-        const isActive = activePanel === label;
-        if (isActive && label !== "RPF") closePanel();
-        else openPanel(label);
-      }}
+  // 🔴 RPF
+  if (label === "RPF") {
+    openPanel("RPF");
+    return;
+  }
+
+  // 🔴 OTHER PANELS
+  const isActive = activePanel === label;
+  if (isActive) closePanel();
+  else openPanel(label);
+}}
+
 
 
       onExit={() =>

@@ -64,6 +64,23 @@ const BOX_H = 50;
 const IMG_W = 1300;
 const IMG_H = 600;
 
+  const POPUP_COLUMNS = [
+  { key: 'sr', title: 'SR', width: 100, align: 'center' },
+  { key: 'parameter', title: 'Parameter', flex: 4, align: 'center' },
+  { key: 'orig', title: 'Original', flex: 2, align: 'center' },
+  { key: 'changed', title: 'Changed', flex: 2, align: 'center' },
+];
+
+const POPUP_TITLE_FONT = 18;  // Title font size
+const POPUP_HEADER_FONT = 18;  // Header font size
+const POPUP_BODY_FONT = 15;  // Table Body font size
+const POPUP_CLOSE_FONT = 18;  // Close button font size
+
+// Adjust the Size of popup
+const POPUP_WIDTH = 1200;        // popup card width
+const POPUP_MAX_HEIGHT = 500;   // popup card max height
+
+
 /* ---------- COMPONENT ---------- */
 
 function BlowerSettingsInner(
@@ -336,46 +353,84 @@ function BlowerSettingsInner(
       </Modal>
 
       {/* TABLE POPUP */}
-      <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Parameter Table</Text>
+<Modal visible={tablePopup} transparent animationType="fade">
+  <View style={styles.modalBg}>
+    <View style={styles.modal}>
 
-            <View style={styles.tblHead}>
-              <Text style={styles.th}>SR</Text>
-              <Text style={styles.th}>Parameter</Text>
-              <Text style={styles.th}>Original</Text>
-              <Text style={styles.th}>Changed</Text>
-            </View>
+      {/* HEADER ROW */}
+      <View style={styles.popupHeaderRow}>
+        <Text style={styles.modalTitle}>Parameter Table</Text>
 
-            {PARAM_SR.map((sr) => {
-              const orig = values[sr]?.value_01 ?? '';
-              const param = values[sr]?.parameter ?? '';
-              const changed = edited[sr] ?? '-';
+        <TouchableOpacity
+          onPress={() => setTablePopup(false)}
+          style={styles.popupCloseBtn}
+        >
+          <Text style={styles.popupCloseIcon}>✕</Text>
+          <Text style={styles.popupCloseText}>Close</Text>
+        </TouchableOpacity>
+      </View>
 
-              return (
-                <View style={styles.tblRow} key={sr}>
-                  <Text style={styles.td}>{sr}</Text>
-                  <Text style={styles.td}>{param}</Text>
-                  <Text style={styles.td}>{orig}</Text>
+      {/* TABLE */}
+      <View style={styles.popupTable}>
+
+        {/* TABLE HEADER */}
+        <View style={[styles.popupRow, styles.popupHeader]}>
+          {POPUP_COLUMNS.map((col, i) => (
+            <Text
+              key={col.key}
+              style={[
+                styles.popupCell,
+                col.width && { width: col.width },
+                col.flex && { flex: col.flex },
+                i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
+                styles.popupHeaderText,
+              ]}
+            >
+              {col.title}
+            </Text>
+          ))}
+        </View>
+
+        {/* TABLE ROWS */}
+        {PARAM_SR.map((sr) => {
+          const orig = values[sr]?.value_01 ?? '';
+          const param = values[sr]?.parameter ?? '';
+          const changed = edited[sr] ?? '-';
+
+          return (
+            <View key={sr} style={styles.popupRow}>
+              {POPUP_COLUMNS.map((col, i) => {
+                let value: any = '';
+                if (col.key === 'sr') value = sr;
+                if (col.key === 'parameter') value = param;
+                if (col.key === 'orig') value = orig;
+                if (col.key === 'changed') value = changed;
+
+                return (
                   <Text
+                    key={col.key}
                     style={[
-                      styles.td,
-                      { color: changed !== '-' ? 'blue' : '#111' },
+                      styles.popupCell,
+                      styles.popupBodyText,
+                      col.width && { width: col.width },
+                      col.flex && { flex: col.flex },
+                      i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
+                      col.key === 'changed' &&
+                        changed !== '-' && { color: '#007bff' },
                     ]}
                   >
-                    {changed}
+                    {value}
                   </Text>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  </View>
+</Modal>
 
-            <TouchableOpacity onPress={() => setTablePopup(false)}>
-              <Text style={styles.save}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -507,6 +562,84 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+
+  modal: {
+  backgroundColor: '#fff',
+  padding: 12,
+  borderRadius: 10,
+  width: POPUP_WIDTH,
+  maxHeight: POPUP_MAX_HEIGHT,
+  alignSelf: 'center',
+},
+
+modalTitle: {
+  fontSize: POPUP_TITLE_FONT,
+  fontWeight: '700',
+  marginBottom: 10,
+},
+
+popupTable: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupRow: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupHeader: {
+  backgroundColor: '#f2f2f8',
+},
+
+popupCell: {
+  paddingVertical: 10,
+  textAlign: 'center',
+},
+
+popupColBorder: {
+  borderRightWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupHeaderText: {
+  fontWeight: '700',
+  fontSize: POPUP_HEADER_FONT,
+},
+
+popupBodyText: {
+  fontSize: POPUP_BODY_FONT,
+},
+
+popupHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+popupCloseBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 6,
+  paddingVertical: 4,
+},
+
+popupCloseIcon: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: '#444',
+  marginRight: 4,
+},
+
+popupCloseText: {
+  fontSize: POPUP_CLOSE_FONT,
+  fontWeight: '800',
+  color: '#444',
+  paddingLeft: 5,
+},
+
 });
 
 export default React.forwardRef(BlowerSettingsInner);

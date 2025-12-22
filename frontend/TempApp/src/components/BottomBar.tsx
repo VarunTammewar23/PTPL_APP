@@ -6,9 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  BackHandler,
+  Platform,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // 👈 added FONT_WEIGHT
+
 
 interface BottomBarProps {
   labels: string[];
@@ -19,13 +23,16 @@ interface BottomBarProps {
   onExit: () => void;
   onSave: () => void;
   onSettings: () => void;
+  disabledLabels?: string[];
 }
 
 const BottomBar: FC<BottomBarProps> = ({
+  
   labels,
   activePanel,
   activeRpfSub,
   onPressItem,
+  disabledLabels = [],
   rpfRef,
   onExit,
   onSave,
@@ -39,37 +46,54 @@ const BottomBar: FC<BottomBarProps> = ({
         contentContainerStyle={styles.bottomBarScroll}
       >
         {labels.map((label, idx) => {
-          const isActive =
-          activePanel === label ||
-          (label === "RPF" && activeRpfSub !== null);
+  const isDisabled = disabledLabels?.includes(label);
+
+  const isActive =
+    !isDisabled &&
+    (activePanel === label ||
+      (label === "RPF" && activeRpfSub !== null));
 
           return (
             <TouchableOpacity
               key={label + idx}
               ref={label === 'RPF' ? rpfRef : undefined}
-              activeOpacity={0.9}
-              onPress={() => onPressItem(label)}
+              activeOpacity={isDisabled ? 1 : 0.9}
+              onPress={() => !isDisabled && onPressItem(label)}
+              disabled={isDisabled}
+
               style={[
-                styles.pillButton,
-                isActive && styles.pillButtonActive,
-              ]}
+                      styles.pillButton,
+                      isActive && styles.pillButtonActive,
+                      isDisabled && styles.pillButtonDisabled,
+                    ]}
+
             >
-              <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
+              <Text
+                  style={[
+                    styles.pillText,
+                    isActive && styles.pillTextActive,
+                    isDisabled && styles.pillTextDisabled,
+                  ]}
+                >
+
                 {label}
               </Text>
             </TouchableOpacity>
           );
         })}
 
+        
+
 
         {/* SETTINGS Button */}
         <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
-          <Icon name="settings" size={FONT_SIZE.header} color="#fff" style={{ marginRight: 6 }} />
+          <Icon name="settings" size={FONT_SIZE.button} color="#211f2e" style={{ marginRight: 3 }} />
           <Text style={styles.settingsText}>SETTINGS</Text>
         </TouchableOpacity>
 
         {/* EXIT Button */}
-        <TouchableOpacity activeOpacity={0.9} onPress={onExit} style={styles.exitPill}>
+        <TouchableOpacity   activeOpacity={0.9}   onPress={handleExitApp}   style={styles.exitPill} >
+
           <Icon name="logout" size={FONT_SIZE.header} color="#6b0f1a" style={{ marginRight: 8 }} />
           <Text style={styles.exitText}>EXIT</Text>
         </TouchableOpacity>
@@ -77,6 +101,25 @@ const BottomBar: FC<BottomBarProps> = ({
     </View>
   );
 };
+  const handleExitApp = () => {
+    Alert.alert(
+      'Exit App',
+      'Are you sure you want to exit?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Exit',
+          style: 'destructive',
+          onPress: () => {
+            if (Platform.OS === 'android') {
+              BackHandler.exitApp();
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
 export default BottomBar;
 
@@ -141,22 +184,22 @@ const styles = StyleSheet.create({
 
   /* SETTINGS BUTTON */
   settingsPill: {
-    backgroundColor: '#444',
+    backgroundColor: '#e9e5f6',
     width: BUTTON_WIDTH,
     height: BUTTON_HEIGHT,
+    borderRadius: 5,
+    borderTopColor: '#7f8294ff',
+    borderLeftColor: '#7f8294ff',
+    borderBottomColor: '#7f8294ff',
+    borderRightColor: '#7f8294ff',
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 5,
-    borderRightWidth: 1,
-     borderTopColor: '#414141ff',
-    borderBottomColor: '#414141ff',
-    borderRightColor: '#414141ff',
-     borderLeftColor: '#414141ff',
     marginRight: 1,
   },
   settingsText: {
-    color: '#fff',
+    color: '#211f2e',
     fontFamily: FONT_FAMILY.regular,
     fontSize: FONT_SIZE.button,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
@@ -176,6 +219,7 @@ const styles = StyleSheet.create({
     borderRightColor: '#ff798fff',
     borderLeftColor: '#ff798fff',
     borderWidth: 1,
+
   },
   exitText: {
     color: '#6b0f1a',
@@ -183,4 +227,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.button,
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
+
+  pillButtonDisabled: {
+  backgroundColor: '#d6d6d6',
+  borderColor: '#b0b0b0',
+  opacity: 0.6,
+},
+
 });

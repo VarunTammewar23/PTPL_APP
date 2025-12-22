@@ -1,3 +1,5 @@
+// PTPL_APP\frontend\TempApp\src\components\VideoModal.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -31,29 +33,34 @@ export default function VideoModal({ visible, onClose }: Props) {
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
+
+          {/* HEADER ROW – SAME AS TABLE POPUP */}
+          <View style={styles.popupHeaderRow}>
+            <View />
+            <TouchableOpacity onPress={onClose} style={styles.popupCloseBtn}>
+              <Text style={styles.popupCloseIcon}>✕</Text>
+              <Text style={styles.popupCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+
           <Video
-  source={require('../assets/samplevideo.mp4')}
-  style={styles.video}
-  controls
-  resizeMode="contain"
-  paused={paused}
-  useTextureView={true}
-  useSecureView={false}
-  onError={(e) => console.log('VIDEO ERROR', e)}
-  onLoad={(e) => console.log('VIDEO LOADED', e.duration)}
-/>
+            source={require('../assets/samplevideo.mp4')}
+            style={styles.video}
+            controls
+            resizeMode="contain"
+            paused={paused}
+            useTextureView={true}
+            useSecureView={false}
+            onError={(e) => console.log('VIDEO ERROR', e)}
+            onLoad={(e) => console.log('VIDEO LOADED', e.duration)}
+          />
 
-
-
-
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
 }
+
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
@@ -63,27 +70,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   container: {
     width: width * 0.9,
     backgroundColor: '#ffffffff',
     borderRadius: 10,
     overflow: 'hidden',
-    paddingBottom: 1,
-    paddingTop: 10,
+    paddingBottom: 10,
+    paddingTop: 6,
   },
+
   video: {
     width: '95%',
     height: 560,
     backgroundColor: '#ffffffff',
     alignSelf: 'center',
   },
-  closeBtn: {
-    paddingVertical: 1,
+
+  /* ===== TABLE-STYLE CLOSE BUTTON ===== */
+
+  popupHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 6,
   },
-  closeText: {
-    color: '#000000ff',
-    fontSize: 22,
-    fontWeight: '700',
+
+  popupCloseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginRight: 13, 
+  },
+
+  popupCloseIcon: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#444',
+    marginRight: 4,
+  },
+
+  popupCloseText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#444',
   },
 });

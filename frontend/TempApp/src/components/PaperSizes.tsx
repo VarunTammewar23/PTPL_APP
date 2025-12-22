@@ -21,6 +21,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { apiGet } from '../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from './VideoModal';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // Typography constants
+
 
 const PARAM_SR = [1, 2, 3, 4, 5, 6];
 
@@ -34,16 +36,46 @@ const POSITIONS = {
 };
 
 const SERIAL_POS = [
-  { id: 1, x: 60, y: 70.5 },
-  { id: 2, x: 16, y: 63 },
-  { id: 3, x: 18.5, y: 26.5 },
-  { id: 4, x: 31.8, y: 7.5 },
-  { id: 5, x: 83.5, y: 95.3 },
-  { id: 6, x: 83, y: 52.5 },
+  { id: 1, x: 61.5, y: 70.5 },
+  { id: 2, x: 17.5, y: 63 },
+  { id: 3, x: 20.5, y: 26.5 },
+  { id: 4, x: 33.2, y: 7.5 },
+  { id: 5, x: 85.5, y: 95.3 },
+  { id: 6, x: 84.7, y: 52.5 },
 ];
 
-const BOX_W = 80,
-  BOX_H = 50;
+const BOX_W = 125,
+      BOX_H = 50;
+
+const PARAM_FONT_SIZES: Record<number, number> = {
+  1: 26,
+  2: 26,
+  3: 34,   // 👈 bigger
+  4: 28,
+  5: 22,   // 👈 smaller
+  6: 22,   // 👈 smaller
+};
+
+
+ 
+  // Adjust the Size of table popup body fonts and titles
+  const POPUP_COLUMNS = [
+  { key: 'sr', title: 'SR', width: 100, align: 'center' },
+  { key: 'parameter', title: 'Parameter', flex: 4, align: 'center' },
+  { key: 'orig', title: 'Original', flex: 2, align: 'center' },
+  { key: 'changed', title: 'Changed', flex: 2, align: 'center' },
+];
+
+const POPUP_TITLE_FONT = 18;  // Title font size
+const POPUP_HEADER_FONT = 18;  // Header font size
+const POPUP_BODY_FONT = 15;  // Table Body font size
+const POPUP_CLOSE_FONT = 18;  // Close button font size
+
+// Adjust the Size of popup
+const POPUP_WIDTH = 1200;        // popup card width
+const POPUP_MAX_HEIGHT = 500;   // popup card max height
+
+
 
   type Props = {
   recipeId: number;
@@ -252,9 +284,17 @@ function MachinePanelInner(
         },
       ]}
     >
-      <Text style={[styles.paramText, dark && { color: '#fff' }]}>
-        {val}
-      </Text>
+      <Text
+  style={[
+    styles.paramText,
+    {
+      fontSize: PARAM_FONT_SIZES[sr] ?? 28, // 👈 per-parameter size
+    },
+    dark && { color: '#fff' },
+  ]}
+>
+  {val}
+</Text>
     </TouchableOpacity>
   );
 })}
@@ -395,47 +435,92 @@ function MachinePanelInner(
       </Modal>
 
       {/* TABLE POPUP */}
-      <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Parameter Table</Text>
+<Modal visible={tablePopup} transparent animationType="fade">
+  <View style={styles.modalBg}>
+    <View style={styles.modal}>
 
-            <View style={styles.tblHead}>
-              <Text style={styles.th}>SR</Text>
-              <Text style={styles.th}>Parameter</Text>
-              <Text style={styles.th}>Original</Text>
-              <Text style={styles.th}>Changed</Text>
-            </View>
+      <View style={styles.popupHeaderRow}>
+  <Text style={styles.modalTitle}>Parameter Table</Text>
 
-            {PARAM_SR.map((sr) => {
-              const orig = values[sr]?.value_01 ?? '';
-              const param = values[sr]?.parameter ?? '';
-              const changed = edited[sr] ?? '-';
+  <TouchableOpacity
+    onPress={() => setTablePopup(false)}
+    style={styles.popupCloseBtn}
+  >
+    <Text style={styles.popupCloseIcon}>✕</Text>
+    <Text style={styles.popupCloseText}>Close</Text>
+  </TouchableOpacity>
+</View>
 
-              return (
-                <View style={styles.tblRow} key={sr}>
-                  <Text style={styles.td}>{sr}</Text>
-                  <Text style={styles.td}>{param}</Text>
-                  <Text style={styles.td}>{orig}</Text>
-                  <Text
-                    style={[
-                      styles.td,
-                      { color: changed !== '-' ? 'blue' : '#111' },
-                    ]}
-                  >
-                    {changed}
-                  </Text>
-                </View>
-              );
-            })}
 
-            <TouchableOpacity onPress={() => setTablePopup(false)}>
-              <Text style={styles.save}>Close</Text>
-            </TouchableOpacity>
-          </View>
+      {/* TABLE CONTAINER */}
+      <View style={styles.popupTable}>
+
+        {/* HEADER */}
+        <View style={[styles.popupRow, styles.popupHeader]}>
+          {POPUP_COLUMNS .map((col, i) => (
+            <Text
+              key={col.key}
+              style={[
+                styles.popupCell,
+                col.width && { width: col.width },
+                col.flex && { flex: col.flex },
+                col.align === 'left' && styles.leftAlign,
+                i !== POPUP_COLUMNS .length - 1 && styles.popupColBorder,
+                styles.popupHeaderText,
+              ]}
+            >
+              {{
+                sr: 'SR',
+                parameter: 'Parameter',
+                orig: 'Original',
+                changed: 'Changed',
+              }[col.key]}
+            </Text>
+          ))}
         </View>
-      </Modal>
+
+        {/* ROWS */}
+        {PARAM_SR.map((sr) => {
+          const orig = values[sr]?.value_01 ?? '';
+          const param = values[sr]?.parameter ?? '';
+          const changed = edited[sr] ?? '-';
+
+          return (
+            <View key={sr} style={styles.popupRow}>
+              {POPUP_COLUMNS .map((col, i) => {
+                let value = '';
+                if (col.key === 'sr') value = sr;
+                if (col.key === 'parameter') value = param;
+                if (col.key === 'orig') value = orig;
+                if (col.key === 'changed') value = changed;
+
+                return (
+                  <Text
+                      key={col.key}
+                      style={[
+                        styles.popupCell,
+                        styles.popupBodyText,   // 👈 ADD
+                        col.width && { width: col.width },
+                        col.flex && { flex: col.flex },
+                        col.align === 'left' && styles.leftAlign,
+                        i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
+                        col.key === 'changed' &&
+                          changed !== '-' && { color: '#007bff' },
+                      ]}
+                    >
+                    {value}
+                  </Text>
+                );
+              })}
+            </View>
+          );
+        })}
+      </View>
     </View>
+  </View>
+</Modal>
+
+</View>
   );
 }
 
@@ -518,7 +603,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: FONT_SIZE.sidebar,
     fontWeight: '700',
   },
 
@@ -538,7 +623,7 @@ const styles = StyleSheet.create({
 ,
 
   paramText: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#000',
   },
@@ -565,15 +650,19 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modal: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 10,
-  },
+  backgroundColor: '#fff',
+  padding: 12,
+  borderRadius: 10,
+  width: POPUP_WIDTH,
+  maxHeight: POPUP_MAX_HEIGHT,
+  alignSelf: 'center',
+},
+
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
+  fontSize: POPUP_TITLE_FONT,
+  fontWeight: '700',
+  marginBottom: 10,
+},
 
   input: {
     borderWidth: 1,
@@ -596,26 +685,113 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  tblHead: {
-    flexDirection: 'row',
-    backgroundColor: '#e8e8f5',
-    padding: 6,
-  },
-  th: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  tblRow: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  td: {
-    flex: 1,
-    textAlign: 'center',
-  },
+ 
+
+  tableWrapper: {
+  borderWidth: 1,
+  borderColor: '#cececeff',
+  borderRadius: 6,
+  overflow: 'hidden',
+  position: 'relative',
+},
+
+tblHead: {
+  flexDirection: 'row',
+  backgroundColor: '#e8e8f5',
+  paddingVertical: 6,
+},
+
+tblRow: {
+  flexDirection: 'row',
+  paddingVertical: 8,
+  borderTopWidth: 1,
+  borderColor: '#cececeff',
+},
+
+cell: {
+  paddingVertical: 8,
+  textAlign: 'center',
+},
+
+leftAlign: {
+  textAlign: 'left',
+  paddingLeft: 6,
+},
+
+colBorder: {
+  borderRightWidth: 1,
+  borderColor: '#cececeff',
+},
+
+headerText: {
+  fontWeight: '700',
+},
+
+popupTable: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupRow: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupHeader: {
+  backgroundColor: '#f2f2f8',
+  borderTopWidth: 1,
+},
+
+popupCell: {
+  paddingVertical: 10,
+  textAlign: 'center',
+},
+
+popupColBorder: {
+  borderRightWidth: 1,
+  borderColor: '#ccc',
+},
+
+popupHeaderText: {
+  fontWeight: '700',
+  fontSize: POPUP_HEADER_FONT,
+},
+
+popupBodyText: {
+  fontSize: POPUP_BODY_FONT,
+},
+
+
+popupHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+popupCloseBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 6,
+  paddingVertical: 4,
+},
+
+popupCloseIcon: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: '#444',
+  marginRight: 4,
+},
+
+popupCloseText: {
+  fontSize: POPUP_CLOSE_FONT,
+  fontWeight: '800',
+  color: '#444',
+  paddingLeft : 5,
+},
+
 });
 
 export default React.forwardRef(MachinePanelInner);
+

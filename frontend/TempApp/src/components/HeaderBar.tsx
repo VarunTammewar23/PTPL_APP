@@ -265,8 +265,8 @@ dropdownTrigger: {
 
 dropdownText: {
   color: '#000',
-  fontFamily: FONT_FAMILY.regular,
-  fontSize: FONT_SIZE.text,
+  fontFamily: FONT_FAMILY.bold,
+  fontSize: FONT_SIZE.headerbar,
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
   includeFontPadding: false,
@@ -274,11 +274,11 @@ dropdownText: {
 
 /* ---------- LABEL TEXT (e.g., Select recipe, Recipe No) ---------- */
 label: {
-  fontFamily: FONT_FAMILY.medium,
-  fontSize: FONT_SIZE.special,
-  fontWeight: FONT_WEIGHT.regular,
+  fontFamily: FONT_FAMILY.bold,
+  fontSize: FONT_SIZE.headerbar,
+  fontWeight: FONT_WEIGHT.bold,
   color: '#000',
-  marginLeft: 10,
+  marginLeft: 5,
   marginRight: 20,
 },
 
@@ -289,8 +289,8 @@ inputBox: {
   minWidth: FIELD_MIN_WIDTH,
   paddingHorizontal: 10,
   borderRadius: 6,
-  fontFamily: FONT_FAMILY.medium,
-  fontSize: FONT_SIZE.special,
+  fontFamily: FONT_FAMILY.bold,
+  fontSize: FONT_SIZE.headerbar,
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
   color: '#000',
@@ -311,11 +311,11 @@ commonBtn: {
   marginRight: 8,
 },
 
-/* ---------- BUTTON TEXT ---------- */
+/* ---------- BUTTON TEXT (IMPORT,EXPORT) ---------- */
 btnText: {
-  color: '#fff',
+  color: '#ffffffff',
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.button,
+  fontSize: FONT_SIZE.headerbar,
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
 },
@@ -399,7 +399,7 @@ screenBox: {
 screenText: {
   color: '#000000ff',
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.text,
+  fontSize: FONT_SIZE.headerbar,
   fontWeight: FONT_WEIGHT.bold,
 },
 
