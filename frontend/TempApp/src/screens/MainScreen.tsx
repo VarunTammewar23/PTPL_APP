@@ -35,6 +35,13 @@ import BlowerSettings from '../components/RPF/BlowerSettings';
 import RollerGap from '../components/RPF/RollerGap';
 import { getCurrentApiBase } from '../config/ConfigContext';
 import FoldingTray from '../components/RPF/FoldingTray';
+import FoldSetting from '../components/RT Angle/FoldSetting';
+import FoldSetting2 from '../components/RT Angle/FoldSetting2';
+import GapSetting from '../components/RT Angle/GapSetting';
+import K1A from '../components/Knife 1/K1A';
+import K1B from '../components/Knife 1/K1B';
+
+
 
 
 
@@ -84,6 +91,11 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showBlowerSettings, setShowBlowerSettings] = useState(false);
   const [showRollerGap, setShowRollerGap] = useState(false);
   const [showFoldingTray, setShowFoldingTray] = useState(false);
+  const [showFoldSetting, setShowFoldSetting] = useState(false);
+  const [showFoldSetting2, setShowFoldSetting2] = useState(false);
+  const [showGapSetting, setShowGapSetting] = useState(false);
+  const [showK1A, setShowK1A] = useState(false);
+
   const [customerName, setCustomerName] = useState<string | null>(null);
 
 
@@ -100,6 +112,11 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const blowerRef = useRef<any>(null);
   const rollerRef = useRef<any>(null);
   const foldingTrayRef = useRef<any>(null);
+  const foldSettingRef = useRef<any>(null);
+  const foldSetting2Ref = useRef<any>(null);
+  const gapSettingRef = useRef<any>(null);
+  const K1ARef = useRef<any>(null);
+
   // 🔴 Holds unsaved changes across ALL panels
   const pendingEditsRef = useRef<Map<number, any>>(new Map());
 
@@ -438,6 +455,11 @@ const closePanel = () => {
     else if (showBlowerSettings) panelRef = blowerRef;
     else if (showRollerGap) panelRef = rollerRef;
     else if (showFoldingTray) panelRef = foldingTrayRef;
+    else if (showFoldSetting) panelRef = foldSettingRef;
+    else if (showFoldSetting2) panelRef = foldSetting2Ref;
+    else if (showGapSetting) panelRef = gapSettingRef;
+    else if (showK1A) panelRef = K1ARef;
+
     else panelRef = machineRef; // fallback
 
 
@@ -512,6 +534,11 @@ if (mode === 'save') {
     blowerRef,
     rollerRef,
     foldingTrayRef,
+    foldSettingRef,
+    foldSetting2Ref,
+    gapSettingRef,
+    K1ARef,
+
   ].forEach(r => {
     try {
       r?.current?.clearEdits?.();
@@ -592,6 +619,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         sideLayRef,
         blowerRef,
         rollerRef,
+        foldingTrayRef,
+        foldSettingRef,
+        foldSetting2Ref,
+        gapSettingRef,
+        K1ARef,
       ].forEach(r => {
         try {
           if (r?.current?.clearEdits) r.current.clearEdits();
@@ -634,6 +666,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
   setShowBlowerSettings(false);
   setShowRollerGap(false);
   setShowFoldingTray(false);
+  setShowFoldSetting(false);
+  setShowFoldSetting2(false);
+  setShowGapSetting(false);
+  setShowK1A(false);
+
 
   setSaving(false);
   return;
@@ -656,6 +693,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
           setShowBlowerSettings(false);
           setShowRollerGap(false);
           setShowFoldingTray(false);
+          setShowFoldSetting(false);
+          setShowFoldSetting2(false);
+          setShowGapSetting(false);
+          setShowK1A(false);
+
 
           Alert.alert('Exists', `Recipe already exists. Opened ${newRecipeName}`);
         } else {
@@ -689,6 +731,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         setShowBlowerSettings(false);
         setShowRollerGap(false);
         setShowFoldingTray(false);
+        setShowFoldSetting(false);
+        setShowFoldSetting2(false);
+        setShowGapSetting(false);
+        setShowK1A(false);
+
 
         Alert.alert('Saved (server)', `Recipe created on server: ${newRecipeName}`);
       } else {
@@ -729,6 +776,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     if (showBlowerSettings) return "RPF : BLOWER SETTINGS";
     if (showRollerGap) return "RPF : ROLLER GAP";
     if (showFoldingTray) return "RPF : FOLDING TRAY";
+    if (showFoldSetting) return "RT ANGLE : FOLD SETTING";
+    if (showFoldSetting2) return "RT ANGLE : FOLD SETTING 2";
+    if (showGapSetting) return "RT ANGLE : GAP SETTING";
+    if (showK1A) return "KNIFE 1 : K1A";
     return null;
   }
 
@@ -888,6 +939,51 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
               />
             </View>
 
+            <View style={{ flex: 1, display: showFoldSetting ? 'flex' : 'none' }}>
+              <FoldSetting
+                ref={foldSettingRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showFoldSetting2 ? 'flex' : 'none' }}>
+              <FoldSetting2
+                ref={foldSetting2Ref}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showGapSetting ? 'flex' : 'none' }}>
+              <GapSetting
+                ref={gapSettingRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK1A ? 'flex' : 'none' }}>
+              <K1A
+                ref={K1ARef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+
 
             <View
               style={{
@@ -902,7 +998,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                   !showSideLay &&
                   !showBlowerSettings &&
                   !showRollerGap &&
-                  !showFoldingTray
+                  !showFoldingTray &&
+                  !showFoldSetting &&
+                  !showFoldSetting2 &&
+                  !showGapSetting &&
+                  !showK1A
                     ? 'flex'
                     : 'none',
               }}
@@ -960,6 +1060,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                         setShowBlowerSettings(false);
                         setShowRollerGap(false);
                         setShowFoldingTray(false);
+                        setShowFoldSetting(false);
+                        setShowFoldSetting2(false);
+                        setShowGapSetting(false);
+                        setShowK1A(false);
+
 
                         if (it === "PAPER SIZES")
                           return setShowMachine(true);
@@ -1020,6 +1125,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     setShowBlowerSettings(false);
     setShowRollerGap(false);
     setShowFoldingTray(false);
+    setShowFoldSetting(false);
+    setShowFoldSetting2(false);
+    setShowGapSetting(false);
+    setShowK1A(false);
     setShowSideMenu(false);
     return;
   }
@@ -1040,6 +1149,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     setShowBlowerSettings(false);
     setShowRollerGap(false);
     setShowFoldingTray(false);
+    setShowFoldSetting(false);
+    setShowFoldSetting2(false);
+    setShowGapSetting(false);
+    setShowK1A(false);
     return;
   }
 
@@ -1086,20 +1199,146 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
           </>
         )}
 
-        {activePanel === "RT ANGLE" && (
-          <>
-            <Text style={styles.panelItem}>Rotate Left</Text>
-            <Text style={styles.panelItem}>Rotate Right</Text>
-            <Text style={styles.panelItem}>Reset Angle</Text>
-          </>
-        )}
+        {activePanel === "RT ANGLE" && (<>
+    <TouchableOpacity
+      onPress={() => {
+        if (selectedRecipeId === -1) {
+          Alert.alert("Select a recipe first");
+          return;
+        }
+
+        // close popup
+        closePanel();
+
+        // reset others
+        setShowMachine(false);
+        setShowFolds(false);
+        setShowOffset(false);
+        setShowGlueTap(false);
+        setShowSuctionGap(false);
+        setShowAllSpeed(false);
+        setShowSideLay(false);
+        setShowBlowerSettings(false);
+        setShowRollerGap(false);
+        setShowFoldingTray(false);
+
+        // 🔥 OPEN RT ANGLE PANEL
+        setShowFoldSetting(true); 
+        setShowFoldSetting2(false); 
+        setShowGapSetting(false);
+        setShowK1A(false);
+        setActivePanel("RT ANGLE");
+      }}
+    >
+      <Text style={styles.panelItem}>Fold Setting</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+  onPress={() => {
+    if (selectedRecipeId === -1) {
+      Alert.alert("Select a recipe first");
+      return;
+    }
+
+    closePanel();
+
+    // reset all other panels
+    setShowMachine(false);
+    setShowFolds(false);
+    setShowOffset(false);
+    setShowGlueTap(false);
+    setShowSuctionGap(false);
+    setShowAllSpeed(false);
+    setShowSideLay(false);
+    setShowBlowerSettings(false);
+    setShowRollerGap(false);
+    setShowFoldingTray(false);
+
+    // 🔥 OPEN ROTATE RIGHT PANEL
+    setShowFoldSetting(false);
+    setShowFoldSetting2(true);
+    setShowGapSetting(false);
+    setShowK1A(false);
+
+    setActivePanel("RT ANGLE");
+  }}
+>
+  <Text style={styles.panelItem}>Fold Setting 2</Text>
+</TouchableOpacity>
+
+    <TouchableOpacity
+  onPress={() => {
+    if (selectedRecipeId === -1) {
+      Alert.alert("Select a recipe first");
+      return;
+    }
+
+    closePanel();
+
+    // reset all other panels
+    setShowMachine(false);
+    setShowFolds(false);
+    setShowOffset(false);
+    setShowGlueTap(false);
+    setShowSuctionGap(false);
+    setShowAllSpeed(false);
+    setShowSideLay(false);
+    setShowBlowerSettings(false);
+    setShowRollerGap(false);
+    setShowFoldingTray(false);
+
+    // 🔥 OPEN ROTATE RIGHT PANEL
+    setShowFoldSetting(false);
+    setShowFoldSetting2(false);
+    setShowGapSetting(true);
+    setShowK1A(false);
+
+    setActivePanel("RT ANGLE");
+  }}
+>
+  <Text style={styles.panelItem}>Gap Setting</Text>
+</TouchableOpacity>
+  </>
+)}
+
 
         {activePanel === "KNIFE 1" && (
-          <>
-            <Text style={styles.panelItem}>Knife 1 Width</Text>
-            <Text style={styles.panelItem}>Knife 1 Speed</Text>
-          </>
-        )}
+  <>
+    <TouchableOpacity
+      onPress={() => {
+        if (selectedRecipeId === -1) {
+          Alert.alert("Select a recipe first");
+          return;
+        }
+
+        closePanel();
+
+        // reset all other panels
+        setShowMachine(false);
+        setShowFolds(false);
+        setShowOffset(false);
+        setShowGlueTap(false);
+        setShowSuctionGap(false);
+        setShowAllSpeed(false);
+        setShowSideLay(false);
+        setShowBlowerSettings(false);
+        setShowRollerGap(false);
+        setShowFoldingTray(false);
+        setShowFoldSetting(false);
+        setShowFoldSetting2(false);
+        setShowGapSetting(false);
+
+        // 🔥 OPEN KNIFE 1 PANEL
+        setShowK1A(true);
+
+        setActivePanel("KNIFE 1");
+      }}
+    >
+      <Text style={styles.panelItem}>K1A</Text>
+    </TouchableOpacity>
+  </>
+)}
+
 
         {activePanel === "KNIFE 2" && (
           <>

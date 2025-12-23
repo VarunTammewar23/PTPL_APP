@@ -1,4 +1,4 @@
-// src/components/RPF/Folds.tsx
+// src/components/RT Angle/K1A.tsx
 import React, {
   useEffect,
   useMemo,
@@ -20,6 +20,48 @@ import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 
+/* ---------- CONFIG ---------- */
+
+// 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
+const PARAM_SR = [201, 202, 203];
+
+const POSITIONS: Record<number, { x: number; y: number }> = {
+  201: { x: 50, y: 30 },
+  202: { x: 50, y: 50 },
+  203: { x: 50, y: 70 },
+};
+
+const SERIAL_POS = [
+  { id: 201, x: 20, y: 30 },
+  { id: 202, x: 20, y: 50 },
+  { id: 203, x: 20, y: 70 },
+];
+
+const BOX_W = 100;
+const BOX_H = 50;
+
+const IMG_W = 1300;
+const IMG_H = 600;
+
+/* ---------- TABLE CONFIG ---------- */
+
+const POPUP_COLUMNS = [
+  { key: 'sr', title: 'SR', width: 100 },
+  { key: 'parameter', title: 'Parameter', flex: 4 },
+  { key: 'orig', title: 'Original', flex: 2 },
+  { key: 'changed', title: 'Changed', flex: 2 },
+];
+
+const POPUP_TITLE_FONT = 18;
+const POPUP_HEADER_FONT = 18;
+const POPUP_BODY_FONT = 15;
+const POPUP_CLOSE_FONT = 18;
+
+const POPUP_WIDTH = 1200;
+const POPUP_MAX_HEIGHT = 500;
+
+/* ---------- TYPES ---------- */
+
 type Props = {
   recipeId: number;
   recipeName?: string;
@@ -27,7 +69,7 @@ type Props = {
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
-  onSave?: (params: any[]) => void;
+  onSave?: (opts?: { mode?: 'save' | 'saveAs' }) => void;
   onParamEdit?: (param: {
     parameter_no: number;
     value_01: string | number;
@@ -45,63 +87,21 @@ interface RecipeParam {
   unit?: string;
 }
 
-/* ---------- CONFIG ---------- */
-
-const PARAM_SR = [7, 8, 9];
-
-const POSITIONS: Record<number, { x: number; y: number }> = {
-  7: { x: 75, y: 21 },
-  8: { x: 75, y: 44 },
-  9: { x:75, y: 69 },
-};
-
-const SERIAL_POS = [
-  { id: 7, x: 13, y: 21 },
-  { id: 8, x: 13, y: 47 },
-  { id: 9, x: 13, y: 73 },
-];
-
-const BOX_W = 80;
-const BOX_H = 50;
-
-const IMG_W = 1300;
-const IMG_H = 600;
-
-// Adjust the Size of table popup body fonts and titles
-  const POPUP_COLUMNS = [
-  { key: 'sr', title: 'SR', width: 100, align: 'center' },
-  { key: 'parameter', title: 'Parameter', flex: 4, align: 'center' },
-  { key: 'orig', title: 'Original', flex: 2, align: 'center' },
-  { key: 'changed', title: 'Changed', flex: 2, align: 'center' },
-];
-
-const POPUP_TITLE_FONT = 18;  // Title font size
-const POPUP_HEADER_FONT = 18;  // Header font size
-const POPUP_BODY_FONT = 15;  // Table Body font size
-const POPUP_CLOSE_FONT = 18;  // Close button font size
-
-// Adjust the Size of popup
-const POPUP_WIDTH = 1200;        // popup card width
-const POPUP_MAX_HEIGHT = 500;   // popup card max height
-
 /* ---------- COMPONENT ---------- */
 
-function FoldsInner(
-  { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
+function K1AInner(
+  { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit }: Props,
   ref: any
 ) {
-
-
   const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
+  const [loading, setLoading] = useState(!initialParams);
 
   useEffect(() => {
     if (initialParams) {
       setParams(initialParams);
+      setLoading(false);
     }
   }, [initialParams]);
-
-
-  const [loading, setLoading] = useState(!initialParams);
 
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
@@ -109,18 +109,20 @@ function FoldsInner(
   const [contW, setContW] = useState(width);
   const [contH, setContH] = useState(Math.round(height * 0.75));
 
-  const imgSrc = imageUri
-    ? { uri: imageUri }
-    : require('../../assets/folds.jpeg');
+  const imgSrc = imageUri ? { uri: imageUri } : require('../../assets/KA.jpg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
-  /* ---------- FETCH PARAMS ---------- */
+  const [tablePopup, setTablePopup] = useState(false);
+  const [videoPopup, setVideoPopup] = useState(false);
+
+  /* ---------- FETCH ---------- */
 
   useEffect(() => {
     if (initialParams) return;
+
     const fetchData = async () => {
       try {
         const res = await apiGet(`/recipes/${recipeId}`);
@@ -128,6 +130,7 @@ function FoldsInner(
       } catch {}
       setLoading(false);
     };
+
     fetchData();
     const id = setInterval(fetchData, pollMs);
     return () => clearInterval(id);
@@ -149,7 +152,7 @@ function FoldsInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'FOLDS',
+        section: values[sr]?.section ?? 'RT ANGLE',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -161,15 +164,12 @@ function FoldsInner(
     },
   }));
 
-  const [tablePopup, setTablePopup] = useState(false);
-  const [videoPopup, setVideoPopup] = useState(false);
-
   /* ---------- UI ---------- */
 
   return (
     <View style={styles.container}>
       <View style={[styles.bodyRow, isPortrait && { flexDirection: 'column' }]}>
-        {/* IMAGE AREA */}
+        {/* IMAGE */}
         <View
           style={styles.leftArea}
           onLayout={e => {
@@ -185,7 +185,6 @@ function FoldsInner(
             bindToBorders
             style={{ width: contW, height: contH }}
           >
-            {/* ALIGNMENT LAYER */}
             <View
               style={{
                 width: contW,
@@ -237,18 +236,15 @@ function FoldsInner(
                         },
                       ]}
                     >
-                    <Text style={styles.paramText}>
-                      {val}
-                    </Text>
-
+                      <Text style={styles.paramText}>{val}</Text>
                     </TouchableOpacity>
                   );
                 })}
 
                 {/* SERIAL NUMBERS */}
                 {SERIAL_POS.map(p => {
-                  let cx = (p.x / 100) * IMG_W;
-                  let cy = (p.y / 100) * IMG_H;
+                  const cx = (p.x / 100) * IMG_W;
+                  const cy = (p.y / 100) * IMG_H;
 
                   return (
                     <View
@@ -283,41 +279,27 @@ function FoldsInner(
             <Text style={styles.btnText}>SHOW TABLE</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-                      style={styles.btnGreen}
-                      onPress={() => setVideoPopup(true)}
-                    >
-                      <Text style={styles.btnText}>VIDEO</Text>
-                    </TouchableOpacity>
+          <TouchableOpacity style={styles.btnGreen} onPress={() => setVideoPopup(true)}>
+            <Text style={styles.btnText}>VIDEO</Text>
+          </TouchableOpacity>
 
-          <TouchableOpacity
-  style={styles.btnBlue}
-  onPress={() => onSave?.({ mode: 'save' })}
->
-  <Text style={styles.btnText}>SAVE</Text>
-</TouchableOpacity>
+          <TouchableOpacity style={styles.btnBlue} onPress={() => onSave?.({ mode: 'save' })}>
+            <Text style={styles.btnText}>SAVE</Text>
+          </TouchableOpacity>
 
-<TouchableOpacity
-  style={styles.btnGreen}
-  onPress={() => onSave?.({ mode: 'saveAs' })}
->
-  <Text style={styles.btnText}>SAVE AS</Text>
-</TouchableOpacity>
-
+          <TouchableOpacity style={styles.btnGreen} onPress={() => onSave?.({ mode: 'saveAs' })}>
+            <Text style={styles.btnText}>SAVE AS</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <VideoModal
-  visible={videoPopup}
-  onClose={() => setVideoPopup(false)}
-/>
-
+      <VideoModal visible={videoPopup} onClose={() => setVideoPopup(false)} />
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Fold</Text>
+            <Text style={styles.modalTitle}>Edit Angle</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -329,117 +311,100 @@ function FoldsInner(
                 Cancel
               </Text>
               <Text
-  style={styles.save}
-  onPress={() => {
-    const sr = editingSr!;
-    const newVal = tempVal;
+                style={styles.save}
+                onPress={() => {
+                  const sr = editingSr!;
+                  const newVal = tempVal;
 
-    // 1️⃣ Update local UI state (unchanged behavior)
-    setEdited({ ...edited, [sr]: newVal });
+                  setEdited({ ...edited, [sr]: newVal });
 
-    // 2️⃣ 🔴 REPORT EDIT TO MAINSCREEN (THIS WAS MISSING)
-    onParamEdit?.({
-      parameter_no: sr,
-      value_01: newVal,
-      section: values[sr]?.section ?? 'No. of Folds',
-      parameter: values[sr]?.parameter ?? '',
-      unit: values[sr]?.unit ?? '',
-    });
+                  onParamEdit?.({
+                    parameter_no: sr,
+                    value_01: newVal,
+                    section: values[sr]?.section ?? 'RT ANGLE',
+                    parameter: values[sr]?.parameter ?? '',
+                    unit: values[sr]?.unit ?? '',
+                  });
 
-    // 3️⃣ Close editor
-    setEditingSr(null);
-  }}
->
-  Save
-</Text>
-
+                  setEditingSr(null);
+                }}
+              >
+                Save
+              </Text>
             </View>
           </View>
         </View>
       </Modal>
 
       {/* TABLE POPUP */}
-<Modal visible={tablePopup} transparent animationType="fade">
-  <View style={styles.modalBg}>
-    <View style={styles.modal}>
+      <Modal visible={tablePopup} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.modal}>
+            <View style={styles.popupHeaderRow}>
+              <Text style={styles.modalTitle}>Parameter Table</Text>
+              <TouchableOpacity onPress={() => setTablePopup(false)} style={styles.popupCloseBtn}>
+                <Text style={styles.popupCloseIcon}>✕</Text>
+                <Text style={styles.popupCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* HEADER ROW */}
-      <View style={styles.popupHeaderRow}>
-        <Text style={styles.modalTitle}>Parameter Table</Text>
-
-        <TouchableOpacity
-          onPress={() => setTablePopup(false)}
-          style={styles.popupCloseBtn}
-        >
-          <Text style={styles.popupCloseIcon}>✕</Text>
-          <Text style={styles.popupCloseText}>Close</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* TABLE */}
-      <View style={styles.popupTable}>
-
-        {/* TABLE HEADER */}
-        <View style={[styles.popupRow, styles.popupHeader]}>
-          {POPUP_COLUMNS.map((col, i) => (
-            <Text
-              key={col.key}
-              style={[
-                styles.popupCell,
-                col.width && { width: col.width },
-                col.flex && { flex: col.flex },
-                i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
-                styles.popupHeaderText,
-              ]}
-            >
-              {col.title}
-            </Text>
-          ))}
-        </View>
-
-        {/* TABLE ROWS */}
-        {PARAM_SR.map((sr) => {
-          const orig = values[sr]?.value_01 ?? '';
-          const param = values[sr]?.parameter ?? '';
-          const changed = edited[sr] ?? '-';
-
-          return (
-            <View key={sr} style={styles.popupRow}>
-              {POPUP_COLUMNS.map((col, i) => {
-                let value: any = '';
-                if (col.key === 'sr') value = sr;
-                if (col.key === 'parameter') value = param;
-                if (col.key === 'orig') value = orig;
-                if (col.key === 'changed') value = changed;
-
-                return (
+            <View style={styles.popupTable}>
+              <View style={[styles.popupRow, styles.popupHeader]}>
+                {POPUP_COLUMNS.map(col => (
                   <Text
                     key={col.key}
                     style={[
                       styles.popupCell,
-                      styles.popupBodyText,
                       col.width && { width: col.width },
                       col.flex && { flex: col.flex },
-                      i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
-                      col.key === 'changed' &&
-                        changed !== '-' && { color: '#007bff' },
+                      styles.popupHeaderText,
                     ]}
                   >
-                    {value}
+                    {col.title}
                   </Text>
+                ))}
+              </View>
+
+              {PARAM_SR.map(sr => {
+                const orig = values[sr]?.value_01 ?? '';
+                const param = values[sr]?.parameter ?? '';
+                const changed = edited[sr] ?? '-';
+
+                return (
+                  <View key={sr} style={styles.popupRow}>
+                    {POPUP_COLUMNS.map(col => {
+                      let value: any = '';
+                      if (col.key === 'sr') value = sr;
+                      if (col.key === 'parameter') value = param;
+                      if (col.key === 'orig') value = orig;
+                      if (col.key === 'changed') value = changed;
+
+                      return (
+                        <Text
+                          key={col.key}
+                          style={[
+                            styles.popupCell,
+                            styles.popupBodyText,
+                            col.width && { width: col.width },
+                            col.flex && { flex: col.flex },
+                            col.key === 'changed' &&
+                              changed !== '-' && { color: '#007bff' },
+                          ]}
+                        >
+                          {value}
+                        </Text>
+                      );
+                    })}
+                  </View>
                 );
               })}
             </View>
-          );
-        })}
-      </View>
-    </View>
-  </View>
-</Modal>
-
           </View>
-        );
-      }
+        </View>
+      </Modal>
+    </View>
+  );
+}
 
 /* ---------- STYLES ---------- */
 
@@ -447,23 +412,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
-  leftArea: {
-    flex: 0.85,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
+  leftArea: { flex: 0.85, overflow: 'hidden' },
+  rightButtons: { flex: 0.15, alignItems: 'center', paddingVertical: 10 },
 
-  rightButtons: {
-    flex: 0.15,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-
-  portraitButtons: {
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-  },
+  portraitButtons: { width: '100%', borderTopWidth: 1, borderColor: '#ccc' },
 
   btnBlue: {
     backgroundColor: '#007bff',
@@ -479,12 +431,7 @@ const styles = StyleSheet.create({
     width: '90%',
     marginTop: 10,
   },
-
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '700',
-  },
+  btnText: { color: '#fff', textAlign: 'center', fontWeight: '700' },
 
   paramBox: {
     position: 'absolute',
@@ -493,7 +440,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
   },
-
   paramText: { fontSize: 24, fontWeight: '700' },
 
   serialBox: {
@@ -503,14 +449,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 6,
   },
-
   serialText: { color: '#fff', fontWeight: '700' },
 
-  loading: {
-    position: 'absolute',
-    top: '45%',
-    left: '45%',
-  },
+  loading: { position: 'absolute', top: '45%', left: '45%' },
 
   modalBg: {
     flex: 1,
@@ -518,6 +459,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
+  modal: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 10,
+    width: POPUP_WIDTH,
+    maxHeight: POPUP_MAX_HEIGHT,
+    alignSelf: 'center',
+  },
+
+  modalTitle: { fontSize: POPUP_TITLE_FONT, fontWeight: '700', marginBottom: 10 },
 
   input: {
     borderWidth: 1,
@@ -526,113 +477,27 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 12,
-  },
-
+  row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
 
-   tblHead: {
+  popupTable: { borderWidth: 1, borderColor: '#ccc' },
+  popupRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ccc' },
+  popupHeader: { backgroundColor: '#f2f2f8' },
+
+  popupCell: { paddingVertical: 10, textAlign: 'center' },
+  popupHeaderText: { fontWeight: '700', fontSize: POPUP_HEADER_FONT },
+  popupBodyText: { fontSize: POPUP_BODY_FONT },
+
+  popupHeaderRow: {
     flexDirection: 'row',
-    backgroundColor: '#e8e8f5',
-    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  th: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  tblRow: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  td: {
-    flex: 1,
-    textAlign: 'center',
-  },
-
-  modal: {
-  backgroundColor: '#fff',
-  padding: 12,
-  borderRadius: 10,
-  width: POPUP_WIDTH,
-  maxHeight: POPUP_MAX_HEIGHT,
-  alignSelf: 'center',
-},
-
-modalTitle: {
-  fontSize: POPUP_TITLE_FONT,
-  fontWeight: '700',
-  marginBottom: 10,
-},
-
-popupTable: {
-  borderWidth: 1,
-  borderColor: '#ccc',
-},
-
-popupRow: {
-  flexDirection: 'row',
-  borderBottomWidth: 1,
-  borderColor: '#ccc',
-},
-
-popupHeader: {
-  backgroundColor: '#f2f2f8',
-},
-
-popupCell: {
-  paddingVertical: 10,
-  textAlign: 'center',
-},
-
-popupColBorder: {
-  borderRightWidth: 1,
-  borderColor: '#ccc',
-},
-
-popupHeaderText: {
-  fontWeight: '700',
-  fontSize: POPUP_HEADER_FONT,
-},
-
-popupBodyText: {
-  fontSize: POPUP_BODY_FONT,
-},
-
-popupHeaderRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: 8,
-},
-
-popupCloseBtn: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 6,
-  paddingVertical: 4,
-},
-
-popupCloseIcon: {
-  fontSize: 18,
-  fontWeight: '800',
-  color: '#444',
-  marginRight: 4,
-},
-
-popupCloseText: {
-  fontSize: POPUP_CLOSE_FONT,
-  fontWeight: '800',
-  color: '#444',
-  paddingLeft: 5,
-},
-
+  popupCloseBtn: { flexDirection: 'row', alignItems: 'center' },
+  popupCloseIcon: { fontSize: 18, fontWeight: '800', marginRight: 4 },
+  popupCloseText: { fontSize: POPUP_CLOSE_FONT, fontWeight: '800' },
 });
 
-export default React.forwardRef(FoldsInner);
+export default React.forwardRef(K1AInner);
