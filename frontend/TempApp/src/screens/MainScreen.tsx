@@ -117,6 +117,81 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const gapSettingRef = useRef<any>(null);
   const K1ARef = useRef<any>(null);
 
+  const RPF_ITEMS = [
+  "PAPER SIZES",
+  "NO OF FOLDS",
+  "OFFSET SETTINGS",
+  "GLUE/TAP QTY",
+  "SUCTION / GAP SET",
+  "ALL SPEED",
+  "SIDE LAY",
+  "BLOWER SETTINGS",
+  "ROLLER GAP",
+  "FOLDING TRAY"
+];
+
+const RT_ANGLE_ITEMS = [
+  "FOLD SETTING",
+  "FOLD SETTING 2",
+  "GAP SETTING"
+];
+
+const KNIFE_1_ITEMS = [
+  "KNIFE K1 A",
+  "KNIFE K1 B",
+  "KNIFE K1 C"
+];
+
+
+function getSubmenuItems(panel: string): string[] {
+  switch (panel) {
+    case "RPF": return RPF_ITEMS;
+    case "RT ANGLE": return RT_ANGLE_ITEMS;
+    case "KNIFE 1": return KNIFE_1_ITEMS;
+    default: return [];
+  }
+}
+
+function openSubScreen(panel: string, sub: string) {
+  // reset all screens
+  setShowMachine(false);
+  setShowFolds(false);
+  setShowOffset(false);
+  setShowGlueTap(false);
+  setShowSuctionGap(false);
+  setShowAllSpeed(false);
+  setShowSideLay(false);
+  setShowBlowerSettings(false);
+  setShowRollerGap(false);
+  setShowFoldingTray(false);
+  setShowFoldSetting(false);
+  setShowFoldSetting2(false);
+  setShowGapSetting(false);
+  setShowK1A(false);
+
+  // RPF
+  if (panel === "RPF" && sub === "PAPER SIZES") return setShowMachine(true);
+  if (panel === "RPF" && sub === "NO OF FOLDS") return setShowFolds(true);
+  if (panel === "RPF" && sub === "OFFSET SETTINGS") return setShowOffset(true);
+  if (panel === "RPF" && sub === "GLUE/TAP QTY") return setShowGlueTap(true);
+  if (panel === "RPF" && sub === "SUCTION / GAP SET") return setShowSuctionGap(true);
+  if (panel === "RPF" && sub === "ALL SPEED") return setShowAllSpeed(true);
+  if (panel === "RPF" && sub === "SIDE LAY") return setShowSideLay(true);
+  if (panel === "RPF" && sub === "BLOWER SETTINGS") return setShowBlowerSettings(true);
+  if (panel === "RPF" && sub === "ROLLER GAP") return setShowRollerGap(true);
+  if (panel === "RPF" && sub === "FOLDING TRAY") return setShowFoldingTray(true);
+
+  // RT ANGLE
+  if (panel === "RT ANGLE" && sub === "FOLD SETTING") return setShowFoldSetting(true);
+  if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return setShowFoldSetting2(true);
+  if (panel === "RT ANGLE" && sub === "GAP SETTING") return setShowGapSetting(true);
+
+  // KNIFE 1
+  if (panel === "KNIFE 1" && sub === "KNIFE K1 A") return setShowK1A(true);
+}
+
+
+
   // 🔴 Holds unsaved changes across ALL panels
   const pendingEditsRef = useRef<Map<number, any>>(new Map());
 
@@ -132,7 +207,7 @@ const onParamEdit = (p: any) => {
 
 
   const [activePanel, setActivePanel] = useState<string>("HOME");
-  const [activeRpfSub, setActiveRpfSub] = useState<string | null>(null);
+
   const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
 
   
@@ -140,66 +215,54 @@ const onParamEdit = (p: any) => {
   const [sideMenuLeft, setSideMenuLeft] = useState<number>(8);
   const [sideMenuTop, setSideMenuTop] = useState<number>(100);
 
-  const rpfRef = useRef<any>(null);
+  const [activeSubScreen, setActiveSubScreen] = useState<string | null>(null);
+  const panelRefs = useRef<Record<string, any>>({});
+
 
   const ITEM_H = 54;
   const MENU_W = 140;
   const MENU_PADDING = 6;
 
-  const RPF_ITEMS = [
-    "PAPER SIZES",
-    "NO OF FOLDS",
-    "OFFSET SETTINGS",
-    "GLUE/TAP QTY",
-    "SUCTION / GAP SET",
-    "ALL SPEED",
-    "SIDE LAY",
-    "BLOWER SETTINGS",
-    "ROLLER GAP",
-    "FOLDING TRAY"
+ 
+
+const openPanel = (name: string) => {
+  const PANELS_WITH_SUBMENU = [
+    "RPF",
+    "RT ANGLE",
+    "KNIFE 1",
+    "KNIFE 2",
+    "KNIFE 3",
   ];
 
-  // 🔥 FIXED RPF SUBMENU LOGIC — NOTHING ELSE CHANGED
-  const openPanel = (name: string) => {
-  if (name === "RPF") {
-    // If submenu already open → just close it
-    if (showSideMenu) {
+  if (PANELS_WITH_SUBMENU.includes(name)) {
+    if (showSideMenu && activePanel === name) {
       setShowSideMenu(false);
-      setActivePanel("RPF"); // ✅ keep highlight
       return;
     }
 
-    // Measure RPF button to position submenu correctly
-    rpfRef.current?.measure(
-      (fx: number, fy: number, width: number, height: number, px: number, py: number) => {
-        const ITEM_H_NEW = 38;
-        const ITEM_GAP = 5;
+    panelRefs.current[name]?.measure(
+      (fx: number, fy: number, w: number, h: number, px: number, py: number) => {
+        const items = getSubmenuItems(name);
+        const ITEM_H = 38;
+        const GAP = 5;
 
         const menuHeight =
-          RPF_ITEMS.length * (ITEM_H_NEW + ITEM_GAP) -
-          ITEM_GAP +
-          MENU_PADDING * 2;
+          items.length * (ITEM_H + GAP) - GAP + 12;
 
-        let left = Math.round(px);
-        left = Math.max(6, Math.min(left, SCREEN_W - MENU_W - 6));
-
-        let top = Math.round(py - menuHeight);
-        if (top < 8) top = 8;
+        let left = Math.max(6, Math.min(px, SCREEN_W - MENU_W));
+        let top = Math.max(8, py - menuHeight);
 
         setSideMenuLeft(left);
         setSideMenuTop(top);
 
         setShowSideMenu(true);
-        setActivePanel("RPF"); // ✅ highlight RPF
-        setActiveRpfSub(null);
-
-        panelAnim.setValue(SCREEN_H);
+        setActivePanel(name);
+        setActiveSubScreen(null);
       }
     );
     return;
   }
 
-  // ---------- NORMAL PANELS ----------
   setShowSideMenu(false);
   setActivePanel(name);
 
@@ -209,6 +272,7 @@ const onParamEdit = (p: any) => {
     useNativeDriver: true,
   }).start();
 };
+
 
 const closePanel = () => {
   setShowSideMenu(false);
@@ -315,7 +379,7 @@ const closePanel = () => {
 
   // 🔴 CRITICAL: sync bottom bar highlight
   setActivePanel("RECIPE");
-  setActiveRpfSub(null);
+  setActiveSubScreen(null);
 
   setShowMachine(false);
 };
@@ -1017,103 +1081,52 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         )}
       </View>
 
-      {showSideMenu && activePanel === "RPF" && (
-        <TouchableWithoutFeedback
-          onPress={() => {
-          setShowSideMenu(false);
-          setActivePanel("RPF"); // keep RPF highlighted
-        }}
-        >
-          <View style={styles.sideMenuOverlay}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.sideMenuFixed,
-                  { left: sideMenuLeft, top: sideMenuTop }
-                ]}
+{showSideMenu && getSubmenuItems(activePanel).length > 0 && (
+  <TouchableWithoutFeedback onPress={() => setShowSideMenu(false)}>
+    <View style={styles.sideMenuOverlay}>
+      <TouchableWithoutFeedback>
+        <View style={[styles.sideMenuFixed, { left: sideMenuLeft, top: sideMenuTop }]}>
+          <View style={styles.sideMenuInner}>
+            {getSubmenuItems(activePanel).map(it => (
+              <TouchableOpacity
+                key={it}
+                style={styles.sideMenuButton}
+                onPress={() => {
+                  if (selectedRecipeId === -1) {
+                    Alert.alert("Select a recipe first");
+                    return;
+                  }
+
+                  setActivePanel(activePanel);
+                  setActiveSubScreen(it);
+                  setShowSideMenu(false);
+                  openSubScreen(activePanel, it);
+                }}
               >
-                <View style={styles.sideMenuInner}>
-                  {RPF_ITEMS.map((it, i) => (
-                    <TouchableOpacity
-                      key={it + i}
-                      style={styles.sideMenuButton}
-                      activeOpacity={0.9}
-                      onPress={() => {
-                        if (selectedRecipeId === -1) {
-                          Alert.alert("Select a recipe first");
-                          return;
-                        }
-                        // Highlight RPF pill
-                        setActivePanel("RPF");
-
-                        // Highlight sub item
-                        setActiveRpfSub(it);
-
-                        setShowSideMenu(false);
-                        setShowMachine(false);
-                        setShowFolds(false);
-                        setShowOffset(false);
-                        setShowGlueTap(false);
-                        setShowSuctionGap(false);
-                        setShowAllSpeed(false);
-                        setShowSideLay(false);
-                        setShowBlowerSettings(false);
-                        setShowRollerGap(false);
-                        setShowFoldingTray(false);
-                        setShowFoldSetting(false);
-                        setShowFoldSetting2(false);
-                        setShowGapSetting(false);
-                        setShowK1A(false);
-
-
-                        if (it === "PAPER SIZES")
-                          return setShowMachine(true);
-                        if (it === "NO OF FOLDS")
-                          return setShowFolds(true);
-                        if (it === "OFFSET SETTINGS")
-                          return setShowOffset(true);
-                        if (it === "GLUE/TAP QTY")
-                          return setShowGlueTap(true);
-                        if (it === "SUCTION / GAP SET")
-                          return setShowSuctionGap(true);
-                        if (it === "ALL SPEED")
-                          return setShowAllSpeed(true);
-                        if (it === "SIDE LAY")
-                          return setShowSideLay(true); // ⬅️ ADD THIS
-                        if (it === "BLOWER SETTINGS")
-                          return setShowBlowerSettings(true);
-                        if (it === "ROLLER GAP") 
-                          return setShowRollerGap(true);
-                        if (it === "FOLDING TRAY")
-                          return setShowFoldingTray(true);
-
-
-
-                      }}
-                    >
-                      <View style={styles.sideMenuGloss} />
-                      <Text style={styles.sideMenuText}>{it}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
+                <View style={styles.sideMenuGloss} />
+                <Text style={styles.sideMenuText}>{it}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </TouchableWithoutFeedback>
-      )}
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
+  </TouchableWithoutFeedback>
+)}
+
 
       <BottomBar
       labels={labels}
       activePanel={activePanel}
-      activeRpfSub={activeRpfSub}
-      disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
-      rpfRef={rpfRef}
+      activeSubScreen={activeSubScreen}
+disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
+      panelRefs={panelRefs}
       onSave={saveCurrentMachineData}
       onPressItem={label => {
   // 🔴 HOME
   if (label === "HOME") {
     setActivePanel("HOME");
-    setActiveRpfSub(null);
+    setActiveSubScreen(null);
 
     setShowMachine(false);
     setShowFolds(false);
@@ -1136,7 +1149,7 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
   // 🔴 RECIPE
   if (label === "RECIPE") {
     setActivePanel("RECIPE");
-    setActiveRpfSub(null);
+    setActiveSubScreen(null);
     setShowSideMenu(false);
 
     setShowMachine(false);

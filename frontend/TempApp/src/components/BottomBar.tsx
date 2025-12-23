@@ -17,27 +17,28 @@ import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // ð
 interface BottomBarProps {
   labels: string[];
   activePanel: string | null;
-  activeRpfSub: string | null; 
+  activeSubScreen: string | null;
   onPressItem: (label: string) => void;
-  rpfRef?: any;
+  panelRefs: React.MutableRefObject<Record<string, any>>;
   onExit: () => void;
   onSave: () => void;
   onSettings: () => void;
   disabledLabels?: string[];
 }
 
+
 const BottomBar: FC<BottomBarProps> = ({
-  
   labels,
   activePanel,
-  activeRpfSub,
+  activeSubScreen,
   onPressItem,
   disabledLabels = [],
-  rpfRef,
+  panelRefs,
   onExit,
   onSave,
   onSettings,
 }) => {
+
   return (
     <View style={styles.bottomBarContainer}>
       <ScrollView
@@ -48,18 +49,24 @@ const BottomBar: FC<BottomBarProps> = ({
         {labels.map((label, idx) => {
   const isDisabled = disabledLabels?.includes(label);
 
-  const isActive =
-    !isDisabled &&
-    (activePanel === label ||
-      (label === "RPF" && activeRpfSub !== null));
+const isActive =
+  !isDisabled &&
+  (activePanel === label ||
+    activeSubScreen !== null && activePanel === label);
+
 
           return (
             <TouchableOpacity
-              key={label + idx}
-              ref={label === 'RPF' ? rpfRef : undefined}
-              activeOpacity={isDisabled ? 1 : 0.9}
-              onPress={() => !isDisabled && onPressItem(label)}
-              disabled={isDisabled}
+  key={label + idx}
+  ref={el => {
+    if (panelRefs?.current && el) {
+      panelRefs.current[label] = el;
+    }
+  }}
+  activeOpacity={isDisabled ? 1 : 0.9}
+  onPress={() => !isDisabled && onPressItem(label)}
+  disabled={isDisabled}
+
 
               style={[
                       styles.pillButton,
