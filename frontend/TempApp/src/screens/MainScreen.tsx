@@ -15,7 +15,7 @@ import {
   Image,
 } from 'react-native';
 import RecipeTable from '../components/RecipeTable';
-import MachinePanel from '../components/PaperSizes';
+import MachinePanel from '../components/RPF/PaperSizes';
 import HeaderBar from '../components/HeaderBar';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -25,16 +25,16 @@ import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import * as XLSX from 'xlsx';
 import BottomBar from '../components/BottomBar';
-import Folds from '../components/Folds';
-import Offset from '../components/Offset';
-import GlueTap from '../components/GlueTap';
-import SuctionGap from '../components/SuctionGap';
-import AllSpeed from '../components/AllSpeed';
-import SideLay from '../components/SideLay';
-import BlowerSettings from '../components/BlowerSettings';
-import RollerGap from '../components/RollerGap';
+import Folds from '../components/RPF/Folds';
+import Offset from '../components/RPF/Offset';
+import GlueTap from '../components/RPF/GlueTap';
+import SuctionGap from '../components/RPF/SuctionGap';
+import AllSpeed from '../components/RPF/AllSpeed';
+import SideLay from '../components/RPF/SideLay';
+import BlowerSettings from '../components/RPF/BlowerSettings';
+import RollerGap from '../components/RPF/RollerGap';
 import { getCurrentApiBase } from '../config/ConfigContext';
-import FoldingTray from '../components/FoldingTray';
+import FoldingTray from '../components/RPF/FoldingTray';
 
 
 

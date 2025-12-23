@@ -1,4 +1,4 @@
-// src/components/GlueTap.tsx
+// src/components/SuctionGap.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,9 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -45,16 +45,20 @@ interface RecipeParam {
   unit?: string;
 }
 
-/* ---------- GLUE TAP CONFIG ---------- */
+/* ---------- SUCTION GAP CONFIG ---------- */
 
-const PARAM_SR = [12];
+const PARAM_SR = [1, 13, 14];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  12: { x: 34, y: 55 },
+  1: { x: 55, y: 72 },
+  13: { x: 68.3, y: 53 },
+  14: { x: 16.5, y: 38 },
 };
 
 const SERIAL_POS = [
-  { id: 12, x: 32.5, y: 48 },
+  { id: 1, x: 53.5, y: 79 },
+  { id: 13, x: 66.6, y: 60.5 },
+  { id: 14, x: 15, y: 45 },
 ];
 
 const BOX_W = 80;
@@ -62,7 +66,6 @@ const BOX_H = 50;
 
 const IMG_W = 1300;
 const IMG_H = 600;
-
 
 // Adjust the Size of table popup body fonts and titles
   const POPUP_COLUMNS = [
@@ -83,7 +86,7 @@ const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
 /* ---------- COMPONENT ---------- */
 
-function GlueTapInner(
+function SuctionGapInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
@@ -106,7 +109,7 @@ function GlueTapInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/gluetap.jpeg');
+    : require('../../assets/suctiongap.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -146,7 +149,7 @@ function GlueTapInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'GLUE / TAP QTY',
+        section: values[sr]?.section ?? 'SUCTION / GAP SET',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -201,7 +204,7 @@ function GlueTapInner(
                   </View>
                 )}
 
-                {/* PARAM BOX */}
+                {/* PARAM BOXES */}
                 {PARAM_SR.map(sr => {
                   const pos = POSITIONS[sr];
                   const val = edited[sr] ?? values[sr]?.value_01 ?? '';
@@ -238,7 +241,7 @@ function GlueTapInner(
                   );
                 })}
 
-                {/* SERIAL NUMBER */}
+                {/* SERIAL NUMBERS */}
                 {SERIAL_POS.map(p => {
                   let cx = (p.x / 100) * IMG_W;
                   let cy = (p.y / 100) * IMG_H;
@@ -277,12 +280,11 @@ function GlueTapInner(
           </TouchableOpacity>
 
           <TouchableOpacity
-  style={styles.btnGreen}
-  onPress={() => setVideoPopup(true)}
->
-  <Text style={styles.btnText}>VIDEO</Text>
-</TouchableOpacity>
-
+                      style={styles.btnGreen}
+                      onPress={() => setVideoPopup(true)}
+                    >
+                      <Text style={styles.btnText}>VIDEO</Text>
+                    </TouchableOpacity>
 
           <TouchableOpacity
   style={styles.btnBlue}
@@ -300,12 +302,11 @@ function GlueTapInner(
 
         </View>
       </View>
-      
-      <VideoModal
-  visible={videoPopup}
-  onClose={() => setVideoPopup(false)}
-/>
 
+<VideoModal
+          visible={videoPopup}
+          onClose={() => setVideoPopup(false)}
+        />
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
@@ -335,7 +336,7 @@ function GlueTapInner(
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'Gluetap',
+      section: values[sr]?.section ?? 'SuctionGap',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -434,14 +435,13 @@ function GlueTapInner(
           </View>
         );
       }
-
-/* ---------- STYLES (SAME AS FOLDS / OFFSET) ---------- */
+/* ---------- STYLES (SAME AS FOLDS / OFFSET / GLUETAP) ---------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
-  leftArea: { flex: 0.85, backgroundColor: '#fff' ,overflow: 'hidden'},
+  leftArea: { flex: 0.85, backgroundColor: '#fff',overflow: 'hidden' },
 
   rightButtons: {
     flex: 0.15,
@@ -521,7 +521,6 @@ const styles = StyleSheet.create({
 
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
-
    tblHead: {
     flexDirection: 'row',
     backgroundColor: '#e8e8f5',
@@ -622,4 +621,4 @@ popupCloseText: {
 
 });
 
-export default React.forwardRef(GlueTapInner);
+export default React.forwardRef(SuctionGapInner);

@@ -1,4 +1,4 @@
-// src/components/SideLay.tsx
+// src/components/BlowerSettings.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,9 +16,10 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
+import VideoModal from '../VideoModal';
+
 
 type Props = {
   recipeId: number;
@@ -47,14 +48,14 @@ interface RecipeParam {
 
 /* ---------- CONFIG ---------- */
 
-const PARAM_SR = [18];
+const PARAM_SR = [];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  18: { x: 22, y: 83 },
+  31: { x: 20, y: 120 },
 };
 
 const SERIAL_POS = [
-  { id: 18, x: 15, y: 85 },
+  { id: 31, x: 20, y: 110 },
 ];
 
 const BOX_W = 80;
@@ -63,7 +64,6 @@ const BOX_H = 50;
 const IMG_W = 1300;
 const IMG_H = 600;
 
-// Adjust the Size of table popup body fonts and titles
   const POPUP_COLUMNS = [
   { key: 'sr', title: 'SR', width: 100, align: 'center' },
   { key: 'parameter', title: 'Parameter', flex: 4, align: 'center' },
@@ -83,7 +83,7 @@ const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
 /* ---------- COMPONENT ---------- */
 
-function SideLayInner(
+function BlowerSettingsInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
@@ -106,7 +106,7 @@ function SideLayInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/sidelay.jpeg');
+    : require('../../assets/blowersettings.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -146,7 +146,7 @@ function SideLayInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'SIDE LAY',
+        section: values[sr]?.section ?? 'BLOWER SETTINGS',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -160,6 +160,7 @@ function SideLayInner(
 
   const [tablePopup, setTablePopup] = useState(false);
   const [videoPopup, setVideoPopup] = useState(false);
+
 
   /* ---------- UI ---------- */
 
@@ -277,11 +278,11 @@ function SideLayInner(
           </TouchableOpacity>
 
           <TouchableOpacity
-                      style={styles.btnGreen}
-                      onPress={() => setVideoPopup(true)}
-                    >
-                      <Text style={styles.btnText}>VIDEO</Text>
-                    </TouchableOpacity>
+            style={styles.btnGreen}
+            onPress={() => setVideoPopup(true)}
+          >
+            <Text style={styles.btnText}>VIDEO</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
   style={styles.btnBlue}
@@ -300,16 +301,17 @@ function SideLayInner(
         </View>
       </View>
 
-      <VideoModal
-                visible={videoPopup}
-                onClose={() => setVideoPopup(false)}
-              />
+       <VideoModal
+          visible={videoPopup}
+          onClose={() => setVideoPopup(false)}
+        />
+
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Side Lay</Text>
+            <Text style={styles.modalTitle}>Edit Blower</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -333,7 +335,7 @@ function SideLayInner(
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'Sidelay',
+      section: values[sr]?.section ?? 'Blower Settings',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -350,7 +352,7 @@ function SideLayInner(
         </View>
       </Modal>
 
-     {/* TABLE POPUP */}
+      {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
     <View style={styles.modal}>
@@ -487,7 +489,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  paramText: { fontSize: 24, fontWeight: '700' },
+  paramText: { fontSize: 28, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
@@ -510,6 +512,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     padding: 20,
+  },
+
+  modal: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 10,
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
   },
 
   input: {
@@ -628,4 +642,4 @@ popupCloseText: {
 
 });
 
-export default React.forwardRef(SideLayInner);
+export default React.forwardRef(BlowerSettingsInner);

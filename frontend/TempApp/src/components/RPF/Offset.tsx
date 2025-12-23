@@ -1,4 +1,4 @@
-// src/components/FoldingTray.tsx
+// src/components/Offset.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,11 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
-import { ScrollView } from 'react-native';
-
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -47,75 +45,22 @@ interface RecipeParam {
   unit?: string;
 }
 
-/* ---------- CONFIG ---------- */
+/* ---------- OFFSET CONFIG ---------- */
 
-const PARAM_SR = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,57];
+const PARAM_SR = [2, 6, 10, 11];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
- 34: { x: 55, y: 5 },
-
-  35: { x: 78, y: 30.5 },
-  36: { x: 53, y: 10 },
-
-  37: { x: 74, y: 36.5 },
-  38: { x: 50, y: 16 },
-
-  39: { x: 72, y: 42.5 },
-  40: { x: 47, y: 21.5 },
-
-  41: { x: 69, y: 48.5 },
-  42: { x: 45, y: 28 },
-
-  43: { x: 66.5, y: 54.5 },
-  44: { x: 42, y: 34 },
-
-  45: { x: 64, y: 60.3 },
-  46: { x: 38, y: 40 },
-
-  47: { x: 61, y: 66.5 },
-  48: { x: 36, y: 46 },
-
-  49: { x: 58, y: 72.5 },
-  50: { x: 33, y: 52 },
-
-  51: { x: 55.5, y: 78 },
-  52: { x: 30, y: 57 },
-
-  53: { x: 53, y: 84.3 },
-  54: { x: 28, y: 63 },
-
-  55: { x: 50, y: 90 },
-  56: { x: 25, y: 69.5 },
-
-  57: { x: 47.6, y: 96.5 },
-
+  2: { x: 57.3, y: 50 },
+  6: { x: 34.3, y: 89.3 },
+  10: { x: 82.8, y: 75 },
+  11: { x: 53.5, y: 89.3 },
 };
 
 const SERIAL_POS = [
-  { id: 34, x: 47, y: 5 },
-  { id: 35, x: 85, y: 30.5 },
-  { id: 36, x: 45, y: 10 },
-  { id: 37, x: 82, y: 36.5 },
-  { id: 38, x: 42, y: 16 },
-  { id: 39, x: 80, y: 42.5 },
-  { id: 40, x: 39, y: 21.5 },
-  { id: 41, x: 77, y: 48.5 },
-  { id: 42, x: 37, y: 28 },
-  { id: 43, x: 74, y: 54.5 },
-  { id: 44, x: 34, y: 34 },
-  { id: 45, x: 72, y: 60.5 },
-  { id: 46, x: 31, y: 40 },
-  { id: 47, x: 69, y: 66.5 },
-  { id: 48, x: 28, y: 46 },
-  { id: 49, x: 66, y: 72.5 },
-  { id: 50, x: 25, y: 52 },
-  { id: 51, x: 63, y: 79 },
-  { id: 52, x: 22, y: 58 },
-  { id: 53, x: 60, y: 84.5 },
-  { id: 54, x: 20, y: 63 },
-  { id: 55, x: 57.5, y: 90.5 },
-  { id: 56, x: 17, y: 69 },
-  { id: 57, x: 55, y: 96.5 },
+  { id: 2, x: 58, y: 57 },
+  { id: 6, x: 33.5, y: 83.5 },
+  { id: 10, x: 82, y: 82 },
+  { id: 11, x: 52.9, y: 84 },
 ];
 
 const BOX_W = 80;
@@ -141,9 +86,10 @@ const POPUP_CLOSE_FONT = 18;  // Close button font size
 const POPUP_WIDTH = 1200;        // popup card width
 const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
+
 /* ---------- COMPONENT ---------- */
 
-function FoldingTrayInner(
+function OffsetInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
@@ -166,7 +112,7 @@ useEffect(() => {
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/foldingtray.png');
+    : require('../../assets/offset.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -206,7 +152,7 @@ useEffect(() => {
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'FOLDING TRAY',
+        section: values[sr]?.section ?? 'OFFSET SETTINGS',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -300,8 +246,8 @@ useEffect(() => {
 
                 {/* SERIAL NUMBERS */}
                 {SERIAL_POS.map(p => {
-                  const cx = (p.x / 100) * IMG_W;
-                  const cy = (p.y / 100) * IMG_H;
+                  let cx = (p.x / 100) * IMG_W;
+                  let cy = (p.y / 100) * IMG_H;
 
                   return (
                     <View
@@ -336,12 +282,13 @@ useEffect(() => {
             <Text style={styles.btnText}>SHOW TABLE</Text>
           </TouchableOpacity>
 
-         <TouchableOpacity
-                     style={styles.btnGreen}
-                     onPress={() => setVideoPopup(true)}
-                   >
-                     <Text style={styles.btnText}>VIDEO</Text>
-                   </TouchableOpacity>
+          <TouchableOpacity
+  style={styles.btnGreen}
+  onPress={() => setVideoPopup(true)}
+>
+  <Text style={styles.btnText}>VIDEO</Text>
+</TouchableOpacity>
+
 
           <TouchableOpacity
   style={styles.btnBlue}
@@ -370,7 +317,7 @@ useEffect(() => {
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Folding Tray</Text>
+            <Text style={styles.modalTitle}>Edit Value</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -394,7 +341,7 @@ useEffect(() => {
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'Folding Tray',
+      section: values[sr]?.section ?? 'Offset',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -429,26 +376,28 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
 
-      {/* TABLE HEADER (FIXED) */}
-      <View style={[styles.popupRow, styles.popupHeader]}>
-        {POPUP_COLUMNS.map((col, i) => (
-          <Text
-            key={col.key}
-            style={[
-              styles.popupCell,
-              col.width && { width: col.width },
-              col.flex && { flex: col.flex },
-              i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
-              styles.popupHeaderText,
-            ]}
-          >
-            {col.title}
-          </Text>
-        ))}
-      </View>
+      {/* TABLE */}
+      <View style={styles.popupTable}>
 
-      {/* TABLE BODY (SCROLLABLE) */}
-      <ScrollView style={{ maxHeight: POPUP_MAX_HEIGHT - 120 }}>
+        {/* TABLE HEADER */}
+        <View style={[styles.popupRow, styles.popupHeader]}>
+          {POPUP_COLUMNS.map((col, i) => (
+            <Text
+              key={col.key}
+              style={[
+                styles.popupCell,
+                col.width && { width: col.width },
+                col.flex && { flex: col.flex },
+                i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
+                styles.popupHeaderText,
+              ]}
+            >
+              {col.title}
+            </Text>
+          ))}
+        </View>
+
+        {/* TABLE ROWS */}
         {PARAM_SR.map((sr) => {
           const orig = values[sr]?.value_01 ?? '';
           const param = values[sr]?.parameter ?? '';
@@ -483,28 +432,22 @@ useEffect(() => {
             </View>
           );
         })}
-      </ScrollView>
-
+      </View>
     </View>
   </View>
 </Modal>
 
+          </View>
+        );
+      }
 
-    </View>
-  );
-}
-
-/* ---------- STYLES ---------- */
+/* ---------- STYLES (IDENTICAL TO FOLDS) ---------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
-  leftArea: {
-    flex: 0.85,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
+  leftArea: { flex: 0.85, backgroundColor: '#fff',overflow: 'hidden' },
 
   rightButtons: {
     flex: 0.15,
@@ -534,11 +477,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '700',
-  },
+  btnText: { color: '#fff', textAlign: 'center', fontWeight: '700' },
 
   paramBox: {
     position: 'absolute',
@@ -548,7 +487,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  paramText: { fontSize: 21, fontWeight: '700' },
+  paramText: { fontSize: 17, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
@@ -589,28 +528,28 @@ const styles = StyleSheet.create({
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
 
-  tblHead: {
-  flexDirection: 'row',
-  backgroundColor: '#e8e8f5',
-  padding: 6,
-},
-th: {
-  flex: 1,
-  textAlign: 'center',
-  fontWeight: '700',
-},
-tblRow: {
-  flexDirection: 'row',
-  paddingVertical: 8,
-  borderBottomWidth: 1,
-  borderColor: '#eee',
-},
-td: {
-  flex: 1,
-  textAlign: 'center',
-},
+   tblHead: {
+    flexDirection: 'row',
+    backgroundColor: '#e8e8f5',
+    padding: 6,
+  },
+  th: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+  tblRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  td: {
+    flex: 1,
+    textAlign: 'center',
+  },
 
-modal: {
+  modal: {
   backgroundColor: '#fff',
   padding: 12,
   borderRadius: 10,
@@ -622,31 +561,12 @@ modal: {
 modalTitle: {
   fontSize: POPUP_TITLE_FONT,
   fontWeight: '700',
+  marginBottom: 10,
 },
 
-popupHeaderRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 8,
-},
-
-popupCloseBtn: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-popupCloseIcon: {
-  fontSize: 18,
-  fontWeight: '800',
-  marginRight: 4,
-  color: '#444',
-},
-
-popupCloseText: {
-  fontSize: POPUP_CLOSE_FONT,
-  fontWeight: '800',
-  color: '#444',
+popupTable: {
+  borderWidth: 1,
+  borderColor: '#ccc',
 },
 
 popupRow: {
@@ -657,7 +577,6 @@ popupRow: {
 
 popupHeader: {
   backgroundColor: '#f2f2f8',
-  borderTopWidth: 1,
 },
 
 popupCell: {
@@ -679,7 +598,34 @@ popupBodyText: {
   fontSize: POPUP_BODY_FONT,
 },
 
+popupHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+popupCloseBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 6,
+  paddingVertical: 4,
+},
+
+popupCloseIcon: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: '#444',
+  marginRight: 4,
+},
+
+popupCloseText: {
+  fontSize: POPUP_CLOSE_FONT,
+  fontWeight: '800',
+  color: '#444',
+  paddingLeft: 5,
+},
 
 });
 
-export default React.forwardRef(FoldingTrayInner);
+export default React.forwardRef(OffsetInner);

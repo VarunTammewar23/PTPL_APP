@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
 
   popupCloseIcon: {
-    fontSize: 18,
+    fontSize: 18, 
     fontWeight: '800',
     color: '#444',
     marginRight: 4,

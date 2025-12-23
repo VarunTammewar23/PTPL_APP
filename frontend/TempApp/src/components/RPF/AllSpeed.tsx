@@ -1,4 +1,4 @@
-// src/components/SuctionGap.tsx
+// src/components/AllSpeed.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,9 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -45,20 +45,26 @@ interface RecipeParam {
   unit?: string;
 }
 
-/* ---------- SUCTION GAP CONFIG ---------- */
+/* ---------- CONFIG ---------- */
 
-const PARAM_SR = [1, 13, 14];
+const PARAM_SR = [15, 16, 17, 118, 102, 134];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  1: { x: 55, y: 72 },
-  13: { x: 68.3, y: 53 },
-  14: { x: 16.5, y: 38 },
+  15:  { x: 71, y: 12.5 },
+  16:  { x: 71, y: 34 },
+  17:  { x: 71, y: 55 },
+  118: { x: 71, y: 73.5 },
+  102: { x: 71, y: 84 },
+  134: { x: 71, y: 93.5 },
 };
 
 const SERIAL_POS = [
-  { id: 1, x: 53.5, y: 79 },
-  { id: 13, x: 66.6, y: 60.5 },
-  { id: 14, x: 15, y: 45 },
+  { id: 15,  x: 65,  y: 13 },
+  { id: 16,  x: 65,  y: 34 },
+  { id: 17,  x: 65,  y: 55 },
+  { id: 118, x: 60, y: 73 },
+  { id: 102, x: 60, y: 84 },
+  { id: 134, x: 60, y: 93 },
 ];
 
 const BOX_W = 80;
@@ -84,9 +90,10 @@ const POPUP_CLOSE_FONT = 18;  // Close button font size
 const POPUP_WIDTH = 1200;        // popup card width
 const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
+
 /* ---------- COMPONENT ---------- */
 
-function SuctionGapInner(
+function AllSpeedInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
@@ -109,7 +116,7 @@ function SuctionGapInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/suctiongap.jpeg');
+    : require('../../assets/allspeed.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -149,7 +156,7 @@ function SuctionGapInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'SUCTION / GAP SET',
+        section: values[sr]?.section ?? 'ALL SPEED',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -243,8 +250,8 @@ function SuctionGapInner(
 
                 {/* SERIAL NUMBERS */}
                 {SERIAL_POS.map(p => {
-                  let cx = (p.x / 100) * IMG_W;
-                  let cy = (p.y / 100) * IMG_H;
+                  const cx = (p.x / 100) * IMG_W;
+                  const cy = (p.y / 100) * IMG_H;
 
                   return (
                     <View
@@ -303,16 +310,17 @@ function SuctionGapInner(
         </View>
       </View>
 
-<VideoModal
-          visible={videoPopup}
-          onClose={() => setVideoPopup(false)}
-        />
+      <VideoModal
+  visible={videoPopup}
+  onClose={() => setVideoPopup(false)}
+/>
+
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Value</Text>
+            <Text style={styles.modalTitle}>Edit Speed</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -336,7 +344,7 @@ function SuctionGapInner(
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'SuctionGap',
+      section: values[sr]?.section ?? 'All Speed',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -431,17 +439,20 @@ function SuctionGapInner(
     </View>
   </View>
 </Modal>
-
           </View>
         );
       }
-/* ---------- STYLES (SAME AS FOLDS / OFFSET / GLUETAP) ---------- */
+/* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
-  leftArea: { flex: 0.85, backgroundColor: '#fff',overflow: 'hidden' },
+  leftArea: {
+    flex: 0.85,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
 
   rightButtons: {
     flex: 0.15,
@@ -471,7 +482,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  btnText: { color: '#fff', textAlign: 'center', fontWeight: '700' },
+  btnText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '700',
+  },
 
   paramBox: {
     position: 'absolute',
@@ -481,7 +496,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  paramText: { fontSize: 22, fontWeight: '700' },
+  paramText: { fontSize: 24, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
@@ -506,7 +521,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-  input: {
+    input: {
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
@@ -521,6 +536,7 @@ const styles = StyleSheet.create({
 
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
+
    tblHead: {
     flexDirection: 'row',
     backgroundColor: '#e8e8f5',
@@ -621,4 +637,4 @@ popupCloseText: {
 
 });
 
-export default React.forwardRef(SuctionGapInner);
+export default React.forwardRef(AllSpeedInner);

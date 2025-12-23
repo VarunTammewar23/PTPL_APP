@@ -1,4 +1,4 @@
-// src/components/AllSpeed.tsx
+// src/components/SideLay.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,9 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -47,24 +47,14 @@ interface RecipeParam {
 
 /* ---------- CONFIG ---------- */
 
-const PARAM_SR = [15, 16, 17, 118, 102, 134];
+const PARAM_SR = [18];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  15:  { x: 71, y: 12.5 },
-  16:  { x: 71, y: 34 },
-  17:  { x: 71, y: 55 },
-  118: { x: 71, y: 73.5 },
-  102: { x: 71, y: 84 },
-  134: { x: 71, y: 93.5 },
+  18: { x: 22, y: 83 },
 };
 
 const SERIAL_POS = [
-  { id: 15,  x: 65,  y: 13 },
-  { id: 16,  x: 65,  y: 34 },
-  { id: 17,  x: 65,  y: 55 },
-  { id: 118, x: 60, y: 73 },
-  { id: 102, x: 60, y: 84 },
-  { id: 134, x: 60, y: 93 },
+  { id: 18, x: 15, y: 85 },
 ];
 
 const BOX_W = 80;
@@ -93,7 +83,7 @@ const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
 /* ---------- COMPONENT ---------- */
 
-function AllSpeedInner(
+function SideLayInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
@@ -116,7 +106,7 @@ function AllSpeedInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/allspeed.jpeg');
+    : require('../../assets/sidelay.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -156,7 +146,7 @@ function AllSpeedInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'ALL SPEED',
+        section: values[sr]?.section ?? 'SIDE LAY',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -211,7 +201,7 @@ function AllSpeedInner(
                   </View>
                 )}
 
-                {/* PARAM BOXES */}
+                {/* PARAM BOX */}
                 {PARAM_SR.map(sr => {
                   const pos = POSITIONS[sr];
                   const val = edited[sr] ?? values[sr]?.value_01 ?? '';
@@ -248,7 +238,7 @@ function AllSpeedInner(
                   );
                 })}
 
-                {/* SERIAL NUMBERS */}
+                {/* SERIAL NUMBER */}
                 {SERIAL_POS.map(p => {
                   const cx = (p.x / 100) * IMG_W;
                   const cy = (p.y / 100) * IMG_H;
@@ -311,16 +301,15 @@ function AllSpeedInner(
       </View>
 
       <VideoModal
-  visible={videoPopup}
-  onClose={() => setVideoPopup(false)}
-/>
-
+                visible={videoPopup}
+                onClose={() => setVideoPopup(false)}
+              />
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Speed</Text>
+            <Text style={styles.modalTitle}>Edit Side Lay</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -344,7 +333,7 @@ function AllSpeedInner(
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'All Speed',
+      section: values[sr]?.section ?? 'Sidelay',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -361,7 +350,7 @@ function AllSpeedInner(
         </View>
       </Modal>
 
-      {/* TABLE POPUP */}
+     {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
     <View style={styles.modal}>
@@ -439,9 +428,11 @@ function AllSpeedInner(
     </View>
   </View>
 </Modal>
-          </View>
-        );
-      }
+
+    </View>
+  );
+}
+
 /* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
@@ -521,7 +512,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-    input: {
+  input: {
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
@@ -637,4 +628,4 @@ popupCloseText: {
 
 });
 
-export default React.forwardRef(AllSpeedInner);
+export default React.forwardRef(SideLayInner);

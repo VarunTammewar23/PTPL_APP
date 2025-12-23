@@ -16,9 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -111,7 +111,7 @@ function FoldsInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/folds.jpeg');
+    : require('../../assets/folds.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);

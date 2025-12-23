@@ -1,4 +1,4 @@
-// src/components/RollerGap.tsx
+// src/components/GlueTap.tsx
 import React, {
   useEffect,
   useMemo,
@@ -16,11 +16,9 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { apiGet } from '../api/api';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
-import { ScrollView } from 'react-native';
-
+import VideoModal from '../VideoModal';
 
 type Props = {
   recipeId: number;
@@ -47,75 +45,24 @@ interface RecipeParam {
   unit?: string;
 }
 
-/* ---------- CONFIG ---------- */
+/* ---------- GLUE TAP CONFIG ---------- */
 
-const PARAM_SR = [58,83,81,79,77,75,73,71,69,67,65,63,61,60,62,64,66,68,70,72,74,76,78,80,82,84];
+const PARAM_SR = [12];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  58: { x: 23, y: 60.1 },
-  83: { x: 24.5, y: 54.8 },
-  81: { x: 27, y: 49.5 },
-  79: { x: 29.5, y: 44 },
-  77: { x: 31.5, y: 38.3 },
-  75: { x: 33, y: 33 },
-  73: { x: 35.5, y: 27 },
-  71: { x: 37.5, y: 22 },
-  69: { x: 39, y: 16.5 },
-  67: { x: 41.5, y: 10.5 },
-  65: { x: 44.5, y: 6 },
-  63: { x: 50.5, y: 6 },
-  61: { x: 56, y: 6 },
-  60: { x: 67.5, y: 5 },
-  62: { x: 75, y: 33.3 },
-  64: { x: 74, y: 38.5 },
-  66: { x: 71.5, y: 44 },
-  68: { x: 69.3, y: 49.5 },
-  70: { x: 67.3, y: 54.5 },
-  72: { x: 65.4, y: 60 },
-  74: { x: 63, y: 65 },
-  76: { x: 60.4, y: 71 },
-  78: { x: 58, y: 76.4 },
-  80: { x: 56, y: 82 },
-  82: { x: 53.9, y: 87.5 },
-  84: { x: 51.5, y: 92.8 },
+  12: { x: 34, y: 55 },
 };
 
 const SERIAL_POS = [
-  { id: 58, x: 16, y: 61 },
-  { id: 83, x: 16, y: 55.5 },
-  { id: 81, x: 18, y: 50.2 },
-  { id: 79, x: 20, y: 45 },
-  { id: 77, x: 22, y: 39.2 },
-  { id: 75, x: 24, y: 33.5 },
-  { id: 73, x: 26, y: 27 },
-  { id: 71, x: 29, y: 22 },
-  { id: 69, x: 31, y: 16 },
-  { id: 67, x: 33, y: 10.5 },
-  { id: 65, x: 37, y: 6 },
-  { id: 63, x: 47, y: 1 },
-  { id: 61, x: 60, y: 1 },
-  { id: 60, x: 75, y: 5 },
-  { id: 62, x: 82, y: 33 },
-  { id: 64, x: 81, y: 38.5 },
-  { id: 66, x: 80, y: 43.6 },
-  { id: 68, x: 78, y: 49 },
-  { id: 70, x: 76, y: 54.5 },
-  { id: 72, x: 74, y: 60 },
-  { id: 74, x: 72, y: 65 },
-  { id: 76, x: 70, y: 71 },
-  { id: 78, x: 68, y: 74.6 },
-  { id: 80, x: 66, y: 82 },
-  { id: 82, x: 64, y: 87.5 },
-  { id: 84, x: 62, y: 92.8 },
+  { id: 12, x: 32.5, y: 48 },
 ];
 
-
-
 const BOX_W = 80;
-const BOX_H = 45;
+const BOX_H = 50;
 
 const IMG_W = 1300;
 const IMG_H = 600;
+
 
 // Adjust the Size of table popup body fonts and titles
   const POPUP_COLUMNS = [
@@ -134,16 +81,15 @@ const POPUP_CLOSE_FONT = 18;  // Close button font size
 const POPUP_WIDTH = 1200;        // popup card width
 const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
-
 /* ---------- COMPONENT ---------- */
 
-function RollerGapInner(
+function GlueTapInner(
   { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
   ref: any
 ) {
   const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
 
-useEffect(() => {
+  useEffect(() => {
   if (initialParams) {
     setParams(initialParams);
   }
@@ -160,7 +106,7 @@ useEffect(() => {
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/rollergap.jpeg');
+    : require('../../assets/gluetap.jpeg');
 
   const [edited, setEdited] = useState<Record<number, string>>({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
@@ -200,7 +146,7 @@ useEffect(() => {
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'ROLLER GAP',
+        section: values[sr]?.section ?? 'GLUE / TAP QTY',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -255,7 +201,7 @@ useEffect(() => {
                   </View>
                 )}
 
-                {/* PARAM BOXES */}
+                {/* PARAM BOX */}
                 {PARAM_SR.map(sr => {
                   const pos = POSITIONS[sr];
                   const val = edited[sr] ?? values[sr]?.value_01 ?? '';
@@ -292,10 +238,10 @@ useEffect(() => {
                   );
                 })}
 
-                {/* SERIAL NUMBERS */}
+                {/* SERIAL NUMBER */}
                 {SERIAL_POS.map(p => {
-                  const cx = (p.x / 100) * IMG_W;
-                  const cy = (p.y / 100) * IMG_H;
+                  let cx = (p.x / 100) * IMG_W;
+                  let cy = (p.y / 100) * IMG_H;
 
                   return (
                     <View
@@ -354,7 +300,7 @@ useEffect(() => {
 
         </View>
       </View>
-
+      
       <VideoModal
   visible={videoPopup}
   onClose={() => setVideoPopup(false)}
@@ -365,7 +311,7 @@ useEffect(() => {
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Roller Gap</Text>
+            <Text style={styles.modalTitle}>Edit Value</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -389,7 +335,7 @@ useEffect(() => {
     onParamEdit?.({
       parameter_no: sr,
       value_01: newVal,
-      section: values[sr]?.section ?? 'RollerGap',
+      section: values[sr]?.section ?? 'Gluetap',
       parameter: values[sr]?.parameter ?? '',
       unit: values[sr]?.unit ?? '',
     });
@@ -424,26 +370,28 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
 
-      {/* TABLE HEADER (FIXED) */}
-      <View style={[styles.popupRow, styles.popupHeader]}>
-        {POPUP_COLUMNS.map((col, i) => (
-          <Text
-            key={col.key}
-            style={[
-              styles.popupCell,
-              col.width && { width: col.width },
-              col.flex && { flex: col.flex },
-              i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
-              styles.popupHeaderText,
-            ]}
-          >
-            {col.title}
-          </Text>
-        ))}
-      </View>
+      {/* TABLE */}
+      <View style={styles.popupTable}>
 
-      {/* TABLE BODY (SCROLLABLE) */}
-      <ScrollView style={{ maxHeight: POPUP_MAX_HEIGHT - 120 }}>
+        {/* TABLE HEADER */}
+        <View style={[styles.popupRow, styles.popupHeader]}>
+          {POPUP_COLUMNS.map((col, i) => (
+            <Text
+              key={col.key}
+              style={[
+                styles.popupCell,
+                col.width && { width: col.width },
+                col.flex && { flex: col.flex },
+                i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
+                styles.popupHeaderText,
+              ]}
+            >
+              {col.title}
+            </Text>
+          ))}
+        </View>
+
+        {/* TABLE ROWS */}
         {PARAM_SR.map((sr) => {
           const orig = values[sr]?.value_01 ?? '';
           const param = values[sr]?.parameter ?? '';
@@ -478,28 +426,22 @@ useEffect(() => {
             </View>
           );
         })}
-      </ScrollView>
-
+      </View>
     </View>
   </View>
 </Modal>
 
+          </View>
+        );
+      }
 
-    </View>
-  );
-}
-
-/* ---------- STYLES ---------- */
+/* ---------- STYLES (SAME AS FOLDS / OFFSET) ---------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
-  leftArea: {
-    flex: 0.85,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
+  leftArea: { flex: 0.85, backgroundColor: '#fff' ,overflow: 'hidden'},
 
   rightButtons: {
     flex: 0.15,
@@ -529,11 +471,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '700',
-  },
+  btnText: { color: '#fff', textAlign: 'center', fontWeight: '700' },
 
   paramBox: {
     position: 'absolute',
@@ -543,7 +481,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  paramText: { fontSize: 18, fontWeight: '700' },
+  paramText: { fontSize: 22, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
@@ -568,7 +506,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-    input: {
+  input: {
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
@@ -585,27 +523,27 @@ const styles = StyleSheet.create({
   save: { color: '#007bff', fontWeight: '700' },
 
    tblHead: {
-  flexDirection: 'row',
-  backgroundColor: '#e8e8f5',
-  padding: 6,
-},
-th: {
-  flex: 1,
-  textAlign: 'center',
-  fontWeight: '700',
-},
-tblRow: {
-  flexDirection: 'row',
-  paddingVertical: 8,
-  borderBottomWidth: 1,
-  borderColor: '#eee',
-},
-td: {
-  flex: 1,
-  textAlign: 'center',
-},
+    flexDirection: 'row',
+    backgroundColor: '#e8e8f5',
+    padding: 6,
+  },
+  th: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+  tblRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  td: {
+    flex: 1,
+    textAlign: 'center',
+  },
 
-modal: {
+  modal: {
   backgroundColor: '#fff',
   padding: 12,
   borderRadius: 10,
@@ -617,31 +555,12 @@ modal: {
 modalTitle: {
   fontSize: POPUP_TITLE_FONT,
   fontWeight: '700',
+  marginBottom: 10,
 },
 
-popupHeaderRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 8,
-},
-
-popupCloseBtn: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-popupCloseIcon: {
-  fontSize: 18,
-  fontWeight: '800',
-  marginRight: 4,
-  color: '#444',
-},
-
-popupCloseText: {
-  fontSize: POPUP_CLOSE_FONT,
-  fontWeight: '800',
-  color: '#444',
+popupTable: {
+  borderWidth: 1,
+  borderColor: '#ccc',
 },
 
 popupRow: {
@@ -652,7 +571,6 @@ popupRow: {
 
 popupHeader: {
   backgroundColor: '#f2f2f8',
-  borderTopWidth: 1,
 },
 
 popupCell: {
@@ -674,6 +592,34 @@ popupBodyText: {
   fontSize: POPUP_BODY_FONT,
 },
 
+popupHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+popupCloseBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 6,
+  paddingVertical: 4,
+},
+
+popupCloseIcon: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: '#444',
+  marginRight: 4,
+},
+
+popupCloseText: {
+  fontSize: POPUP_CLOSE_FONT,
+  fontWeight: '800',
+  color: '#444',
+  paddingLeft: 5,
+},
+
 });
 
-export default React.forwardRef(RollerGapInner);
+export default React.forwardRef(GlueTapInner);

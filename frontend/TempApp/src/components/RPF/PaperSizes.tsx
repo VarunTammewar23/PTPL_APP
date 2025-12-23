@@ -17,11 +17,11 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../theme/ThemeProvider';
-import { apiGet } from '../api/api';
+import { useTheme } from '../../theme/ThemeProvider';
+import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
-import VideoModal from './VideoModal';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // Typography constants
+import VideoModal from '../VideoModal';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
 
 
 const PARAM_SR = [1, 2, 3, 4, 5, 6];
@@ -140,7 +140,7 @@ function MachinePanelInner(
 
   const imgSrc = imageUri
     ? { uri: imageUri }
-    : require('../assets/Paper_size.jpg');
+    : require('../../assets/Paper_size.jpg');
 
   const [edited, setEdited] = useState({});
   const [editingSr, setEditingSr] = useState<number | null>(null);
