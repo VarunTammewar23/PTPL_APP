@@ -17,9 +17,9 @@ import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // ð
 interface BottomBarProps {
   labels: string[];
   activePanel: string | null;
-  activeRpfSub: string | null; 
+  activeSubScreen: string | null; 
   onPressItem: (label: string) => void;
-  rpfRef?: any;
+  panelRefs: React.MutableRefObject<Record<string, any>>;
   onExit: () => void;
   onSave: () => void;
   onSettings: () => void;
@@ -30,10 +30,10 @@ const BottomBar: FC<BottomBarProps> = ({
   
   labels,
   activePanel,
-  activeRpfSub,
+  activeSubScreen,
   onPressItem,
   disabledLabels = [],
-  rpfRef,
+  panelRefs,
   onExit,
   onSave,
   onSettings,
@@ -51,12 +51,15 @@ const BottomBar: FC<BottomBarProps> = ({
   const isActive =
     !isDisabled &&
     (activePanel === label ||
-      (label === "RPF" && activeRpfSub !== null));
+      (activePanel === label && activeSubScreen !== null));
+
 
           return (
             <TouchableOpacity
               key={label + idx}
-              ref={label === 'RPF' ? rpfRef : undefined}
+              ref={(ref) => {
+                if (ref) panelRefs.current[label] = ref;
+              }}
               activeOpacity={isDisabled ? 1 : 0.9}
               onPress={() => !isDisabled && onPressItem(label)}
               disabled={isDisabled}
