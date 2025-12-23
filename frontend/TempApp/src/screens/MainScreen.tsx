@@ -44,6 +44,10 @@ import K1C from '../components/Knife 1/K1C';
 import K2A from '../components/Knife 2/K2A';
 import K2B from '../components/Knife 2/K2B';
 import K2C from '../components/Knife 2/K2C';
+import K3A from '../components/Knife 3/K3A';
+import K3B from '../components/Knife 3/K3B';
+import K3C from '../components/Knife 3/K3C';
+
 
 
 
@@ -106,6 +110,10 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showK2A, setShowK2A] = useState(false);
   const [showK2B, setShowK2B] = useState(false);
   const [showK2C, setShowK2C] = useState(false);
+  const [showK3A, setShowK3A] = useState(false);
+  const [showK3B, setShowK3B] = useState(false);
+  const [showK3C, setShowK3C] = useState(false);
+
 
 
 
@@ -134,6 +142,10 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const K2ARef = useRef<any>(null);
   const K2BRef = useRef<any>(null);
   const K2CRef = useRef<any>(null);
+  const K3ARef = useRef<any>(null); 
+  const K3BRef = useRef<any>(null);
+  const K3CRef = useRef<any>(null);
+
 
 
 
@@ -168,6 +180,13 @@ const KNIFE_2_ITEMS = [
   "KNIFE K2 C"
 ];
 
+const KNIFE_3_ITEMS = [
+  "KNIFE K3 A",
+  "KNIFE K3 B",
+  "KNIFE K3 C"
+];
+
+
 
 
 function getSubmenuItems(panel: string): string[] {
@@ -176,6 +195,7 @@ function getSubmenuItems(panel: string): string[] {
     case "RT ANGLE": return RT_ANGLE_ITEMS;
     case "KNIFE 1": return KNIFE_1_ITEMS;
     case "KNIFE 2": return KNIFE_2_ITEMS;
+    case "KNIFE 3": return KNIFE_3_ITEMS;
     default: return [];
   }
 }
@@ -201,6 +221,10 @@ function openSubScreen(panel: string, sub: string) {
   setShowK2A(false);
   setShowK2B(false);
   setShowK2C(false);
+  setShowK3A(false);
+  setShowK3B(false);
+  setShowK3C(false);
+
 
 
   // RPF
@@ -215,10 +239,12 @@ function openSubScreen(panel: string, sub: string) {
   if (panel === "RPF" && sub === "ROLLER GAP") return setShowRollerGap(true);
   if (panel === "RPF" && sub === "FOLDING TRAY") return setShowFoldingTray(true);
 
+
   // RT ANGLE
   if (panel === "RT ANGLE" && sub === "FOLD SETTING") return setShowFoldSetting(true);
   if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return setShowFoldSetting2(true);
   if (panel === "RT ANGLE" && sub === "GAP SETTING") return setShowGapSetting(true);
+  
 
         // KNIFE 1
       if (panel === "KNIFE 1" && sub === "KNIFE K1 A") {
@@ -247,6 +273,21 @@ function openSubScreen(panel: string, sub: string) {
         setShowK2C(true);
         return;
       }
+
+            // KNIFE 3
+      if (panel === "KNIFE 3" && sub === "KNIFE K3 A") {
+        setShowK3A(true);
+        return;
+      }
+      if (panel === "KNIFE 3" && sub === "KNIFE K3 B") {
+        setShowK3B(true);
+        return;
+      }
+      if (panel === "KNIFE 3" && sub === "KNIFE K3 C") {
+        setShowK3C(true);
+        return;
+      }
+
 
 
     }
@@ -571,6 +612,10 @@ const openPanel = (name: string) => {
     else if (showK2A) panelRef = K2ARef;
     else if (showK2B) panelRef = K2BRef;
     else if (showK2C) panelRef = K2CRef;
+    else if (showK3A) panelRef = K3ARef;
+    else if (showK3B) panelRef = K3BRef;
+    else if (showK3C) panelRef = K3CRef;
+
 
 
     else panelRef = machineRef; // fallback
@@ -654,8 +699,12 @@ if (mode === 'save') {
     K1BRef,
     K1CRef,
     K2ARef,
-  K2BRef,
-  K2CRef,
+    K2BRef,
+    K2CRef,
+    K3ARef,
+    K3BRef,
+    K3CRef,
+
 
 
 
@@ -748,7 +797,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         K1CRef,
         K2ARef,
         K2BRef,
-       K2CRef,
+        K2CRef,
+        K3ARef,
+        K3BRef,
+        K3CRef,
+
 
 
       ].forEach(r => {
@@ -802,6 +855,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
   setShowK2A(false);
   setShowK2B(false);
   setShowK2C(false);
+  setShowK3A(false);
+  setShowK3B(false);
+  setShowK3C(false);
+
 
 
 
@@ -835,6 +892,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
           setShowK2A(false);
           setShowK2B(false);
           setShowK2C(false);
+          setShowK3A(false);
+          setShowK3B(false);
+          setShowK3C(false);
+
 
 
 
@@ -879,6 +940,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         setShowK2A(false);
         setShowK2B(false);
         setShowK2C(false);
+        setShowK3A(false);
+        setShowK3B(false);
+        setShowK3C(false);
+
 
 
 
@@ -930,6 +995,10 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     if (showK2A) return "KNIFE 2 : K2A";
     if (showK2B) return "KNIFE 2 : K2B";
     if (showK2C) return "KNIFE 2 : K2C";
+    if (showK3A) return "KNIFE 3 : K3A";
+    if (showK3B) return "KNIFE 3 : K3B";
+    if (showK3C) return "KNIFE 3 : K3C";
+
 
 
     return null;
@@ -1159,7 +1228,7 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
 
             <View style={{ flex: 1, display: showK2A ? 'flex' : 'none' }}>
 
-  <K2A
+            <K2A
                 ref={K2ARef}
                 recipeId={selectedRecipeId}
                 recipeName={selectedRecipeName ?? undefined}
@@ -1191,6 +1260,40 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
               />
             </View>
 
+            <View style={{ flex: 1, display: showK3A ? 'flex' : 'none' }}>
+              <K3A
+                ref={K3ARef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK3B ? 'flex' : 'none' }}>
+              <K3B
+                ref={K3BRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK3C ? 'flex' : 'none' }}>
+              <K3C
+                ref={K3CRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+
 
 
 
@@ -1217,7 +1320,11 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                   !showK1C &&
                   !showK2A &&
                   !showK2B &&
-                  !showK2C
+                  !showK2C &&
+                  !showK3A &&
+                  !showK3B &&
+                  !showK3C
+
                     ? 'flex'
                     : 'none',
               }}
@@ -1296,6 +1403,10 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowK1B(false);
     setShowK1C(false);
     setShowSideMenu(false);
+    setShowK3A(false);
+    setShowK3B(false);
+    setShowK3C(false);
+
     return;
   }
 
@@ -1321,6 +1432,13 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowK1A(false);
     setShowK1B(false);
     setShowK1C(false);
+    setShowK3A(false);
+    setShowK3B(false);
+    setShowK3C(false);
+    setShowK3A(false);
+    setShowK3B(false);
+    setShowK3C(false);
+
     return;
   }
 

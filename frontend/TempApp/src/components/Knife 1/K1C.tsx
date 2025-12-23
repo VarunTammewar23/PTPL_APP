@@ -1,4 +1,4 @@
-// src/components/RT Angle/K1C.tsx
+// src/components/Knife 1/K1C.tsx
 import React, {
   useEffect,
   useMemo,
@@ -152,7 +152,7 @@ function K1CInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'RT ANGLE',
+        section: values[sr]?.section ?? 'Knife 1',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -321,7 +321,7 @@ function K1CInner(
                   onParamEdit?.({
                     parameter_no: sr,
                     value_01: newVal,
-                    section: values[sr]?.section ?? 'RT ANGLE',
+                    section: values[sr]?.section ?? 'Knife 1',
                     parameter: values[sr]?.parameter ?? '',
                     unit: values[sr]?.unit ?? '',
                   });
