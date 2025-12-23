@@ -40,6 +40,12 @@ import FoldSetting2 from '../components/RT Angle/FoldSetting2';
 import GapSetting from '../components/RT Angle/GapSetting';
 import K1A from '../components/Knife 1/K1A';
 import K1B from '../components/Knife 1/K1B';
+import K1C from '../components/Knife 1/K1C';
+import K2A from '../components/Knife 2/K2A';
+import K2B from '../components/Knife 2/K2B';
+import K2C from '../components/Knife 2/K2C';
+
+
 
 
 
@@ -95,6 +101,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showFoldSetting2, setShowFoldSetting2] = useState(false);
   const [showGapSetting, setShowGapSetting] = useState(false);
   const [showK1A, setShowK1A] = useState(false);
+  const [showK1B, setShowK1B] = useState(false);
+  const [showK1C, setShowK1C] = useState(false);
+  const [showK2A, setShowK2A] = useState(false);
+  const [showK2B, setShowK2B] = useState(false);
+  const [showK2C, setShowK2C] = useState(false);
+
+
 
   const [customerName, setCustomerName] = useState<string | null>(null);
 
@@ -116,6 +129,13 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const foldSetting2Ref = useRef<any>(null);
   const gapSettingRef = useRef<any>(null);
   const K1ARef = useRef<any>(null);
+  const K1BRef = useRef<any>(null);
+  const K1CRef = useRef<any>(null);
+  const K2ARef = useRef<any>(null);
+  const K2BRef = useRef<any>(null);
+  const K2CRef = useRef<any>(null);
+
+
 
   const RPF_ITEMS = [
   "PAPER SIZES",
@@ -142,12 +162,20 @@ const KNIFE_1_ITEMS = [
   "KNIFE K1 C"
 ];
 
+const KNIFE_2_ITEMS = [
+  "KNIFE K2 A",
+  "KNIFE K2 B",
+  "KNIFE K2 C"
+];
+
+
 
 function getSubmenuItems(panel: string): string[] {
   switch (panel) {
     case "RPF": return RPF_ITEMS;
     case "RT ANGLE": return RT_ANGLE_ITEMS;
     case "KNIFE 1": return KNIFE_1_ITEMS;
+    case "KNIFE 2": return KNIFE_2_ITEMS;
     default: return [];
   }
 }
@@ -168,6 +196,12 @@ function openSubScreen(panel: string, sub: string) {
   setShowFoldSetting2(false);
   setShowGapSetting(false);
   setShowK1A(false);
+  setShowK1B(false);
+  setShowK1C(false);
+  setShowK2A(false);
+  setShowK2B(false);
+  setShowK2C(false);
+
 
   // RPF
   if (panel === "RPF" && sub === "PAPER SIZES") return setShowMachine(true);
@@ -186,9 +220,37 @@ function openSubScreen(panel: string, sub: string) {
   if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return setShowFoldSetting2(true);
   if (panel === "RT ANGLE" && sub === "GAP SETTING") return setShowGapSetting(true);
 
-  // KNIFE 1
-  if (panel === "KNIFE 1" && sub === "KNIFE K1 A") return setShowK1A(true);
-}
+        // KNIFE 1
+      if (panel === "KNIFE 1" && sub === "KNIFE K1 A") {
+        setShowK1A(true);
+        return;
+      }
+      if (panel === "KNIFE 1" && sub === "KNIFE K1 B") {
+        setShowK1B(true);
+        return;
+      }
+      if (panel === "KNIFE 1" && sub === "KNIFE K1 C") {
+        setShowK1C(true);
+        return;
+      }
+
+      // KNIFE 2
+      if (panel === "KNIFE 2" && sub === "KNIFE K2 A") {
+        setShowK2A(true);
+        return;
+      }
+      if (panel === "KNIFE 2" && sub === "KNIFE K2 B") {
+        setShowK2B(true);
+        return;
+      }
+      if (panel === "KNIFE 2" && sub === "KNIFE K2 C") {
+        setShowK2C(true);
+        return;
+      }
+
+
+    }
+
 
 
 
@@ -208,7 +270,6 @@ const onParamEdit = (p: any) => {
 
   const [activePanel, setActivePanel] = useState<string>("HOME");
 
-  const panelAnim = useRef(new Animated.Value(SCREEN_H)).current;
 
   
   const [showSideMenu, setShowSideMenu] = useState(false);
@@ -266,26 +327,8 @@ const openPanel = (name: string) => {
   setShowSideMenu(false);
   setActivePanel(name);
 
-  Animated.timing(panelAnim, {
-    toValue: 0,
-    duration: 250,
-    useNativeDriver: true,
-  }).start();
+  
 };
-
-
-const closePanel = () => {
-  setShowSideMenu(false);
-
-  Animated.timing(panelAnim, {
-    toValue: SCREEN_H,
-    duration: 250,
-    useNativeDriver: true,
-  }).start();
-
-  // ❌ DO NOT touch activePanel here
-};
-
 
 
   const fetchRecipes = useCallback(async () => {
@@ -523,6 +566,12 @@ const closePanel = () => {
     else if (showFoldSetting2) panelRef = foldSetting2Ref;
     else if (showGapSetting) panelRef = gapSettingRef;
     else if (showK1A) panelRef = K1ARef;
+    else if (showK1B) panelRef = K1BRef;  
+    else if (showK1C) panelRef = K1CRef;
+    else if (showK2A) panelRef = K2ARef;
+    else if (showK2B) panelRef = K2BRef;
+    else if (showK2C) panelRef = K2CRef;
+
 
     else panelRef = machineRef; // fallback
 
@@ -602,6 +651,13 @@ if (mode === 'save') {
     foldSetting2Ref,
     gapSettingRef,
     K1ARef,
+    K1BRef,
+    K1CRef,
+    K2ARef,
+  K2BRef,
+  K2CRef,
+
+
 
   ].forEach(r => {
     try {
@@ -688,6 +744,13 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         foldSetting2Ref,
         gapSettingRef,
         K1ARef,
+        K1BRef,
+        K1CRef,
+        K2ARef,
+        K2BRef,
+       K2CRef,
+
+
       ].forEach(r => {
         try {
           if (r?.current?.clearEdits) r.current.clearEdits();
@@ -734,6 +797,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
   setShowFoldSetting2(false);
   setShowGapSetting(false);
   setShowK1A(false);
+  setShowK1B(false);
+  setShowK1C(false);
+  setShowK2A(false);
+  setShowK2B(false);
+  setShowK2C(false);
+
 
 
   setSaving(false);
@@ -761,6 +830,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
           setShowFoldSetting2(false);
           setShowGapSetting(false);
           setShowK1A(false);
+          setShowK1B(false);
+          setShowK1C(false);
+          setShowK2A(false);
+          setShowK2B(false);
+          setShowK2C(false);
+
 
 
           Alert.alert('Exists', `Recipe already exists. Opened ${newRecipeName}`);
@@ -799,6 +874,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         setShowFoldSetting2(false);
         setShowGapSetting(false);
         setShowK1A(false);
+        setShowK1B(false);
+        setShowK1C(false);
+        setShowK2A(false);
+        setShowK2B(false);
+        setShowK2C(false);
+
 
 
         Alert.alert('Saved (server)', `Recipe created on server: ${newRecipeName}`);
@@ -844,6 +925,13 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     if (showFoldSetting2) return "RT ANGLE : FOLD SETTING 2";
     if (showGapSetting) return "RT ANGLE : GAP SETTING";
     if (showK1A) return "KNIFE 1 : K1A";
+    if (showK1B) return "KNIFE 1 : K1B";
+    if (showK1C) return "KNIFE 1 : K1C";
+    if (showK2A) return "KNIFE 2 : K2A";
+    if (showK2B) return "KNIFE 2 : K2B";
+    if (showK2C) return "KNIFE 2 : K2C";
+
+
     return null;
   }
 
@@ -1047,6 +1135,64 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
               />
             </View>
 
+            <View style={{ flex: 1, display: showK1B ? 'flex' : 'none' }}>
+              <K1B
+                ref={K1BRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK1C ? 'flex' : 'none' }}>
+              <K1C
+                ref={K1CRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK2A ? 'flex' : 'none' }}>
+
+  <K2A
+                ref={K2ARef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK2B ? 'flex' : 'none' }}>
+              <K2B
+                ref={K2BRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+            <View style={{ flex: 1, display: showK2C ? 'flex' : 'none' }}>
+              <K2C
+                ref={K2CRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
+
+
 
 
             <View
@@ -1066,7 +1212,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                   !showFoldSetting &&
                   !showFoldSetting2 &&
                   !showGapSetting &&
-                  !showK1A
+                  !showK1A &&
+                  !showK1B &&
+                  !showK1C &&
+                  !showK2A &&
+                  !showK2B &&
+                  !showK2C
                     ? 'flex'
                     : 'none',
               }}
@@ -1142,6 +1293,8 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowFoldSetting2(false);
     setShowGapSetting(false);
     setShowK1A(false);
+    setShowK1B(false);
+    setShowK1C(false);
     setShowSideMenu(false);
     return;
   }
@@ -1166,6 +1319,8 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowFoldSetting2(false);
     setShowGapSetting(false);
     setShowK1A(false);
+    setShowK1B(false);
+    setShowK1C(false);
     return;
   }
 
@@ -1176,9 +1331,7 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
   }
 
   // 🔴 OTHER PANELS
-  const isActive = activePanel === label;
-  if (isActive) closePanel();
-  else openPanel(label);
+  openPanel(label);
 }}
 
 
@@ -1193,181 +1346,7 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     />
 
 
-      <Animated.View
-        style={[styles.panel, { transform: [{ translateY: panelAnim }] }]}
-      >
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelTitle}>{activePanel} Controls</Text>
-          <TouchableOpacity onPress={closePanel}>
-            <Text style={styles.panelClose}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
-        {activePanel === "RPF" && (
-          <>
-            <Text style={styles.panelItem}>RPF1</Text>
-            <Text style={styles.panelItem}>RPF2</Text>
-            <Text style={styles.panelItem}>RPF Gap Setting</Text>
-            <Text style={styles.panelItem}>RPF Speed Setting</Text>
-          </>
-        )}
-
-        {activePanel === "RT ANGLE" && (<>
-    <TouchableOpacity
-      onPress={() => {
-        if (selectedRecipeId === -1) {
-          Alert.alert("Select a recipe first");
-          return;
-        }
-
-        // close popup
-        closePanel();
-
-        // reset others
-        setShowMachine(false);
-        setShowFolds(false);
-        setShowOffset(false);
-        setShowGlueTap(false);
-        setShowSuctionGap(false);
-        setShowAllSpeed(false);
-        setShowSideLay(false);
-        setShowBlowerSettings(false);
-        setShowRollerGap(false);
-        setShowFoldingTray(false);
-
-        // 🔥 OPEN RT ANGLE PANEL
-        setShowFoldSetting(true); 
-        setShowFoldSetting2(false); 
-        setShowGapSetting(false);
-        setShowK1A(false);
-        setActivePanel("RT ANGLE");
-      }}
-    >
-      <Text style={styles.panelItem}>Fold Setting</Text>
-    </TouchableOpacity>
-
-    <TouchableOpacity
-  onPress={() => {
-    if (selectedRecipeId === -1) {
-      Alert.alert("Select a recipe first");
-      return;
-    }
-
-    closePanel();
-
-    // reset all other panels
-    setShowMachine(false);
-    setShowFolds(false);
-    setShowOffset(false);
-    setShowGlueTap(false);
-    setShowSuctionGap(false);
-    setShowAllSpeed(false);
-    setShowSideLay(false);
-    setShowBlowerSettings(false);
-    setShowRollerGap(false);
-    setShowFoldingTray(false);
-
-    // 🔥 OPEN ROTATE RIGHT PANEL
-    setShowFoldSetting(false);
-    setShowFoldSetting2(true);
-    setShowGapSetting(false);
-    setShowK1A(false);
-
-    setActivePanel("RT ANGLE");
-  }}
->
-  <Text style={styles.panelItem}>Fold Setting 2</Text>
-</TouchableOpacity>
-
-    <TouchableOpacity
-  onPress={() => {
-    if (selectedRecipeId === -1) {
-      Alert.alert("Select a recipe first");
-      return;
-    }
-
-    closePanel();
-
-    // reset all other panels
-    setShowMachine(false);
-    setShowFolds(false);
-    setShowOffset(false);
-    setShowGlueTap(false);
-    setShowSuctionGap(false);
-    setShowAllSpeed(false);
-    setShowSideLay(false);
-    setShowBlowerSettings(false);
-    setShowRollerGap(false);
-    setShowFoldingTray(false);
-
-    // 🔥 OPEN ROTATE RIGHT PANEL
-    setShowFoldSetting(false);
-    setShowFoldSetting2(false);
-    setShowGapSetting(true);
-    setShowK1A(false);
-
-    setActivePanel("RT ANGLE");
-  }}
->
-  <Text style={styles.panelItem}>Gap Setting</Text>
-</TouchableOpacity>
-  </>
-)}
-
-
-        {activePanel === "KNIFE 1" && (
-  <>
-    <TouchableOpacity
-      onPress={() => {
-        if (selectedRecipeId === -1) {
-          Alert.alert("Select a recipe first");
-          return;
-        }
-
-        closePanel();
-
-        // reset all other panels
-        setShowMachine(false);
-        setShowFolds(false);
-        setShowOffset(false);
-        setShowGlueTap(false);
-        setShowSuctionGap(false);
-        setShowAllSpeed(false);
-        setShowSideLay(false);
-        setShowBlowerSettings(false);
-        setShowRollerGap(false);
-        setShowFoldingTray(false);
-        setShowFoldSetting(false);
-        setShowFoldSetting2(false);
-        setShowGapSetting(false);
-
-        // 🔥 OPEN KNIFE 1 PANEL
-        setShowK1A(true);
-
-        setActivePanel("KNIFE 1");
-      }}
-    >
-      <Text style={styles.panelItem}>K1A</Text>
-    </TouchableOpacity>
-  </>
-)}
-
-
-        {activePanel === "KNIFE 2" && (
-          <>
-            <Text style={styles.panelItem}>Knife 2 Width</Text>
-            <Text style={styles.panelItem}>Knife 2 Pressure</Text>
-          </>
-        )}
-
-        {activePanel === "Tray" && (
-          <>
-            <Text style={styles.panelItem}>Tray Up</Text>
-            <Text style={styles.panelItem}>Tray Down</Text>
-            <Text style={styles.panelItem}>Tray Reset</Text>
-          </>
-        )}
-      </Animated.View>
+      
     </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-// src/components/RT Angle/K3B.tsx
+// src/components/Knife 3/K3B.tsx
 import React, {
   useEffect,
   useMemo,
@@ -152,7 +152,7 @@ function K3BInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'RT ANGLE',
+        section: values[sr]?.section ?? 'Knife 3',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -321,7 +321,7 @@ function K3BInner(
                   onParamEdit?.({
                     parameter_no: sr,
                     value_01: newVal,
-                    section: values[sr]?.section ?? 'RT ANGLE',
+                    section: values[sr]?.section ?? 'Knife 3',
                     parameter: values[sr]?.parameter ?? '',
                     unit: values[sr]?.unit ?? '',
                   });
