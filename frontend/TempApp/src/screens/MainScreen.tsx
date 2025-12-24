@@ -47,11 +47,7 @@ import K2C from '../components/Knife 2/K2C';
 import K3A from '../components/Knife 3/K3A';
 import K3B from '../components/Knife 3/K3B';
 import K3C from '../components/Knife 3/K3C';
-
-
-
-
-
+import TraySpecs from '../components/STP Tray/TraySpecs';
 
 
 
@@ -113,6 +109,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [showK3A, setShowK3A] = useState(false);
   const [showK3B, setShowK3B] = useState(false);
   const [showK3C, setShowK3C] = useState(false);
+  const [showSTPTray, setShowSTPTray] = useState(false);
+
 
 
 
@@ -145,6 +143,8 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const K3ARef = useRef<any>(null); 
   const K3BRef = useRef<any>(null);
   const K3CRef = useRef<any>(null);
+  const stpTrayRef = useRef<any>(null);
+
 
 
 
@@ -224,6 +224,8 @@ function openSubScreen(panel: string, sub: string) {
   setShowK3A(false);
   setShowK3B(false);
   setShowK3C(false);
+  setShowSTPTray(false);
+
 
 
 
@@ -336,11 +338,50 @@ const openPanel = (name: string) => {
     "KNIFE 3",
   ];
 
-  if (PANELS_WITH_SUBMENU.includes(name)) {
-    if (showSideMenu && activePanel === name) {
-      setShowSideMenu(false);
-      return;
-    }
+        // 🔵 STP TRAY (DIRECT SCREEN)
+      if (name === "STP TRAY") {
+        if (selectedRecipeId === -1) {
+          Alert.alert("Select a recipe first");
+          return;
+        }
+
+        // reset all
+        setShowMachine(false);
+        setShowFolds(false);
+        setShowOffset(false);
+        setShowGlueTap(false);
+        setShowSuctionGap(false);
+        setShowAllSpeed(false);
+        setShowSideLay(false);
+        setShowBlowerSettings(false);
+        setShowRollerGap(false);
+        setShowFoldingTray(false);
+        setShowFoldSetting(false);
+        setShowFoldSetting2(false);
+        setShowGapSetting(false);
+        setShowK1A(false);
+        setShowK1B(false);
+        setShowK1C(false);
+        setShowK2A(false);
+        setShowK2B(false);
+        setShowK2C(false);
+        setShowK3A(false);
+        setShowK3B(false);
+        setShowK3C(false);
+        setShowSideMenu(false);
+
+        setShowSTPTray(true);
+        setActivePanel("STP TRAY");
+        setActiveSubScreen(null);
+        return;
+      }
+
+
+      if (PANELS_WITH_SUBMENU.includes(name)) {
+        if (showSideMenu && activePanel === name) {
+          setShowSideMenu(false);
+          return;
+        }
 
     panelRefs.current[name]?.measure(
       (fx: number, fy: number, w: number, h: number, px: number, py: number) => {
@@ -615,6 +656,8 @@ const openPanel = (name: string) => {
     else if (showK3A) panelRef = K3ARef;
     else if (showK3B) panelRef = K3BRef;
     else if (showK3C) panelRef = K3CRef;
+    else if (showSTPTray) panelRef = stpTrayRef;
+
 
 
 
@@ -704,6 +747,8 @@ if (mode === 'save') {
     K3ARef,
     K3BRef,
     K3CRef,
+    stpTrayRef,
+
 
 
 
@@ -801,6 +846,7 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         K3ARef,
         K3BRef,
         K3CRef,
+        stpTrayRef
 
 
 
@@ -858,6 +904,8 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
   setShowK3A(false);
   setShowK3B(false);
   setShowK3C(false);
+  setShowSTPTray(false);
+
 
 
 
@@ -895,6 +943,8 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
           setShowK3A(false);
           setShowK3B(false);
           setShowK3C(false);
+          setShowSTPTray(false);
+
 
 
 
@@ -943,6 +993,7 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
         setShowK3A(false);
         setShowK3B(false);
         setShowK3C(false);
+        setShowSTPTray(false);
 
 
 
@@ -998,6 +1049,8 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     if (showK3A) return "KNIFE 3 : K3A";
     if (showK3B) return "KNIFE 3 : K3B";
     if (showK3C) return "KNIFE 3 : K3C";
+    if (showSTPTray) return "STP TRAY";
+
 
 
 
@@ -1293,6 +1346,17 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
               />
             </View>
 
+            <View style={{ flex: 1, display: showSTPTray ? 'flex' : 'none' }}>
+              <TraySpecs
+                ref={stpTrayRef}
+                recipeId={selectedRecipeId}
+                recipeName={selectedRecipeName ?? undefined}
+                initialParams={recipeParams}
+                onSave={saveCurrentMachineData}
+                onParamEdit={onParamEdit}
+              />
+            </View>
+
 
 
 
@@ -1323,7 +1387,8 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                   !showK2C &&
                   !showK3A &&
                   !showK3B &&
-                  !showK3C
+                  !showK3C &&
+                  !showSTPTray
 
                     ? 'flex'
                     : 'none',
@@ -1406,6 +1471,8 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowK3A(false);
     setShowK3B(false);
     setShowK3C(false);
+    setShowSTPTray(false);
+
 
     return;
   }
@@ -1435,9 +1502,8 @@ disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
     setShowK3A(false);
     setShowK3B(false);
     setShowK3C(false);
-    setShowK3A(false);
-    setShowK3B(false);
-    setShowK3C(false);
+    setShowSTPTray(false);
+
 
     return;
   }
