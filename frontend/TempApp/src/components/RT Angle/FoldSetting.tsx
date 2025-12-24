@@ -23,18 +23,20 @@ import VideoModal from '../VideoModal';
 /* ---------- CONFIG ---------- */
 
 // 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
-const PARAM_SR = [201, 202, 203];
+const PARAM_SR = [85, 86, 87, 88];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  201: { x: 50, y: 30 },
-  202: { x: 50, y: 50 },
-  203: { x: 50, y: 70 },
+  85: { x: 34, y: 11 },
+  86: { x: 76.7, y: 60 },
+  87: { x: 29, y: 23 },
+  88: { x: 71, y: 72 },
 };
 
 const SERIAL_POS = [
-  { id: 201, x: 20, y: 30 },
-  { id: 202, x: 20, y: 50 },
-  { id: 203, x: 20, y: 70 },
+  { id: 85, x: 23, y: 11 },
+  { id: 86, x: 87, y: 60 },
+  { id: 87, x: 18, y: 23 },
+  { id: 88, x: 83, y: 72 },
 ];
 
 const BOX_W = 100;
