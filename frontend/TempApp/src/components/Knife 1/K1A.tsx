@@ -115,7 +115,6 @@ function K1AInner(
   const [editingSr, setEditingSr] = useState<number | null>(null);
   const [tempVal, setTempVal] = useState('');
 
-  const [tablePopup, setTablePopup] = useState(false);
   const [videoPopup, setVideoPopup] = useState(false);
 
   /* ---------- FETCH ---------- */
@@ -194,90 +193,139 @@ function K1AInner(
               }}
             >
               <ImageBackground
-                source={imgSrc}
-                style={{ width: IMG_W, height: IMG_H }}
-                resizeMode="contain"
-              >
-                {loading && (
-                  <View style={styles.loading}>
-                    <ActivityIndicator size="large" />
+              source={imgSrc}
+              style={{ width: IMG_W, height: IMG_H }}
+              resizeMode="contain"
+            >
+              {loading && (
+                <View style={styles.loading}>
+                  <ActivityIndicator size="large" />
+                </View>
+              )}
+
+              {/* PARAM BOXES */}
+              {PARAM_SR.map(sr => {
+                const pos = POSITIONS[sr];
+                const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+
+                let cx = (pos.x / 100) * IMG_W;
+                let cy = (pos.y / 100) * IMG_H;
+
+                cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+                cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+
+                return (
+                  <TouchableOpacity
+                    key={sr}
+                    onPress={() => {
+                      setEditingSr(sr);
+                      setTempVal(String(val));
+                    }}
+                    style={[
+                      styles.paramBox,
+                      {
+                        left: cx,
+                        top: cy,
+                        width: BOX_W,
+                        height: BOX_H,
+                        transform: [
+                          { translateX: -BOX_W / 2 },
+                          { translateY: -BOX_H / 2 },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Text style={styles.paramText}>{val}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* SERIAL NUMBERS */}
+              {SERIAL_POS.map(p => {
+                const cx = (p.x / 100) * IMG_W;
+                const cy = (p.y / 100) * IMG_H;
+
+                return (
+                  <View
+                    key={p.id}
+                    pointerEvents="none"
+                    style={[
+                      styles.serialBox,
+                      {
+                        left: cx,
+                        top: cy,
+                        width: 50,
+                        height: 30,
+                        transform: [
+                          { translateX: -25 },
+                          { translateY: -15 },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Text style={styles.serialText}>{p.id}</Text>
                   </View>
-                )}
+                );
+              })}
 
-                {/* PARAM BOXES */}
+              {/* 🔵 PARAM TABLE OVER IMAGE (ONLY ONCE) */}
+              <View style={styles.overlayTable}>
+                {/* HEADER */}
+                <View style={[styles.popupRow, styles.popupHeader]}>
+                  {POPUP_COLUMNS.map(col => (
+                    <Text
+                      key={col.key}
+                      style={[
+                        styles.popupCell,
+                        col.width && { width: col.width },
+                        col.flex && { flex: col.flex },
+                        styles.popupHeaderText,
+                      ]}
+                    >
+                      {col.title}
+                    </Text>
+                  ))}
+                </View>
+
+                {/* ROWS */}
                 {PARAM_SR.map(sr => {
-                  const pos = POSITIONS[sr];
-                  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
-
-                  let cx = (pos.x / 100) * IMG_W;
-                  let cy = (pos.y / 100) * IMG_H;
-
-                  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
-                  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+                  const orig = values[sr]?.value_01 ?? '';
+                  const param = values[sr]?.parameter ?? '';
+                  const changed = edited[sr] ?? '0';
 
                   return (
-                    <TouchableOpacity
-                      key={sr}
-                      onPress={() => {
-                        setEditingSr(sr);
-                        setTempVal(String(val));
-                      }}
-                      style={[
-                        styles.paramBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: BOX_W,
-                          height: BOX_H,
-                          transform: [
-                            { translateX: -BOX_W / 2 },
-                            { translateY: -BOX_H / 2 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.paramText}>{val}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                    <View key={sr} style={styles.popupRow}>
+                      {POPUP_COLUMNS.map(col => {
+                        let value = '';
+                        if (col.key === 'sr') value = sr;
+                        if (col.key === 'parameter') value = param;
+                        if (col.key === 'orig') value = orig;
+                        if (col.key === 'changed') value = changed;
 
-                {/* SERIAL NUMBERS */}
-                {SERIAL_POS.map(p => {
-                  const cx = (p.x / 100) * IMG_W;
-                  const cy = (p.y / 100) * IMG_H;
-
-                  return (
-                    <View
-                      key={p.id}
-                      pointerEvents="none"
-                      style={[
-                        styles.serialBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: 50,
-                          height: 30,
-                          transform: [
-                            { translateX: -25 },
-                            { translateY: -15 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.serialText}>{p.id}</Text>
+                        return (
+                          <Text
+                            key={col.key}
+                            style={[
+                              styles.popupCell,
+                              styles.popupBodyText,
+                              col.key === 'changed' && { color: '#00ff00' },
+                            ]}
+                          >
+                            {value}
+                          </Text>
+                        );
+                      })}
                     </View>
                   );
                 })}
-              </ImageBackground>
+              </View>
+            </ImageBackground>
             </View>
           </ZoomableView>
         </View>
 
         {/* BUTTONS */}
         <View style={[styles.rightButtons, isPortrait && styles.portraitButtons]}>
-          <TouchableOpacity style={styles.btnBlue} onPress={() => setTablePopup(true)}>
-            <Text style={styles.btnText}>SHOW TABLE</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity style={styles.btnGreen} onPress={() => setVideoPopup(true)}>
             <Text style={styles.btnText}>VIDEO</Text>
@@ -336,72 +384,7 @@ function K1AInner(
         </View>
       </Modal>
 
-      {/* TABLE POPUP */}
-      <Modal visible={tablePopup} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <View style={styles.popupHeaderRow}>
-              <Text style={styles.modalTitle}>Parameter Table</Text>
-              <TouchableOpacity onPress={() => setTablePopup(false)} style={styles.popupCloseBtn}>
-                <Text style={styles.popupCloseIcon}>✕</Text>
-                <Text style={styles.popupCloseText}>Close</Text>
-              </TouchableOpacity>
-            </View>
 
-            <View style={styles.popupTable}>
-              <View style={[styles.popupRow, styles.popupHeader]}>
-                {POPUP_COLUMNS.map(col => (
-                  <Text
-                    key={col.key}
-                    style={[
-                      styles.popupCell,
-                      col.width && { width: col.width },
-                      col.flex && { flex: col.flex },
-                      styles.popupHeaderText,
-                    ]}
-                  >
-                    {col.title}
-                  </Text>
-                ))}
-              </View>
-
-              {PARAM_SR.map(sr => {
-                const orig = values[sr]?.value_01 ?? '';
-                const param = values[sr]?.parameter ?? '';
-                const changed = edited[sr] ?? '-';
-
-                return (
-                  <View key={sr} style={styles.popupRow}>
-                    {POPUP_COLUMNS.map(col => {
-                      let value: any = '';
-                      if (col.key === 'sr') value = sr;
-                      if (col.key === 'parameter') value = param;
-                      if (col.key === 'orig') value = orig;
-                      if (col.key === 'changed') value = changed;
-
-                      return (
-                        <Text
-                          key={col.key}
-                          style={[
-                            styles.popupCell,
-                            styles.popupBodyText,
-                            col.width && { width: col.width },
-                            col.flex && { flex: col.flex },
-                            col.key === 'changed' &&
-                              changed !== '-' && { color: '#007bff' },
-                          ]}
-                        >
-                          {value}
-                        </Text>
-                      );
-                    })}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -481,23 +464,49 @@ const styles = StyleSheet.create({
   cancel: { marginRight: 20, color: '#666' },
   save: { color: '#007bff', fontWeight: '700' },
 
-  popupTable: { borderWidth: 1, borderColor: '#ccc' },
-  popupRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ccc' },
-  popupHeader: { backgroundColor: '#f2f2f8' },
-
-  popupCell: { paddingVertical: 10, textAlign: 'center' },
-  popupHeaderText: { fontWeight: '700', fontSize: POPUP_HEADER_FONT },
-  popupBodyText: { fontSize: POPUP_BODY_FONT },
-
-  popupHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   popupCloseBtn: { flexDirection: 'row', alignItems: 'center' },
   popupCloseIcon: { fontSize: 18, fontWeight: '800', marginRight: 4 },
   popupCloseText: { fontSize: POPUP_CLOSE_FONT, fontWeight: '800' },
+
+  overlayTable: {
+  position: 'absolute',
+  right: 150,
+  top: 30,
+  width: 300,
+  backgroundColor: 'rgba(40, 70, 90, 0.9)',
+  borderRadius: 6,
+  padding: 6,
+  zIndex: 50,
+},
+
+popupRow: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderColor: '#6fa1c6',
+},
+
+popupHeader: {
+  backgroundColor: '#5b87a5',
+},
+
+popupCell: {
+  paddingVertical: 6,
+  paddingHorizontal: 4,
+  textAlign: 'center',
+  color: '#fff',
+},
+
+popupHeaderText: {
+  fontWeight: '700',
+  fontSize: 13,
+  color: '#fff',
+},
+
+popupBodyText: {
+  fontSize: 12,
+  color: '#ccffcc',
+},
+
 });
 
 export default React.forwardRef(K1AInner);
