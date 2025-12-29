@@ -21,18 +21,18 @@ import CreasingDropdown from './CreasingDropdown';
 /* ---------- CONFIG ---------- */
 
 const CREASING_BOX_PARAM_NOS = [
-  288, 289, 290, 291, 292, 293, 294, 295, 296
+  288, 289, 290, 291, 292, 293, 294
 ];
 
 const CREASING_PARAM_NOS = [
-  275, 276, 277, 278, 279, 280, 281, 282, 283
+  275, 276, 277, 278, 279, 280, 281
 ];
 
 const CREASING_YN_PARAM_NOS = [
-  262, 263, 264, 265, 266, 267, 268, 269, 270
+  262, 263, 264, 265, 266, 267, 268
 ];
 
-const DROPDOWN_COUNT = 9; //number of dropdowns
+const DROPDOWN_COUNT = 7; //number of dropdowns
 
 /* ---------- COMPONENT ---------- */
 
