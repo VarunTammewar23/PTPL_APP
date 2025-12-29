@@ -1043,8 +1043,8 @@ setShowCreasing3(false);
           setShowK3C(false);
           setShowSTPTray(false);
           setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
+          setShowCreasing2(false);
+          setShowCreasing3(false);
 
 
 
