@@ -81,6 +81,9 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  // 🔴 Holds unsaved changes across ALL panels
+  const pendingEditsRef = useRef<Map<number, any>>(new Map());
+
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
@@ -92,18 +95,30 @@ console.log(
     type: typeof p.parameter_no
   }))
 );
-  // 🔵 DERIVE KNIFE COUNT FROM PARAMETER 9
-function getKnifeCount(params: RecipeParam[]): number {
-  const p9 = params.find(p => p.parameter_no === 9);
-  const v = Number(p9?.value_01);
+
+function getEffectiveParamValue(
+  params: RecipeParam[],
+  paramNo: number
+): number {
+  const pending = pendingEditsRef.current.get(paramNo);
+  if (pending?.value_01 !== undefined) {
+    const v = Number(pending.value_01);
+    return isNaN(v) ? 0 : v;
+  }
+
+  const fromDb = params.find(p => p.parameter_no === paramNo);
+  const v = Number(fromDb?.value_01);
   return isNaN(v) ? 0 : v;
 }
 
-const knifeCount = getKnifeCount(recipeParams);
+
+
+const knifeCount = getEffectiveParamValue(recipeParams, 9);
 
 const isKnife1Enabled = knifeCount >= 1;
 const isKnife2Enabled = knifeCount >= 2;
 const isKnife3Enabled = knifeCount >= 3;
+
 
 // 🔴 STEP 5 — AUTO CLOSE KNIFE SCREENS WHEN COUNT DROPS
 useEffect(() => {
@@ -341,9 +356,6 @@ function openSubScreen(panel: string, sub: string) {
 
 
 
-
-  // 🔴 Holds unsaved changes across ALL panels
-  const pendingEditsRef = useRef<Map<number, any>>(new Map());
 
 // 🔴 Capture edits from ANY panel, ANY time
 const onParamEdit = (p: any) => {
