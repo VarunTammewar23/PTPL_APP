@@ -48,7 +48,7 @@ import K3A from '../components/Knife 3/K3A';
 import K3B from '../components/Knife 3/K3B';
 import K3C from '../components/Knife 3/K3C';
 import TraySpecs from '../components/STP Tray/TraySpecs';
-import CreasingScreen from '../components/Creasing/CreasingScreen';
+import CreasingScreen from '../components/Creasing/CreasingScreen1';
 
 
 
@@ -397,6 +397,9 @@ const onParamEdit = (p: any) => {
 
 const openPanel = (name: string) => {
 
+         // 🔴 FIX: close Creasing when opening any other panel
+  setShowCreasing(false);
+  
     // 🔴 KNIFE ENABLE CHECK
     if (name === "KNIFE 1" && !isKnife1Enabled) return;
     if (name === "KNIFE 2" && !isKnife2Enabled) return;
