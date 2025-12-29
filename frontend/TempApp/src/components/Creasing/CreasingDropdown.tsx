@@ -12,38 +12,67 @@ import {
 
 const OPTIONS = [
   {
-    label: 'Creasing 1',
+    label: 'F3',
     value: 1,
     image: require('../../assets/crease_1.png'),
   },
   {
-    label: 'Creasing 2',
+    label: 'F1',
     value: 2,
     image: require('../../assets/crease_2.png'),
   },
   {
-    label: 'Creasing 3',
+    label: 'F2',
     value: 3,
     image: require('../../assets/crease_3.png'),
   },
   {
-    label: 'Creasing 4',
+    label: '4',
     value: 4,
     image: require('../../assets/crease_4.png'),
   },
+  {
+    label: 'M32',
+    value: 5,
+    image: require('../../assets/crease_5.png'),
+  },
+  {
+    label: 'M10',
+    value: 6,
+    image: require('../../assets/crease_6.png'),
+  },
+  {
+    label: 'M20',
+    value: 7,
+    image: require('../../assets/crease_7.png'),
+  },
+  {
+    label: 'M12',
+    value: 8,
+    image: require('../../assets/crease_8.png'),
+  },
+];
+
+const YES_NO_OPTIONS = [ //yes no options
+  { label: 'Y', value: 1 },
+  { label: 'N', value: 0 },
 ];
 
 /* ---------- TYPES ---------- */
 
-type Props = {
+type Props = { //chnages yes no 
   value: number | null;
   onChange: (val: number | null) => void;
+  mode?: 'image' | 'yesno'; // 👈 NEW
 };
+
 
 /* ---------- COMPONENT ---------- */
 
-const CreasingDropdown = ({ value, onChange }: Props) => {
-  const selected = OPTIONS.find(o => o.value === value);
+const CreasingDropdown = ({ value, onChange, mode = 'image' }: Props) => { //chnages 
+  const options = mode === 'yesno' ? YES_NO_OPTIONS : OPTIONS; //chnages 
+  const selected = options.find(o => o.value === value);
+
 
   const buttonRef = React.useRef<View>(null);
   const [open, setOpen] = React.useState(false);
@@ -53,6 +82,14 @@ const CreasingDropdown = ({ value, onChange }: Props) => {
 
   return (
     <View style={styles.container}>
+
+      {/* IMAGE MODE: SELECTED LABEL */}
+      {mode === 'image' && selected && (
+        <Text style={styles.selectedLabel}>
+          {selected.label}
+        </Text>
+      )}
+
       {/* DROPDOWN BUTTON */}
       <TouchableOpacity
         ref={buttonRef}
@@ -65,7 +102,39 @@ const CreasingDropdown = ({ value, onChange }: Props) => {
           });
         }}
       >
-        <Text style={styles.arrow}>▼</Text>
+
+        {/* chnages yes no */}
+        {/* DROPDOWN BUTTON CONTENT */}
+        {mode === 'yesno' ? (
+          // YES / NO MODE
+<TouchableOpacity
+  ref={buttonRef}
+  style={styles.dropdown}
+  activeOpacity={0.7}
+  onPress={() => {
+    buttonRef.current?.measureInWindow((x, y, width, height) => {
+      setMenuPos({ x, y: y + height });
+      setOpen(true);
+    });
+  }}
+>
+  {mode === 'yesno' ? (
+    <View style={styles.buttonContent}>
+      <Text style={styles.ynText}>
+        {selected ? selected.label : ''}
+      </Text>
+      <Text style={styles.arrowSmall}>▼</Text>
+    </View>
+  ) : (
+    <Text style={styles.arrow}>▼</Text>   // 👈 EXACT IMAGE UI
+  )}
+</TouchableOpacity>
+
+        ) : (
+          // IMAGE MODE (arrow only)
+          <Text style={styles.arrow}>▼</Text>
+        )}
+
       </TouchableOpacity>
 
       {/* DROPDOWN MENU */}
@@ -94,7 +163,7 @@ const CreasingDropdown = ({ value, onChange }: Props) => {
                 },
               ]}
             >
-              {OPTIONS.map(opt => (
+              {options.map(opt => ( //chnages yes no
                 <TouchableOpacity
                   key={opt.value}
                   style={styles.menuItem}
@@ -112,12 +181,10 @@ const CreasingDropdown = ({ value, onChange }: Props) => {
       </Modal>
 
       {/* IMAGE */}
-      {selected && (
-        <Image
-          source={selected.image}
-          style={styles.image}
-        />
+      {mode === 'image' && selected && ( //chnages yes no 
+        <Image source={selected.image} style={styles.image} />
       )}
+
     </View>
   );
 };
@@ -131,15 +198,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  dropdown: {
-    width: 50,
-    height: 45,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#888',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+dropdown: {
+  width: 50,
+  height: 45,
+  backgroundColor: '#fff',
+  borderWidth: 1,
+  borderColor: '#888',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
 
   arrow: {
     fontSize: 28,
@@ -176,4 +244,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
   },
+
+  buttonContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+ynText: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: '#000',
+},
+
+arrowSmall: {
+  fontSize: 16,
+  color: '#000',
+},
+
+selectedLabel: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#000',
+  marginBottom: 15,
+},
+
 });

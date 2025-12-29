@@ -12,13 +12,17 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Modal,
+  TextInput,
 } from 'react-native';
 
 import CreasingDropdown from './CreasingDropdown';
 
 /* ---------- CONFIG ---------- */
 
+const CREASING_BOX_PARAM_NOS = [293, 294, 295, 296];
 const CREASING_PARAM_NOS = [297, 298, 299, 300];
+const CREASING_YN_PARAM_NOS = [289, 290, 291, 292];
 const DROPDOWN_COUNT = 4;
 
 /* ---------- COMPONENT ---------- */
@@ -31,6 +35,18 @@ function CreasingScreen1(
   Array(DROPDOWN_COUNT).fill(null)
 );
 
+const [ynValues, setYnValues] = useState<(0 | 1 | null)[]>( //Y/N row
+  Array(DROPDOWN_COUNT).fill(null)
+);
+const [boxValues, setBoxValues] = useState<(string | number)[]>(
+  Array(DROPDOWN_COUNT).fill('')
+);
+
+const [edited, setEdited] = useState<Record<number, string>>({});
+const [editingSr, setEditingSr] = useState<number | null>(null);
+const [tempVal, setTempVal] = useState('');
+
+
 
   useEffect(() => {
   if (!initialParams) return;
@@ -41,26 +57,69 @@ function CreasingScreen1(
     );
     return p ? Number(p.value_01) : null;
   });
+     //Y/N row
+    const nextYN = CREASING_YN_PARAM_NOS.map(sr => {
+    const p = initialParams.find(
+      (x: any) => Number(x.parameter_no) === sr
+    );
+    return p ? Number(p.value_01) as 0 | 1 : null;
+  });
+
+  const nextBoxValues = CREASING_BOX_PARAM_NOS.map(sr => {
+  const p = initialParams.find(
+    (x: any) => Number(x.parameter_no) === sr
+  );
+  return p ? p.value_01 ?? '' : '';
+});
+
+setBoxValues(nextBoxValues);
+
 
   setValues(next);
+  setYnValues(nextYN);
+
 }, [initialParams]);
 
 
   /* ---------- REF API ---------- */
 
-  useImperativeHandle(ref, () => ({
-    getFinalParams: () =>
-      values.map((v, i) => ({
-        parameter_no: CREASING_PARAM_NOS[i],
-        value_01: v ?? '',
-        section: 'Creasing',
-        parameter: `Creasing ${i + 1}`,
-        unit: '',
-      })),
+  useImperativeHandle(ref, () => ({ //chnaged 
+  getFinalParams: () => [
+    ...values.map((v, i) => ({
+      parameter_no: CREASING_PARAM_NOS[i],
+      value_01: v ?? '',
+      section: 'Creasing',
+      parameter: `Creasing ${i + 1}`,
+      unit: '',
+    })),
 
-   setInitialValues: (vals: number[]) => {
-  setValues(vals);
-},
+    ...ynValues.map((v, i) => ({
+      parameter_no: CREASING_YN_PARAM_NOS[i],
+      value_01: v ?? 0, // 0 or 1
+      section: 'Creasing',
+      parameter: `Creasing Enable ${i + 1}`,
+      unit: '',
+    })),
+
+        ...CREASING_BOX_PARAM_NOS.map((sr, i) => {
+      const orig = initialParams?.find(
+        (p: any) => Number(p.parameter_no) === sr
+      );
+
+      return {
+        parameter_no: sr,
+        value_01: edited[sr] ?? boxValues[i] ?? '',
+        section: orig?.section ?? 'Creasing',
+        parameter: orig?.parameter ?? '',
+        unit: orig?.unit ?? '',
+      };
+    }),
+
+  ],
+
+      setInitialValues: (vals: number[]) => {
+      setValues(vals);
+    },
 
   }));
 
@@ -80,6 +139,25 @@ const handleChange = (index: number, value: number | null) => {
     });
   };
 
+  //Y/N row
+const handleYNChange = (index: number, value: 0 | 1 | null) => {
+  if (value === null) return;
+
+  const next = [...ynValues];
+  next[index] = value;
+  setYnValues(next);
+
+  onParamEdit?.({
+    parameter_no: CREASING_YN_PARAM_NOS[index],
+    value_01: value,
+    section: 'Creasing',
+    parameter: `Creasing Enable ${index + 1}`,
+    unit: '',
+  });
+};
+
+
+
   /* ---------- UI ---------- */
 
   return (
@@ -93,17 +171,49 @@ const handleChange = (index: number, value: number | null) => {
           style={styles.image}
           resizeMode="contain"
         >
-          {/* DROPDOWNS OVER IMAGE */}
-         <View style={styles.overlay}>
-  {values.map((val, index) => (
-    <View key={index} style={styles.dropdownSlot}>
-      <CreasingDropdown
-        value={val}
-        onChange={(v) => handleChange(index, v)}
-      />
-    </View>
-  ))}
-</View>
+          <View style={styles.columnRow}>
+            {values.map((val, index) => {
+              const sr = CREASING_BOX_PARAM_NOS[index];
+              const displayVal =
+                edited[sr] ?? boxValues[index] ?? '-';
+
+              return (
+                <View key={index} style={styles.column}>
+
+                  {/* TOP DROPDOWN */}
+                  <CreasingDropdown
+                    value={val}
+                    onChange={(v) => handleChange(index, v)}
+                  />
+
+                  {/* GREEN PARAMETER BOX */}
+                  <TouchableOpacity
+                    style={styles.paramBox}
+                    onPress={() => {
+                      setEditingSr(sr);
+                      setTempVal(String(displayVal));
+                    }}
+                  >
+                    <Text style={styles.paramText}>
+                      {displayVal}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Y / N DROPDOWN */}
+                  <View style={styles.ynRow}>
+                    <CreasingDropdown
+                      value={ynValues[index]}
+                      mode="yesno"
+                      onChange={(v) => handleYNChange(index, v as 0 | 1)}
+                    />
+                  </View>
+
+                </View>
+              );
+            })}
+          </View>
+
+
         </ImageBackground>
       </View>
 
@@ -125,6 +235,54 @@ const handleChange = (index: number, value: number | null) => {
       </View>
 
     </View>
+    {/* EDIT GREEN BOX MODAL */}
+        <Modal visible={editingSr !== null} transparent animationType="fade">
+          <View style={styles.modalBg}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>Edit Value</Text>
+
+              <TextInput
+                style={styles.input}
+                value={tempVal}
+                onChangeText={setTempVal}
+                keyboardType="numeric"
+              />
+
+              <View style={styles.row}>
+                <Text
+                  onPress={() => setEditingSr(null)}
+                  style={styles.cancel}
+                >
+                  Cancel
+                </Text>
+
+                <Text
+                  style={styles.save}
+                  onPress={() => {
+                    const sr = editingSr!;
+                    setEdited({ ...edited, [sr]: tempVal });
+
+                    const orig = initialParams?.find(
+                      (p: any) => Number(p.parameter_no) === sr
+                    );
+
+                    onParamEdit?.({
+                      parameter_no: sr,
+                      value_01: tempVal,
+                      section: orig?.section ?? 'Creasing',
+                      parameter: orig?.parameter ?? '',
+                      unit: orig?.unit ?? '',
+                    });
+
+                    setEditingSr(null);
+                  }}
+                >
+                  Save
+                </Text>
+              </View>
+            </View>
+          </View>
+        </Modal>
   </View>
 );
 }
@@ -197,6 +355,87 @@ creaseSlot: {
   width: 48,        // horizontal pitch (distance between dropdown centers)
   alignItems: 'center',
 },
+
+columnRow: {
+  position: 'absolute',
+  top: 20,
+  left: 0,
+  right: 0,
+  flexDirection: 'row',
+  justifyContent: 'center',
+},
+
+column: {
+  width: 90,              // 👈 FIXED column width (important)
+  alignItems: 'center',
+},
+
+paramBox: {
+  marginTop: 8,
+  width: 75,
+  height: 37,
+  borderWidth: 1,
+  borderColor: '#000',
+  backgroundColor: '#1edd3e',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderRadius: 2,
+},
+
+paramText: {
+  fontSize: 20,
+  fontWeight: '700',
+  color: '#000',
+},
+
+ynRow: {
+  marginTop: 14,
+},
+
+modalBg: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.45)',
+  justifyContent: 'center',
+  padding: 20,
+},
+
+modal: {
+  backgroundColor: '#fff',
+  padding: 12,
+  borderRadius: 10,
+  width: 400,
+  alignSelf: 'center',
+},
+
+modalTitle: {
+  fontSize: 18,
+  fontWeight: '700',
+  marginBottom: 10,
+},
+
+input: {
+  borderWidth: 1,
+  borderColor: '#aaa',
+  borderRadius: 6,
+  padding: 8,
+},
+
+row: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  marginTop: 12,
+},
+
+cancel: {
+  marginRight: 20,
+  color: '#666',
+},
+
+save: {
+  color: '#007bff',
+  fontWeight: '700',
+},
+
 
 
 });
