@@ -46,8 +46,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   picker: {
-    width: 90,
-    height: 40,
+    width: 120,
+    height: 100,
   },
   image: {
     width: 80,

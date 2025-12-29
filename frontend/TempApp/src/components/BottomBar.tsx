@@ -89,8 +89,6 @@ const isActive =
           );
         })}
 
-        
-
 
         {/* SETTINGS Button */}
         <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
