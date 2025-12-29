@@ -12,24 +12,44 @@ import {
 
 const OPTIONS = [
   {
-    label: 'Creasing 1',
+    label: 'F3',
     value: 1,
     image: require('../../assets/crease_1.png'),
   },
   {
-    label: 'Creasing 2',
+    label: 'F1',
     value: 2,
     image: require('../../assets/crease_2.png'),
   },
   {
-    label: 'Creasing 3',
+    label: 'F2',
     value: 3,
     image: require('../../assets/crease_3.png'),
   },
   {
-    label: 'Creasing 4',
+    label: '4',
     value: 4,
     image: require('../../assets/crease_4.png'),
+  },
+  {
+    label: 'M32',
+    value: 5,
+    image: require('../../assets/crease_5.png'),
+  },
+  {
+    label: 'M10',
+    value: 6,
+    image: require('../../assets/crease_6.png'),
+  },
+  {
+    label: 'M20',
+    value: 7,
+    image: require('../../assets/crease_7.png'),
+  },
+  {
+    label: 'M12',
+    value: 8,
+    image: require('../../assets/crease_8.png'),
   },
 ];
 
@@ -53,20 +73,29 @@ const CreasingDropdown = ({ value, onChange }: Props) => {
 
   return (
     <View style={styles.container}>
-      {/* DROPDOWN BUTTON */}
-      <TouchableOpacity
-        ref={buttonRef}
-        style={styles.dropdown}
-        activeOpacity={0.7}
-        onPress={() => {
-          buttonRef.current?.measureInWindow((x, y, width, height) => {
-            setMenuPos({ x, y: y + height });
-            setOpen(true);
-          });
-        }}
-      >
-        <Text style={styles.arrow}>▼</Text>
-      </TouchableOpacity>
+
+  {/* SELECTED LABEL */}
+  {selected && (
+    <Text style={styles.selectedLabel}>
+      {selected.label}
+    </Text>
+  )}
+
+  {/* DROPDOWN BUTTON */}
+  <TouchableOpacity
+    ref={buttonRef}
+    style={styles.dropdown}
+    activeOpacity={0.7}
+    onPress={() => {
+      buttonRef.current?.measureInWindow((x, y, width, height) => {
+        setMenuPos({ x, y: y + height });
+        setOpen(true);
+      });
+    }}
+  >
+    <Text style={styles.arrow}>▼</Text>
+  </TouchableOpacity>
+
 
       {/* DROPDOWN MENU */}
       <Modal
@@ -176,4 +205,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
   },
+
+  selectedLabel: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#000',
+  marginBottom: 15,   // 👈 space between label & dropdown
+},
+
 });

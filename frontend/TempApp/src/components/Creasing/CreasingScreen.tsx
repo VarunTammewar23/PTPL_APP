@@ -12,6 +12,8 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Modal,
+  TextInput,
 } from 'react-native';
 
 import CreasingDropdown from './CreasingDropdown';
@@ -21,6 +23,9 @@ import CreasingDropdown from './CreasingDropdown';
 const CREASING_PARAM_NOS = [297, 298, 299, 300];
 const DROPDOWN_COUNT = 4;
 
+const CREASING_BOX_PARAM_NOS = [293, 294, 295, 296];
+
+
 /* ---------- COMPONENT ---------- */
 
 function CreasingScreen1(
@@ -29,6 +34,9 @@ function CreasingScreen1(
 ) {
  const [values, setValues] = useState<(number | null)[]>(
   Array(DROPDOWN_COUNT).fill(null)
+);
+const [boxValues, setBoxValues] = useState<(string | number)[]>(
+  Array(DROPDOWN_COUNT).fill('')
 );
 
 
@@ -45,40 +53,77 @@ function CreasingScreen1(
   setValues(next);
 }, [initialParams]);
 
+useEffect(() => {
+  if (!initialParams) return;
+
+  const nextBoxValues = CREASING_BOX_PARAM_NOS.map(sr => {
+    const p = initialParams.find(
+      (x: any) => Number(x.parameter_no) === sr
+    );
+    return p ? p.value_01 ?? '' : '';
+  });
+
+  setBoxValues(nextBoxValues);
+}, [initialParams]);
+
+const [edited, setEdited] = useState<Record<number, string>>({});
+const [editingSr, setEditingSr] = useState<number | null>(null);
+const [tempVal, setTempVal] = useState('');
+
 
   /* ---------- REF API ---------- */
 
-  useImperativeHandle(ref, () => ({
-    getFinalParams: () =>
-      values.map((v, i) => ({
-        parameter_no: CREASING_PARAM_NOS[i],
-        value_01: v ?? '',
-        section: 'Creasing',
-        parameter: `Creasing ${i + 1}`,
-        unit: '',
-      })),
+useImperativeHandle(ref, () => ({
+  getFinalParams: () => [
+    // DROPDOWN PARAMS (297–300)
+    ...CREASING_PARAM_NOS.map((sr, i) => ({
+      parameter_no: sr,
+      value_01: values[i] ?? '',
+      section: 'Creasing',
+      parameter: `Creasing ${i + 1}`,
+      unit: '',
+    })),
 
-   setInitialValues: (vals: number[]) => {
-  setValues(vals);
-},
+    // BOX PARAMS (293–296)
+    ...CREASING_BOX_PARAM_NOS.map((sr, i) => {
+  const orig = initialParams?.find(
+    (p: any) => Number(p.parameter_no) === sr
+  );
 
-  }));
+  return {
+    parameter_no: sr,
+    value_01: edited[sr] ?? boxValues[i] ?? '',
+    section: orig?.section ?? 'Creasing',
+    parameter: orig?.parameter ?? '',
+    unit: orig?.unit ?? '',
+  };
+}),
+  ],
+}));
+
 
   /* ---------- HANDLERS ---------- */
 
 const handleChange = (index: number, value: number | null) => {
-    const next = [...values];
-    next[index] = value;
-    setValues(next);
+  const next = [...values];
+  next[index] = value;
+  setValues(next);
 
-    onParamEdit?.({
-      parameter_no: CREASING_PARAM_NOS[index],
-      value_01: value ?? '',
-      section: 'Creasing',
-      parameter: `Creasing ${index + 1}`,
-      unit: '',
-    });
-  };
+  const sr = CREASING_PARAM_NOS[index];
+
+  const orig = initialParams?.find(
+    (p: any) => Number(p.parameter_no) === sr
+  );
+
+  onParamEdit?.({
+    parameter_no: sr,
+    value_01: value ?? '',
+    section: orig?.section ?? 'Creasing',
+    parameter: orig?.parameter ?? '',
+    unit: orig?.unit ?? '',
+  });
+};
+
 
   /* ---------- UI ---------- */
 
@@ -94,16 +139,41 @@ const handleChange = (index: number, value: number | null) => {
           resizeMode="contain"
         >
           {/* DROPDOWNS OVER IMAGE */}
-         <View style={styles.overlay}>
+<View style={styles.overlay}>
   {values.map((val, index) => (
     <View key={index} style={styles.dropdownSlot}>
+      {/* DROPDOWN + IMAGE */}
       <CreasingDropdown
         value={val}
         onChange={(v) => handleChange(index, v)}
       />
+
+      {/* PARAMETER BOX */}
+      <TouchableOpacity
+        style={styles.paramBox}
+        onPress={() => {
+        const sr = CREASING_BOX_PARAM_NOS[index];
+        const currentVal =
+          edited[sr] ??
+          boxValues[index] ??
+          '';
+
+        setEditingSr(sr);
+        setTempVal(String(currentVal));
+      }}
+      >
+        <Text style={styles.paramText}>
+  {edited[CREASING_BOX_PARAM_NOS[index]] ??
+    boxValues[index] ??
+    '-'}
+</Text>
+
+
+      </TouchableOpacity>
     </View>
   ))}
 </View>
+
         </ImageBackground>
       </View>
 
@@ -125,6 +195,60 @@ const handleChange = (index: number, value: number | null) => {
       </View>
 
     </View>
+
+    {/* EDIT MODAL */}
+<Modal visible={editingSr !== null} transparent animationType="fade">
+  <View style={styles.modalBg}>
+    <View style={styles.modal}>
+      <Text style={styles.modalTitle}>Edit Value</Text>
+
+      <TextInput
+        style={styles.input}
+        value={tempVal}
+        onChangeText={setTempVal}
+        keyboardType="numeric"
+      />
+
+      <View style={styles.row}>
+        <Text
+          onPress={() => setEditingSr(null)}
+          style={styles.cancel}
+        >
+          Cancel
+        </Text>
+
+        <Text
+          style={styles.save}
+          onPress={() => {
+            const sr = editingSr!;
+            const newVal = tempVal;
+
+            setEdited({ ...edited, [sr]: newVal });
+
+            const orig = initialParams?.find(
+  (p: any) => Number(p.parameter_no) === sr
+);
+
+onParamEdit?.({
+  parameter_no: sr,
+  value_01: newVal,
+  section: orig?.section ?? 'Creasing',
+  parameter: orig?.parameter ?? '',
+  unit: orig?.unit ?? '',
+});
+
+
+            setEditingSr(null);
+          }}
+        >
+          Save
+        </Text>
+      </View>
+    </View>
+  </View>
+</Modal>
+
+
   </View>
 );
 }
@@ -143,8 +267,10 @@ const styles = StyleSheet.create({
   height: '100%',
 },
 dropdownSlot: {
-  marginHorizontal: 0,   // 👈 adjust THIS number only
+  marginHorizontal: 0,
+  alignItems: 'center',   // ✅ THIS CENTERS EVERYTHING
 },
+
 
 overlay: {
   position: 'absolute',
@@ -193,9 +319,65 @@ rightButtons: {
   backgroundColor: '#fff',
 },
 
-creaseSlot: {
-  width: 48,        // horizontal pitch (distance between dropdown centers)
+paramBox: {
+  marginTop: 6,              // ⬅ space below image
+  width: 75,
+  height: 37,
+  borderWidth: 1,
+  borderColor: '#000',
+  backgroundColor: '#1edd3eff',
+  justifyContent: 'center',
   alignItems: 'center',
+  borderRadius: 2,
+},
+
+paramText: {
+  fontSize: 20,
+  fontWeight: '700',
+  color: '#000',
+},
+modalBg: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.45)',
+  justifyContent: 'center',
+  padding: 20,
+},
+
+modal: {
+  backgroundColor: '#fff',
+  padding: 12,
+  borderRadius: 10,
+  width: 400,
+  alignSelf: 'center',
+},
+
+modalTitle: {
+  fontSize: 18,
+  fontWeight: '700',
+  marginBottom: 10,
+},
+
+input: {
+  borderWidth: 1,
+  borderColor: '#aaa',
+  borderRadius: 6,
+  padding: 8,
+},
+
+row: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  marginTop: 12,
+},
+
+cancel: {
+  marginRight: 20,
+  color: '#666',
+},
+
+save: {
+  color: '#007bff',
+  fontWeight: '700',
 },
 
 
