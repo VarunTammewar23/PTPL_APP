@@ -81,9 +81,65 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  // 🔴 Holds unsaved changes across ALL panels
+  const pendingEditsRef = useRef<Map<number, any>>(new Map());
+  const [knifeCountState, setKnifeCountState] = useState<number>(0);
+
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
+
+console.log(
+  "PARAM TYPES:",
+  recipeParams.map(p => ({
+    no: p.parameter_no,
+    type: typeof p.parameter_no
+  }))
+);
+
+function getEffectiveParamValue(
+  params: RecipeParam[],
+  paramNo: number
+): number {
+  const pending = pendingEditsRef.current.get(paramNo);
+  if (pending?.value_01 !== undefined) {
+    const v = Number(pending.value_01);
+    return isNaN(v) ? 0 : v;
+  }
+
+  const fromDb = params.find(p => p.parameter_no === paramNo);
+  const v = Number(fromDb?.value_01);
+  return isNaN(v) ? 0 : v;
+}
+
+
+
+const knifeCount =
+  knifeCountState ||
+  getEffectiveParamValue(recipeParams, 9);
+
+const isKnife1Enabled = knifeCount >= 1;
+const isKnife2Enabled = knifeCount >= 2;
+const isKnife3Enabled = knifeCount >= 3;
+
+
+// 🔴 STEP 5 — AUTO CLOSE KNIFE SCREENS WHEN COUNT DROPS
+useEffect(() => {
+  // If Knife 3 becomes disabled → close all Knife 3 screens
+  if (!isKnife3Enabled) {
+    setShowK3A(false);
+    setShowK3B(false);
+    setShowK3C(false);
+  }
+
+  // If Knife 2 becomes disabled → close all Knife 2 screens
+  if (!isKnife2Enabled) {
+    setShowK2A(false);
+    setShowK2B(false);
+    setShowK2C(false);
+  }
+}, [knifeCount]);
+
 
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(true);
   const [loadingParams, setLoadingParams] = useState<boolean>(false);
@@ -304,10 +360,6 @@ function openSubScreen(panel: string, sub: string) {
 
 
 
-  // 🔴 Holds unsaved changes across ALL panels
-  const pendingEditsRef = useRef<Map<number, any>>(new Map());
-
-// 🔴 Capture edits from ANY panel, ANY time
 const onParamEdit = (p: any) => {
   if (!p || typeof p.parameter_no !== 'number') return;
 
@@ -315,7 +367,14 @@ const onParamEdit = (p: any) => {
     ...pendingEditsRef.current.get(p.parameter_no),
     ...p,
   });
+
+  // 🔥 IMPORTANT: if param 9 changes → update state
+  if (p.parameter_no === 9) {
+    const v = Number(p.value_01);
+    setKnifeCountState(isNaN(v) ? 0 : v);
+  }
 };
+
 
 
   const [activePanel, setActivePanel] = useState<string>("HOME");
@@ -337,6 +396,12 @@ const onParamEdit = (p: any) => {
  
 
 const openPanel = (name: string) => {
+
+    // 🔴 KNIFE ENABLE CHECK
+    if (name === "KNIFE 1" && !isKnife1Enabled) return;
+    if (name === "KNIFE 2" && !isKnife2Enabled) return;
+    if (name === "KNIFE 3" && !isKnife3Enabled) return;
+
   const PANELS_WITH_SUBMENU = [
     "RPF",
     "RT ANGLE",
@@ -1024,8 +1089,6 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
 
 
     
-
-    
   const labels = [
     "HOME",
     "RECIPE",
@@ -1446,11 +1509,16 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
                     return;
                   }
 
+                  // 🔴 BLOCK DISABLED KNIVES
+                  if (activePanel === "KNIFE 2" && !isKnife2Enabled) return;
+                  if (activePanel === "KNIFE 3" && !isKnife3Enabled) return;
+
                   setActivePanel(activePanel);
                   setActiveSubScreen(it);
                   setShowSideMenu(false);
                   openSubScreen(activePanel, it);
                 }}
+
               >
                 <View style={styles.sideMenuGloss} />
                 <Text style={styles.sideMenuText}>{it}</Text>
@@ -1468,7 +1536,12 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
       labels={labels}
       activePanel={activePanel}
       activeSubScreen={activeSubScreen}
-disabledLabels={selectedRecipeId !== -1 ? ["HOME"] : []}
+      disabledLabels={[
+        ...(selectedRecipeId !== -1 ? ["HOME"] : []),
+        !isKnife1Enabled ? "KNIFE 1" : "",
+        !isKnife2Enabled ? "KNIFE 2" : "",
+        !isKnife3Enabled ? "KNIFE 3" : "",
+      ].filter(Boolean)}
       panelRefs={panelRefs}
       onSave={saveCurrentMachineData}
       onPressItem={label => {
