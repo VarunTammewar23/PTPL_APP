@@ -26,7 +26,7 @@ import VideoModal from '../VideoModal';
 const PARAM_SR = [150, 151, 152, 153];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-<<<<<<< HEAD
+
   150: { x: 15, y: 85.5 },
   151: { x: 55, y: 68 },
   152: { x: 86.5, y: 12 },
@@ -38,19 +38,7 @@ const SERIAL_POS = [
   { id: 151, x: 53.5, y: 75.7 },
   { id: 152, x: 85, y: 5 },
   { id: 153, x: 35.5, y: 24.3 },
-=======
-  150: { x: 15.3, y: 85 },
-  151: { x: 55.3, y: 68 },
-  152: { x: 86.5, y: 12 },
-  153: { x: 37, y: 31.5 },
-};
 
-const SERIAL_POS = [
-  { id: 150, x: 21, y: 90 },
-  { id: 151, x: 60, y: 61 },
-  { id: 152, x: 88, y: 5 },
-  { id: 153, x: 43, y: 25 },
->>>>>>> d8f5b6a493600982f73a07f681fcc71d84ace969
 ];
 
 const BOX_W = 100;

@@ -26,20 +26,13 @@ import VideoModal from '../VideoModal';
 const PARAM_SR = [89];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-<<<<<<< HEAD
   89: { x: 46.5, y: 38 },
-=======
-  89: { x: 54, y: 38 },
->>>>>>> d8f5b6a493600982f73a07f681fcc71d84ace969
+
   
 };
 
 const SERIAL_POS = [
-<<<<<<< HEAD
   { id: 89, x: 44.7, y: 31.5 },
-=======
-  { id: 89, x: 45.9, y: 38 },
->>>>>>> d8f5b6a493600982f73a07f681fcc71d84ace969
 ];
 
 const BOX_W = 100;
