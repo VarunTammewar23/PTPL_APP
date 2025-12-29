@@ -83,6 +83,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
 
   // 🔴 Holds unsaved changes across ALL panels
   const pendingEditsRef = useRef<Map<number, any>>(new Map());
+  const [knifeCountState, setKnifeCountState] = useState<number>(0);
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
@@ -113,7 +114,9 @@ function getEffectiveParamValue(
 
 
 
-const knifeCount = getEffectiveParamValue(recipeParams, 9);
+const knifeCount =
+  knifeCountState ||
+  getEffectiveParamValue(recipeParams, 9);
 
 const isKnife1Enabled = knifeCount >= 1;
 const isKnife2Enabled = knifeCount >= 2;
@@ -357,7 +360,6 @@ function openSubScreen(panel: string, sub: string) {
 
 
 
-// 🔴 Capture edits from ANY panel, ANY time
 const onParamEdit = (p: any) => {
   if (!p || typeof p.parameter_no !== 'number') return;
 
@@ -365,7 +367,14 @@ const onParamEdit = (p: any) => {
     ...pendingEditsRef.current.get(p.parameter_no),
     ...p,
   });
+
+  // 🔥 IMPORTANT: if param 9 changes → update state
+  if (p.parameter_no === 9) {
+    const v = Number(p.value_01);
+    setKnifeCountState(isNaN(v) ? 0 : v);
+  }
 };
+
 
 
   const [activePanel, setActivePanel] = useState<string>("HOME");
