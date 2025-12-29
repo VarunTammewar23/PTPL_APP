@@ -1,4 +1,4 @@
-// src/components/Knife 2/K2A.tsx
+// src/components/Knife 1/K2A.tsx
 import React, {
   useEffect,
   useMemo,
@@ -23,18 +23,30 @@ import VideoModal from '../VideoModal';
 /* ---------- CONFIG ---------- */
 
 // 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
-const PARAM_SR = [201, 202, 203];
+const PARAM_SR = [103,104,105,106,107,108,109,110,111];
 
-const POSITIONS: Record<number, { x: number; y: number }> = {
-  201: { x: 50, y: 30 },
-  202: { x: 50, y: 50 },
-  203: { x: 50, y: 70 },
-};
+ const POSITIONS: Record<number, { x: number; y: number }> = {
+  103: { x: 17.6, y: 15.5 },
+  104: { x: 17.6, y: 82 },
+  105: { x: 28.3, y: 28.5 },
+  106: { x: 28.3, y: 67.3 },
+  107: { x: 28.3, y: 36.5 },
+  108: { x: 28.3, y: 59.6},
+  109: { x: 32.3, y: 48.5 },
+  110: { x: 54.3, y: 23 },
+  111: { x: 54.25, y: 73.6 },
+ };
 
 const SERIAL_POS = [
-  { id: 201, x: 20, y: 30 },
-  { id: 202, x: 20, y: 50 },
-  { id: 203, x: 20, y: 70 },
+  { id: 103, x: 13, y: 15 },
+  { id: 104, x: 13, y: 82 },
+  { id: 105, x: 23, y: 28 },
+  { id: 106, x: 23, y: 67 },
+  { id: 107, x: 23, y: 36 },
+  { id: 108, x: 23, y: 60 },
+  { id: 109, x: 27.5, y: 48 },
+  { id: 110, x: 58.7, y: 23 },
+  { id: 111, x: 58.7, y: 73.8 },
 ];
 
 const BOX_W = 100;
@@ -152,7 +164,7 @@ function K2AInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'Knife 2',
+        section: values[sr]?.section ?? 'Knife 1',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -321,7 +333,7 @@ function K2AInner(
                   onParamEdit?.({
                     parameter_no: sr,
                     value_01: newVal,
-                    section: values[sr]?.section ?? 'Knife 2',
+                    section: values[sr]?.section ?? 'Knife 1',
                     parameter: values[sr]?.parameter ?? '',
                     unit: values[sr]?.unit ?? '',
                   });
@@ -440,14 +452,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
   },
-  paramText: { fontSize: 24, fontWeight: '700' },
+  paramText: { fontSize: 16, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
-    backgroundColor: '#000',
+    backgroundColor: '#000000ff',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 6,
+    width: 20,
+    height: 10,
   },
   serialText: { color: '#fff', fontWeight: '700' },
 

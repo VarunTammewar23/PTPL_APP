@@ -23,18 +23,25 @@ import VideoModal from '../VideoModal';
 /* ---------- CONFIG ---------- */
 
 // 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
-const PARAM_SR = [201, 202, 203];
+const PARAM_SR = [112, 113, 114, 114, 115, 115];
 
-const POSITIONS: Record<number, { x: number; y: number }> = {
-  201: { x: 50, y: 30 },
-  202: { x: 50, y: 50 },
-  203: { x: 50, y: 70 },
-};
+const POSITIONS = [
+  { x: 36.65, y: 51.5 }, // 112
+  { x: 27.9, y: 5 },  // 113
+  { x: 45, y: 41.7 }, // 114 (first)
+  { x: 61.9, y: 63.4 }, // 114 (second)
+  { x: 44.9, y: 72 }, // 115 (first)
+  { x: 23.8, y: 58.3 }, // 115 (second)
+];
+
 
 const SERIAL_POS = [
-  { id: 201, x: 20, y: 30 },
-  { id: 202, x: 20, y: 50 },
-  { id: 203, x: 20, y: 70 },
+  { id: 112, x: 36.5, y: 57.5 },
+  { id: 113, x: 23, y: 5 },
+  { id: 114, x: 45, y: 35.5 },
+  { id: 114, x: 61.8, y: 57.6 },
+  { id: 115, x: 44.7, y: 78 },
+  { id: 115, x: 23.7, y: 64 },
 ];
 
 const BOX_W = 100;
@@ -205,69 +212,71 @@ function K1BInner(
                 )}
 
                 {/* PARAM BOXES */}
-                {PARAM_SR.map(sr => {
-                  const pos = POSITIONS[sr];
-                  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+                {PARAM_SR.map((sr, index) => {
+  const pos = POSITIONS[index];
+  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
 
-                  let cx = (pos.x / 100) * IMG_W;
-                  let cy = (pos.y / 100) * IMG_H;
+  let cx = (pos.x / 100) * IMG_W;
+  let cy = (pos.y / 100) * IMG_H;
 
-                  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
-                  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
 
-                  return (
-                    <TouchableOpacity
-                      key={sr}
-                      onPress={() => {
-                        setEditingSr(sr);
-                        setTempVal(String(val));
-                      }}
-                      style={[
-                        styles.paramBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: BOX_W,
-                          height: BOX_H,
-                          transform: [
-                            { translateX: -BOX_W / 2 },
-                            { translateY: -BOX_H / 2 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.paramText}>{val}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+  return (
+    <TouchableOpacity
+      key={`${sr}-${index}`}   // ✅ UNIQUE KEY
+      onPress={() => {
+        setEditingSr(sr);
+        setTempVal(String(val));
+      }}
+      style={[
+        styles.paramBox,
+        {
+          left: cx,
+          top: cy,
+          width: BOX_W,
+          height: BOX_H,
+          transform: [
+            { translateX: -BOX_W / 2 },
+            { translateY: -BOX_H / 2 },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.paramText}>{val}</Text>
+    </TouchableOpacity>
+  );
+})}
+
 
                 {/* SERIAL NUMBERS */}
-                {SERIAL_POS.map(p => {
-                  const cx = (p.x / 100) * IMG_W;
-                  const cy = (p.y / 100) * IMG_H;
+                {SERIAL_POS.map((p, index) => {
+  const cx = (p.x / 100) * IMG_W;
+  const cy = (p.y / 100) * IMG_H;
 
-                  return (
-                    <View
-                      key={p.id}
-                      pointerEvents="none"
-                      style={[
-                        styles.serialBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: 50,
-                          height: 30,
-                          transform: [
-                            { translateX: -25 },
-                            { translateY: -15 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.serialText}>{p.id}</Text>
-                    </View>
-                  );
-                })}
+  return (
+    <View
+      key={`${p.id}-${index}`}   // ✅ UNIQUE KEY
+      pointerEvents="none"
+      style={[
+        styles.serialBox,
+        {
+          left: cx,
+          top: cy,
+          width: 50,
+          height: 30,
+          transform: [
+            { translateX: -25 },
+            { translateY: -15 },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.serialText}>{p.id}</Text>
+    </View>
+  );
+})}
+
               </ImageBackground>
             </View>
           </ZoomableView>
@@ -365,39 +374,40 @@ function K1BInner(
                 ))}
               </View>
 
-              {PARAM_SR.map(sr => {
-                const orig = values[sr]?.value_01 ?? '';
-                const param = values[sr]?.parameter ?? '';
-                const changed = edited[sr] ?? '-';
+              {PARAM_SR.map((sr, index) => {
+  const orig = values[sr]?.value_01 ?? '';
+  const param = values[sr]?.parameter ?? '';
+  const changed = edited[sr] ?? '-';
 
-                return (
-                  <View key={sr} style={styles.popupRow}>
-                    {POPUP_COLUMNS.map(col => {
-                      let value: any = '';
-                      if (col.key === 'sr') value = sr;
-                      if (col.key === 'parameter') value = param;
-                      if (col.key === 'orig') value = orig;
-                      if (col.key === 'changed') value = changed;
+  return (
+    <View key={`${sr}-${index}`} style={styles.popupRow}>
+      {POPUP_COLUMNS.map(col => {
+        let value: any = '';
+        if (col.key === 'sr') value = sr;
+        if (col.key === 'parameter') value = param;
+        if (col.key === 'orig') value = orig;
+        if (col.key === 'changed') value = changed;
 
-                      return (
-                        <Text
-                          key={col.key}
-                          style={[
-                            styles.popupCell,
-                            styles.popupBodyText,
-                            col.width && { width: col.width },
-                            col.flex && { flex: col.flex },
-                            col.key === 'changed' &&
-                              changed !== '-' && { color: '#007bff' },
-                          ]}
-                        >
-                          {value}
-                        </Text>
-                      );
-                    })}
-                  </View>
-                );
-              })}
+        return (
+          <Text
+            key={col.key}
+            style={[
+              styles.popupCell,
+              styles.popupBodyText,
+              col.width && { width: col.width },
+              col.flex && { flex: col.flex },
+              col.key === 'changed' &&
+                changed !== '-' && { color: '#007bff' },
+            ]}
+          >
+            {value}
+          </Text>
+        );
+      })}
+    </View>
+  );
+})}
+
             </View>
           </View>
         </View>
@@ -440,7 +450,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
   },
-  paramText: { fontSize: 24, fontWeight: '700' },
+  paramText: { fontSize: 16, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-// src/components/Knife 3/K3C.tsx
+// src/components/Knife 1/K3C.tsx
 import React, {
   useEffect,
   useMemo,
@@ -23,18 +23,16 @@ import VideoModal from '../VideoModal';
 /* ---------- CONFIG ---------- */
 
 // 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
-const PARAM_SR = [201, 202, 203];
+const PARAM_SR = [116, 117];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  201: { x: 50, y: 30 },
-  202: { x: 50, y: 50 },
-  203: { x: 50, y: 70 },
+  116: { x: 33.5, y: 10.5 },
+  117: { x: 46.95, y: 27.8 },
 };
 
 const SERIAL_POS = [
-  { id: 201, x: 20, y: 30 },
-  { id: 202, x: 20, y: 50 },
-  { id: 203, x: 20, y: 70 },
+  { id: 116, x: 33.5, y: 5 },
+  { id: 117, x: 46.8, y: 22 },
 ];
 
 const BOX_W = 100;
@@ -152,7 +150,7 @@ function K3CInner(
     getFinalParams: () =>
       PARAM_SR.map(sr => ({
         parameter_no: sr,
-        section: values[sr]?.section ?? 'Knife 3',
+        section: values[sr]?.section ?? 'Knife 1',
         parameter: values[sr]?.parameter ?? '',
         value_01: edited[sr] ?? values[sr]?.value_01 ?? '',
         unit: values[sr]?.unit ?? '',
@@ -321,7 +319,7 @@ function K3CInner(
                   onParamEdit?.({
                     parameter_no: sr,
                     value_01: newVal,
-                    section: values[sr]?.section ?? 'Knife 3',
+                    section: values[sr]?.section ?? 'Knife 1',
                     parameter: values[sr]?.parameter ?? '',
                     unit: values[sr]?.unit ?? '',
                   });
@@ -440,7 +438,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
   },
-  paramText: { fontSize: 24, fontWeight: '700' },
+  paramText: { fontSize: 16, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',

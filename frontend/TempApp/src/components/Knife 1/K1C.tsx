@@ -23,18 +23,16 @@ import VideoModal from '../VideoModal';
 /* ---------- CONFIG ---------- */
 
 // 👉 CHANGE THESE PARAM NUMBERS LATER IF NEEDED
-const PARAM_SR = [201, 202, 203];
+const PARAM_SR = [116, 117];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  201: { x: 50, y: 30 },
-  202: { x: 50, y: 50 },
-  203: { x: 50, y: 70 },
+  116: { x: 33.5, y: 10.5 },
+  117: { x: 46.95, y: 27.8 },
 };
 
 const SERIAL_POS = [
-  { id: 201, x: 20, y: 30 },
-  { id: 202, x: 20, y: 50 },
-  { id: 203, x: 20, y: 70 },
+  { id: 116, x: 33.5, y: 5 },
+  { id: 117, x: 46.8, y: 22 },
 ];
 
 const BOX_W = 100;
@@ -440,7 +438,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
   },
-  paramText: { fontSize: 24, fontWeight: '700' },
+  paramText: { fontSize: 16, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
