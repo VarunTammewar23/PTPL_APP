@@ -27,10 +27,10 @@ const PARAM_SR = [150, 151, 152, 153];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
 
-  150: { x: 15, y: 85.5 },
+  150: { x: 15.3, y: 85.5 },
   151: { x: 55, y: 68 },
   152: { x: 86.5, y: 12 },
-  153: { x: 36.7, y: 31.5 },
+  153: { x: 37, y: 31.5 },
 };
 
 const SERIAL_POS = [

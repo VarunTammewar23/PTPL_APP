@@ -270,36 +270,8 @@ function getSubmenuItems(panel: string): string[] {
 }
 
 function openSubScreen(panel: string, sub: string) {
-  // reset all screens
-  setShowMachine(false);
-  setShowFolds(false);
-  setShowOffset(false);
-  setShowGlueTap(false);
-  setShowSuctionGap(false);
-  setShowAllSpeed(false);
-  setShowSideLay(false);
-  setShowBlowerSettings(false);
-  setShowRollerGap(false);
-  setShowFoldingTray(false);
-  setShowFoldSetting(false);
-  setShowFoldSetting2(false);
-  setShowGapSetting(false);
-  setShowK1A(false);
-  setShowK1B(false);
-  setShowK1C(false);
-  setShowK2A(false);
-  setShowK2B(false);
-  setShowK2C(false);
-  setShowK3A(false);
-  setShowK3B(false);
-  setShowK3C(false);
-  setShowSTPTray(false);
-  setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
-
-
-
+  // ✅ NOW we are switching screens
+  closeAllPanels();
 
   // RPF
   if (panel === "RPF" && sub === "PAPER SIZES") return setShowMachine(true);
@@ -313,58 +285,26 @@ setShowCreasing3(false);
   if (panel === "RPF" && sub === "ROLLER GAP") return setShowRollerGap(true);
   if (panel === "RPF" && sub === "FOLDING TRAY") return setShowFoldingTray(true);
 
-
   // RT ANGLE
   if (panel === "RT ANGLE" && sub === "FOLD SETTING") return setShowFoldSetting(true);
   if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return setShowFoldSetting2(true);
   if (panel === "RT ANGLE" && sub === "GAP SETTING") return setShowGapSetting(true);
-  
 
-        // KNIFE 1
-      if (panel === "KNIFE 1" && sub === "KNIFE K1 A") {
-        setShowK1A(true);
-        return;
-      }
-      if (panel === "KNIFE 1" && sub === "KNIFE K1 B") {
-        setShowK1B(true);
-        return;
-      }
-      if (panel === "KNIFE 1" && sub === "KNIFE K1 C") {
-        setShowK1C(true);
-        return;
-      }
+  // KNIFE 1
+  if (panel === "KNIFE 1" && sub === "KNIFE K1 A") return setShowK1A(true);
+  if (panel === "KNIFE 1" && sub === "KNIFE K1 B") return setShowK1B(true);
+  if (panel === "KNIFE 1" && sub === "KNIFE K1 C") return setShowK1C(true);
 
-      // KNIFE 2
-      if (panel === "KNIFE 2" && sub === "KNIFE K2 A") {
-        setShowK2A(true);
-        return;
-      }
-      if (panel === "KNIFE 2" && sub === "KNIFE K2 B") {
-        setShowK2B(true);
-        return;
-      }
-      if (panel === "KNIFE 2" && sub === "KNIFE K2 C") {
-        setShowK2C(true);
-        return;
-      }
+  // KNIFE 2
+  if (panel === "KNIFE 2" && sub === "KNIFE K2 A") return setShowK2A(true);
+  if (panel === "KNIFE 2" && sub === "KNIFE K2 B") return setShowK2B(true);
+  if (panel === "KNIFE 2" && sub === "KNIFE K2 C") return setShowK2C(true);
 
-            // KNIFE 3
-      if (panel === "KNIFE 3" && sub === "KNIFE K3 A") {
-        setShowK3A(true);
-        return;
-      }
-      if (panel === "KNIFE 3" && sub === "KNIFE K3 B") {
-        setShowK3B(true);
-        return;
-      }
-      if (panel === "KNIFE 3" && sub === "KNIFE K3 C") {
-        setShowK3C(true);
-        return;
-      }
-
-
-
-    }
+  // KNIFE 3
+  if (panel === "KNIFE 3" && sub === "KNIFE K3 A") return setShowK3A(true);
+  if (panel === "KNIFE 3" && sub === "KNIFE K3 B") return setShowK3B(true);
+  if (panel === "KNIFE 3" && sub === "KNIFE K3 C") return setShowK3C(true);
+}
 
 
 
@@ -403,18 +343,41 @@ const onParamEdit = (p: any) => {
   const MENU_PADDING = 6;
 
  
+  function closeAllPanels() {
+  setShowMachine(false);
+  setShowFolds(false);
+  setShowOffset(false);
+  setShowGlueTap(false);
+  setShowSuctionGap(false);
+  setShowAllSpeed(false);
+  setShowSideLay(false);
+  setShowBlowerSettings(false);
+  setShowRollerGap(false);
+  setShowFoldingTray(false);
+  setShowFoldSetting(false);
+  setShowFoldSetting2(false);
+  setShowGapSetting(false);
+  setShowK1A(false);
+  setShowK1B(false);
+  setShowK1C(false);
+  setShowK2A(false);
+  setShowK2B(false);
+  setShowK2C(false);
+  setShowK3A(false);
+  setShowK3B(false);
+  setShowK3C(false);
+  setShowSTPTray(false);
+  setShowCreasing1(false);
+  setShowCreasing2(false);
+  setShowCreasing3(false);
+}
+
 
 const openPanel = (name: string) => {
-
-         // 🔴 FIX: close Creasing when opening any other panel
-  setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
-
-    // 🔴 KNIFE ENABLE CHECK
-    if (name === "KNIFE 1" && !isKnife1Enabled) return;
-    if (name === "KNIFE 2" && !isKnife2Enabled) return;
-    if (name === "KNIFE 3" && !isKnife3Enabled) return;
+  // 🔴 KNIFE ENABLE CHECK (keep this)
+  if (name === "KNIFE 1" && !isKnife1Enabled) return;
+  if (name === "KNIFE 2" && !isKnife2Enabled) return;
+  if (name === "KNIFE 3" && !isKnife3Enabled) return;
 
   const PANELS_WITH_SUBMENU = [
     "RPF",
@@ -424,50 +387,29 @@ setShowCreasing3(false);
     "KNIFE 3",
   ];
 
-        // 🔵 STP TRAY (DIRECT SCREEN)
-      if (name === "STP TRAY") {
-        if (selectedRecipeId === -1) {
-          Alert.alert("Select a recipe first");
-          return;
-        }
+  // 🔵 STP TRAY (DIRECT SCREEN → SHOULD CLOSE OTHERS)
+  if (name === "STP TRAY") {
+    if (selectedRecipeId === -1) {
+      Alert.alert("Select a recipe first");
+      return;
+    }
 
-        // reset all
-        setShowMachine(false);
-        setShowFolds(false);
-        setShowOffset(false);
-        setShowGlueTap(false);
-        setShowSuctionGap(false);
-        setShowAllSpeed(false);
-        setShowSideLay(false);
-        setShowBlowerSettings(false);
-        setShowRollerGap(false);
-        setShowFoldingTray(false);
-        setShowFoldSetting(false);
-        setShowFoldSetting2(false);
-        setShowGapSetting(false);
-        setShowK1A(false);
-        setShowK1B(false);
-        setShowK1C(false);
-        setShowK2A(false);
-        setShowK2B(false);
-        setShowK2C(false);
-        setShowK3A(false);
-        setShowK3B(false);
-        setShowK3C(false);
-        setShowSideMenu(false);
+    // ✅ NOW close all panels (intent → action)
+    closeAllPanels();
 
-        setShowSTPTray(true);
-        setActivePanel("STP TRAY");
-        setActiveSubScreen(null);
-        return;
-      }
+    setShowSideMenu(false);
+    setShowSTPTray(true);
+    setActivePanel("STP TRAY");
+    setActiveSubScreen(null);
+    return;
+  }
 
-
-      if (PANELS_WITH_SUBMENU.includes(name)) {
-        if (showSideMenu && activePanel === name) {
-          setShowSideMenu(false);
-          return;
-        }
+  // 🟢 PANELS WITH SUBMENU (DO NOT CLOSE CURRENT SCREEN)
+  if (PANELS_WITH_SUBMENU.includes(name)) {
+    if (showSideMenu && activePanel === name) {
+      setShowSideMenu(false);
+      return;
+    }
 
     panelRefs.current[name]?.measure(
       (fx: number, fy: number, w: number, h: number, px: number, py: number) => {
@@ -492,11 +434,11 @@ setShowCreasing3(false);
     return;
   }
 
+  // 🟡 OTHER PANELS (HOME / RECIPE etc.)
   setShowSideMenu(false);
   setActivePanel(name);
-
-  
 };
+
 
 
   const fetchRecipes = useCallback(async () => {
@@ -1675,45 +1617,14 @@ setShowCreasing3(false);
     return;
   }
 
-  // 🔴 CREASING (DIRECT SCREEN)
-    if (label === "CREASING") {
+if (label === "CREASING") {
   if (selectedRecipeId === -1) {
     Alert.alert("Select a recipe first");
     return;
   }
 
-  // reset all other screens
-  setShowMachine(false);
-  setShowFolds(false);
-  setShowOffset(false);
-  setShowGlueTap(false);
-  setShowSuctionGap(false);
-  setShowAllSpeed(false);
-  setShowSideLay(false);
-  setShowBlowerSettings(false);
-  setShowRollerGap(false);
-  setShowFoldingTray(false);
-  setShowFoldSetting(false);
-  setShowFoldSetting2(false);
-  setShowGapSetting(false);
-  setShowK1A(false);
-  setShowK1B(false);
-  setShowK1C(false);
-  setShowK2A(false);
-  setShowK2B(false);
-  setShowK2C(false);
-  setShowK3A(false);
-  setShowK3B(false);
-  setShowK3C(false);
-  setShowSTPTray(false);
-  setShowSideMenu(false);
+  closeAllPanels();
 
-  // 🔴 CLOSE ALL CREASING FIRST
-  setShowCreasing1(false);
-  setShowCreasing2(false);
-  setShowCreasing3(false);
-
-  // 🔴 DECIDE WHICH CREASING SCREEN TO OPEN
   const creasingCount = getEffectiveParamValue(recipeParams, 9);
 
   if (creasingCount === 1) setShowCreasing1(true);
@@ -1728,6 +1639,7 @@ setShowCreasing3(false);
   setActiveSubScreen(null);
   return;
 }
+
 
 
 

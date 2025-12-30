@@ -50,7 +50,7 @@ interface RecipeParam {
 const PARAM_SR = [18];
 
 const POSITIONS: Record<number, { x: number; y: number }> = {
-  18: { x: 22, y: 83 },
+  18: { x: 21.6, y: 83 },
 };
 
 const SERIAL_POS = [
