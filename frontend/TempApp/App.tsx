@@ -18,34 +18,51 @@ export type RootStackParamList = {
   Machine: { recipeId: number; recipeName?: string; imageUri?: string };
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
 const CUSTOMER_CODE_KEY = 'customer_code';
+const EXIT_INTENT_KEY = 'exit_intent';
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [customerCode, setCustomerCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const code = await AsyncStorage.getItem(CUSTOMER_CODE_KEY);
-        if (code) setCustomerCode(code);
-      } catch (e) {
-        console.warn('Error reading stored customer code', e);
-      } finally {
-        setLoading(false);
+  
+
+ useEffect(() => {
+  (async () => {
+    try {
+      const code = await AsyncStorage.getItem(CUSTOMER_CODE_KEY);
+      const exitIntent = await AsyncStorage.getItem(EXIT_INTENT_KEY);
+
+      // 🔴 If app was NOT exited properly → force logout
+      if (code && exitIntent === 'true') {
+        setCustomerCode(code);
+      } else {
+        // app was killed or first time
+        await AsyncStorage.removeItem(CUSTOMER_CODE_KEY);
+        setCustomerCode(null);
       }
-    })();
-  }, []);
+
+      // clear exit flag after decision
+    } catch (e) {
+      console.warn('Startup session error', e);
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, []);
+
 
   const handleLogin = async (code: string) => {
     try {
       await AsyncStorage.setItem(CUSTOMER_CODE_KEY, code);
+      await AsyncStorage.removeItem(EXIT_INTENT_KEY); // 🔴 important
       setCustomerCode(code);
     } catch (e) {
-      console.warn('Failed to persist customer code on login', e);
+      console.warn('Login storage error', e);
     }
   };
+
 
   const handleLogout = async () => {
     try {

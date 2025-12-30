@@ -51,6 +51,9 @@ import TraySpecs from '../components/STP Tray/TraySpecs';
 import CreasingScreen1 from '../components/Creasing/CreasingScreen1';
 import CreasingScreen2 from '../components/Creasing/CreasingScreen2';
 import CreasingScreen3 from '../components/Creasing/CreasingScreen3';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BackHandler } from 'react-native';
+
 
 
 
@@ -337,6 +340,25 @@ const onParamEdit = (p: any) => {
   const [activeSubScreen, setActiveSubScreen] = useState<string | null>(null);
   const panelRefs = useRef<Record<string, any>>({});
 
+useEffect(() => {
+  (async () => {
+    try {
+      const exitIntent = await AsyncStorage.getItem('exit_intent');
+
+      if (exitIntent === 'true') {
+        // 🔴 HARD RESET TO HOME
+        setActivePanel("HOME");
+        setActiveSubScreen(null);
+        closeAllPanels();
+
+        // 🔴 CLEAR FLAG AFTER RESET
+        await AsyncStorage.removeItem('exit_intent');
+      }
+    } catch {
+      // silent
+    }
+  })();
+}, []);
 
   const ITEM_H = 54;
   const MENU_W = 140;
@@ -1527,7 +1549,7 @@ if (showCreasing3) return "CREASING 3";
 )}
 
 
-      <BottomBar
+  <BottomBar
       labels={labels}
       activePanel={activePanel}
       activeSubScreen={activeSubScreen}
@@ -1540,104 +1562,104 @@ if (showCreasing3) return "CREASING 3";
       panelRefs={panelRefs}
       onSave={saveCurrentMachineData}
       onPressItem={label => {
-  // 🔴 HOME
-  if (label === "HOME") {
-    setActivePanel("HOME");
-    setActiveSubScreen(null);
+        // 🔴 HOME
+        if (label === "HOME") {
+          setActivePanel("HOME");
+          setActiveSubScreen(null);
 
-    setShowMachine(false);
-    setShowFolds(false);
-    setShowOffset(false);
-    setShowGlueTap(false);
-    setShowSuctionGap(false);
-    setShowAllSpeed(false);
-    setShowSideLay(false);
-    setShowBlowerSettings(false);
-    setShowRollerGap(false);
-    setShowFoldingTray(false);
-    setShowFoldSetting(false);
-    setShowFoldSetting2(false);
-    setShowGapSetting(false);
-    setShowK1A(false);
-    setShowK1B(false);
-    setShowK1C(false);
-    setShowSideMenu(false);
-    setShowK3A(false);
-    setShowK3B(false);
-    setShowK3C(false);
-    setShowSTPTray(false);
-    setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
-
-
-    return;
-  }
-
-  // 🔴 RECIPE
-  if (label === "RECIPE") {
-    setActivePanel("RECIPE");
-    setActiveSubScreen(null);
-    setShowSideMenu(false);
-
-    setShowMachine(false);
-    setShowFolds(false);
-    setShowOffset(false);
-    setShowGlueTap(false);
-    setShowSuctionGap(false);
-    setShowAllSpeed(false);
-    setShowSideLay(false);
-    setShowBlowerSettings(false);
-    setShowRollerGap(false);
-    setShowFoldingTray(false);
-    setShowFoldSetting(false);
-    setShowFoldSetting2(false);
-    setShowGapSetting(false);
-    setShowK1A(false);
-    setShowK1B(false);
-    setShowK1C(false);
-    setShowK3A(false);
-    setShowK3B(false);
-    setShowK3C(false);
-    setShowSTPTray(false);
-    setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
+          setShowMachine(false);
+          setShowFolds(false);
+          setShowOffset(false);
+          setShowGlueTap(false);
+          setShowSuctionGap(false);
+          setShowAllSpeed(false);
+          setShowSideLay(false);
+          setShowBlowerSettings(false);
+          setShowRollerGap(false);
+          setShowFoldingTray(false);
+          setShowFoldSetting(false);
+          setShowFoldSetting2(false);
+          setShowGapSetting(false);
+          setShowK1A(false);
+          setShowK1B(false);
+          setShowK1C(false);
+          setShowSideMenu(false);
+          setShowK3A(false);
+          setShowK3B(false);
+          setShowK3C(false);
+          setShowSTPTray(false);
+          setShowCreasing1(false);
+          setShowCreasing2(false);
+          setShowCreasing3(false);
 
 
-    return;
-  }
+          return;
+        }
 
-  // 🔴 RPF
-// 🟢 RPF (DO NOT CLOSE CURRENT SCREEN)
-if (label === "RPF") {
-  openPanel("RPF");
-  return;
-}
+        // 🔴 RECIPE
+        if (label === "RECIPE") {
+          setActivePanel("RECIPE");
+          setActiveSubScreen(null);
+          setShowSideMenu(false);
+
+          setShowMachine(false);
+          setShowFolds(false);
+          setShowOffset(false);
+          setShowGlueTap(false);
+          setShowSuctionGap(false);
+          setShowAllSpeed(false);
+          setShowSideLay(false);
+          setShowBlowerSettings(false);
+          setShowRollerGap(false);
+          setShowFoldingTray(false);
+          setShowFoldSetting(false);
+          setShowFoldSetting2(false);
+          setShowGapSetting(false);
+          setShowK1A(false);
+          setShowK1B(false);
+          setShowK1C(false);
+          setShowK3A(false);
+          setShowK3B(false);
+          setShowK3C(false);
+          setShowSTPTray(false);
+          setShowCreasing1(false);
+          setShowCreasing2(false);
+          setShowCreasing3(false);
 
 
-if (label === "CREASING") {
-  if (selectedRecipeId === -1) {
-    Alert.alert("Select a recipe first");
-    return;
-  }
+          return;
+        }
+
+          // 🔴 RPF
+        // 🟢 RPF (DO NOT CLOSE CURRENT SCREEN)
+        if (label === "RPF") {
+          openPanel("RPF");
+          return;
+        }
+
+
+      if (label === "CREASING") {
+        if (selectedRecipeId === -1) {
+          Alert.alert("Select a recipe first");
+          return;
+        }
 
   closeAllPanels();
 
-  const creasingCount = getEffectiveParamValue(recipeParams, 9);
+    const creasingCount = getEffectiveParamValue(recipeParams, 9);
 
-  if (creasingCount === 1) setShowCreasing1(true);
-  else if (creasingCount === 2) setShowCreasing2(true);
-  else if (creasingCount === 3) setShowCreasing3(true);
-  else {
-    Alert.alert("Creasing not enabled");
-    return;
-  }
+    if (creasingCount === 1) setShowCreasing1(true);
+    else if (creasingCount === 2) setShowCreasing2(true);
+    else if (creasingCount === 3) setShowCreasing3(true);
+    else {
+      Alert.alert("Creasing not enabled");
+      return;
+    }
 
-  setActivePanel("CREASING");
-  setActiveSubScreen(null);
-  return;
-}
+      setActivePanel("CREASING");
+      setActiveSubScreen(null);
+      return;
+    }
 
 
 
@@ -1651,11 +1673,22 @@ if (label === "CREASING") {
       onExit={() =>
         Alert.alert("Exit", "Do you want to exit?", [
           { text: "Cancel", style: "cancel" },
-          { text: "Exit", style: "destructive", onPress: () => {} }
+          {
+            text: "Exit",
+            style: "destructive",
+            onPress: async () => {
+              // 🔴 STEP 4 — MARK INTENTIONAL EXIT
+              await AsyncStorage.setItem('exit_intent', 'true');
+
+              // 🔴 CLOSE APP
+              BackHandler.exitApp();
+            },
+          },
         ])
       }
+
       onSettings={() => navigation.navigate("Settings")}  // 👈 ADD THIS LINE
-    />
+     />
 
 
       
