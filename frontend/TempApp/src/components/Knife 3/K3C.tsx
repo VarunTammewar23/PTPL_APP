@@ -482,8 +482,17 @@ const styles = StyleSheet.create({
   },
 
   row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
-  cancel: { marginRight: 20, color: '#666' },
-  save: { color: '#007bff', fontWeight: '700' },
+  cancel: {
+    marginRight: 20,
+    color: '#666',
+    fontSize: 18,
+
+  },
+  save: {
+    color: '#007bff',
+    fontWeight: '700',
+    fontSize: 18,
+  },
 
   popupTable: { borderWidth: 1, borderColor: '#ccc' },
   popupRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#ccc' },

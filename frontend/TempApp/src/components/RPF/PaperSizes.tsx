@@ -679,10 +679,13 @@ const styles = StyleSheet.create({
   cancel: {
     marginRight: 20,
     color: '#666',
+    fontSize: 18,
+
   },
   save: {
     color: '#007bff',
     fontWeight: '700',
+    fontSize: 18,
   },
 
  

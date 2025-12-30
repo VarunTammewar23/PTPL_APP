@@ -1447,7 +1447,6 @@ if (showCreasing3) return "CREASING 3";
               style={{
                 flex: 1,
                 display:
-                  !showSideMenu &&  
                   !showMachine &&
                   !showFolds &&
                   !showOffset &&
