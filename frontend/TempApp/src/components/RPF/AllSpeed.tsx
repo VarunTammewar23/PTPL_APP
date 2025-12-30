@@ -19,6 +19,8 @@ import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZ
 import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
+
 
 type Props = {
   recipeId: number;
@@ -485,6 +487,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     textAlign: 'center',
+    fontSize: FONT_SIZE.sidebar, 
     fontWeight: '700',
   },
 

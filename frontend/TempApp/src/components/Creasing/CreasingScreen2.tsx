@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 
 import CreasingDropdown from './CreasingDropdown';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
+
 
 /* ---------- CONFIG ---------- */
 
@@ -341,6 +343,7 @@ btnGreen: {
   btnText: {
     color: '#fff',
     textAlign: 'center',
+    fontSize: FONT_SIZE.sidebar, 
     fontWeight: '700',
   },
   bodyRow: {

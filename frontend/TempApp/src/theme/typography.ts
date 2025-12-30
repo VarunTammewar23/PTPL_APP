@@ -12,7 +12,7 @@ export const FONT_SIZE = {
   special: 21,
   button: 17,
   headerbar: 20,
-  sidebar: 20,
+  sidebar: 18,
 };
 
 

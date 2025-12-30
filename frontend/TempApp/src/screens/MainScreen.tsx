@@ -1447,6 +1447,7 @@ if (showCreasing3) return "CREASING 3";
               style={{
                 flex: 1,
                 display:
+                  !showSideMenu &&  
                   !showMachine &&
                   !showFolds &&
                   !showOffset &&
@@ -1609,13 +1610,12 @@ setShowCreasing3(false);
   }
 
   // 🔴 RPF
-  if (label === "RPF") {
-    setShowCreasing1(false);
-    setShowCreasing2(false);
-    setShowCreasing3(false);
-    openPanel("RPF");
-    return;
-  }
+// 🟢 RPF (DO NOT CLOSE CURRENT SCREEN)
+if (label === "RPF") {
+  openPanel("RPF");
+  return;
+}
+
 
 if (label === "CREASING") {
   if (selectedRecipeId === -1) {

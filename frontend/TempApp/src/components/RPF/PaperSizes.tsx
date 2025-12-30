@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: FONT_SIZE.sidebar,
+    fontSize: FONT_SIZE.sidebar, 
     fontWeight: '700',
   },
 
