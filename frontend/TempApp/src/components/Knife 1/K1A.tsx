@@ -20,6 +20,7 @@ import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
+import { POPUP } from '../../ui/Popup';
 
 
 /* ---------- CONFIG ---------- */
@@ -66,13 +67,7 @@ const POPUP_COLUMNS = [
   { key: 'changed', title: 'Changed', flex: 2 },
 ];
 
-const POPUP_TITLE_FONT = 18;
-const POPUP_HEADER_FONT = 18;
-const POPUP_BODY_FONT = 15;
-const POPUP_CLOSE_FONT = 18;
 
-const POPUP_WIDTH = 1200;
-const POPUP_MAX_HEIGHT = 500;
 
 /* ---------- TYPES ---------- */
 
@@ -312,8 +307,7 @@ function K1AInner(
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Edit Angle</Text>
+          <View style={styles.modalEdit}>            <Text style={styles.modalTitle}>Edit Angle</Text>
             <TextInput
               style={styles.input}
               value={tempVal}
@@ -353,7 +347,7 @@ function K1AInner(
       {/* TABLE POPUP */}
       <Modal visible={tablePopup} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modal}>
+          <View style={styles.modalTable}>
             <View style={styles.popupHeaderRow}>
               <Text style={styles.modalTitle}>Parameter Table</Text>
               <TouchableOpacity onPress={() => setTablePopup(false)} style={styles.popupCloseBtn}>
@@ -479,22 +473,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  modal: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 10,
-    width: POPUP_WIDTH,
-    maxHeight: POPUP_MAX_HEIGHT,
-    alignSelf: 'center',
-  },
+modalEdit: {
+  backgroundColor: '#fff',
+  padding: POPUP.EDIT.padding ?? 12,
+  borderRadius: POPUP.EDIT.borderRadius ?? 10,
+  width: POPUP.EDIT.width,
+  alignSelf: 'center',
+},
 
-  modalTitle: { fontSize: POPUP_TITLE_FONT, fontWeight: '700', marginBottom: 10 },
+modalTable: {
+  backgroundColor: '#fff',
+  padding: POPUP.TABLE.padding ?? 12,
+  borderRadius: POPUP.TABLE.borderRadius ?? 10,
+  width: POPUP.TABLE.width,
+  maxHeight: POPUP.TABLE.maxHeight,
+  alignSelf: 'center',
+},
+
+
+modalTitle: {
+  fontSize: POPUP.TABLE.titleFont,
+  fontWeight: '700',
+  marginBottom: 10,
+},
 
   input: {
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
     padding: 8,
+    fontSize: POPUP.EDIT.inputFont, // ✅ global control
   },
 
   row: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
@@ -515,8 +523,8 @@ const styles = StyleSheet.create({
   popupHeader: { backgroundColor: '#f2f2f8' },
 
   popupCell: { paddingVertical: 10, textAlign: 'center' },
-  popupHeaderText: { fontWeight: '700', fontSize: POPUP_HEADER_FONT },
-  popupBodyText: { fontSize: POPUP_BODY_FONT },
+  popupHeaderText: { fontWeight: '700', fontSize: POPUP.TABLE.headerFont },
+  popupBodyText: { fontSize: POPUP.TABLE.bodyFont },
 
   popupHeaderRow: {
     flexDirection: 'row',
@@ -526,7 +534,7 @@ const styles = StyleSheet.create({
   },
   popupCloseBtn: { flexDirection: 'row', alignItems: 'center' },
   popupCloseIcon: { fontSize: 18, fontWeight: '800', marginRight: 4 },
-  popupCloseText: { fontSize: POPUP_CLOSE_FONT, fontWeight: '800' },
+  popupCloseText: { fontSize: POPUP.TABLE.closeFont, fontWeight: '800' },
 });
 
 export default React.forwardRef(K1AInner);

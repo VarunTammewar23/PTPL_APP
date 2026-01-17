@@ -6,9 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  BackHandler,
-  Platform,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../ui/typography';  // 👈 added FONT_WEIGHT
@@ -99,8 +96,11 @@ const isActive =
         </TouchableOpacity>
 
         {/* EXIT Button */}
-        <TouchableOpacity   activeOpacity={0.9}   onPress={handleExitApp}   style={styles.exitPill} >
-
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={onExit}
+            style={styles.exitPill}
+          >
           <Icon name="logout" size={FONT_SIZE.header} color="#6b0f1a" style={{ marginRight: 8 }} />
           <Text style={styles.exitText}>EXIT</Text>
         </TouchableOpacity>
@@ -108,25 +108,7 @@ const isActive =
     </View>
   );
 };
-  const handleExitApp = () => {
-    Alert.alert(
-      'Exit App',
-      'Are you sure you want to exit?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Exit',
-          style: 'destructive',
-          onPress: () => {
-            if (Platform.OS === 'android') {
-              BackHandler.exitApp();
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
+  
 
 export default BottomBar;
 

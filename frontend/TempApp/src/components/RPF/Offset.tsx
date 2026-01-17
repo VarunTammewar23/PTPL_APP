@@ -20,6 +20,7 @@ import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
+import { POPUP } from '../../ui/Popup';
 
 type Props = {
   recipeId: number;
@@ -78,14 +79,7 @@ const IMG_H = 600;
   { key: 'changed', title: 'Changed', flex: 2, align: 'center' },
 ];
 
-const POPUP_TITLE_FONT = 18;  // Title font size
-const POPUP_HEADER_FONT = 18;  // Header font size
-const POPUP_BODY_FONT = 15;  // Table Body font size
-const POPUP_CLOSE_FONT = 18;  // Close button font size
 
-// Adjust the Size of popup
-const POPUP_WIDTH = 1200;        // popup card width
-const POPUP_MAX_HEIGHT = 500;   // popup card max height
 
 
 /* ---------- COMPONENT ---------- */
@@ -317,7 +311,8 @@ useEffect(() => {
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modal}>
+          <View style={styles.modalEdit}>
+
             <Text style={styles.modalTitle}>Edit Value</Text>
             <TextInput
               style={styles.input}
@@ -362,7 +357,7 @@ useEffect(() => {
       {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
-    <View style={styles.modal}>
+    <View style={styles.modalTable}>
 
       {/* HEADER ROW */}
       <View style={styles.popupHeaderRow}>
@@ -522,6 +517,7 @@ const styles = StyleSheet.create({
     borderColor: '#aaa',
     borderRadius: 6,
     padding: 8,
+    fontSize: POPUP.EDIT.inputFont, // ✅ global control
   },
 
   row: {
@@ -563,17 +559,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  modal: {
+modalEdit: {
   backgroundColor: '#fff',
-  padding: 12,
-  borderRadius: 10,
-  width: POPUP_WIDTH,
-  maxHeight: POPUP_MAX_HEIGHT,
+  padding: POPUP.EDIT.padding ?? 12,
+  borderRadius: POPUP.EDIT.borderRadius ?? 10,
+  width: POPUP.EDIT.width,
   alignSelf: 'center',
 },
 
+modalTable: {
+  backgroundColor: '#fff',
+  padding: POPUP.TABLE.padding ?? 12,
+  borderRadius: POPUP.TABLE.borderRadius ?? 10,
+  width: POPUP.TABLE.width,
+  maxHeight: POPUP.TABLE.maxHeight,
+  alignSelf: 'center',
+},
+
+
 modalTitle: {
-  fontSize: POPUP_TITLE_FONT,
+  fontSize: POPUP.TABLE.titleFont,
   fontWeight: '700',
   marginBottom: 10,
 },
@@ -605,11 +610,11 @@ popupColBorder: {
 
 popupHeaderText: {
   fontWeight: '700',
-  fontSize: POPUP_HEADER_FONT,
+  fontSize: POPUP.TABLE.headerFont,
 },
 
 popupBodyText: {
-  fontSize: POPUP_BODY_FONT,
+  fontSize: POPUP.TABLE.bodyFont,
 },
 
 popupHeaderRow: {
@@ -634,7 +639,7 @@ popupCloseIcon: {
 },
 
 popupCloseText: {
-  fontSize: POPUP_CLOSE_FONT,
+  fontSize: POPUP.TABLE.closeFont,
   fontWeight: '800',
   color: '#444',
   paddingLeft: 5,
