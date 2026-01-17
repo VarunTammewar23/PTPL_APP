@@ -1,6 +1,7 @@
 // src/screens/MainScreen.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
+  AppState,
   SafeAreaView,
   View,
   Text,
@@ -24,6 +25,8 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { ToastAndroid } from 'react-native';
 import * as XLSX from 'xlsx';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BackHandler } from 'react-native';
 import BottomBar from '../components/BottomBar';
 import Folds from '../components/RPF/Folds';
 import Offset from '../components/RPF/Offset';
@@ -51,12 +54,6 @@ import TraySpecs from '../components/STP Tray/TraySpecs';
 import CreasingScreen1 from '../components/Creasing/CreasingScreen1';
 import CreasingScreen2 from '../components/Creasing/CreasingScreen2';
 import CreasingScreen3 from '../components/Creasing/CreasingScreen3';
-
-
-
-
-
-
 
 
 const { FilePickerModule } = NativeModules;
@@ -176,14 +173,23 @@ useEffect(() => {
   const [showCreasing2, setShowCreasing2] = useState(false);
   const [showCreasing3, setShowCreasing3] = useState(false);
 
-
-
-
-
-
   const [customerName, setCustomerName] = useState<string | null>(null);
 
+useEffect(() => {
+  const subscription = AppState.addEventListener('change', state => {
+    if (state === 'active') {
+      // 🔴 FORCE RESET TO HOME
+      setSelectedRecipeId(-1);
+      setActivePanel("HOME");
+      setActiveSubScreen(null);
+      closeAllPanels();
+      pendingEditsRef.current.clear();
+      setKnifeCountState(0);
+    }
+  });
 
+  return () => subscription.remove();
+}, []);
 
 
 
@@ -1652,9 +1658,17 @@ if (label === "CREASING") {
       onExit={() =>
         Alert.alert("Exit", "Do you want to exit?", [
           { text: "Cancel", style: "cancel" },
-          { text: "Exit", style: "destructive", onPress: () => {} }
+          {
+            text: "Exit",
+            style: "destructive",
+            onPress: async () => {
+              await AsyncStorage.setItem('exit_intent', 'true');
+              BackHandler.exitApp();
+            }
+          }
         ])
       }
+
       onSettings={() => navigation.navigate("Settings")}  // 👈 ADD THIS LINE
     />
 
