@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../ui/ThemeProvider';
 import { useConfig } from '../config/ConfigContext';
 import { apiGet } from '../api/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';

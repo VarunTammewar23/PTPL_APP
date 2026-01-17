@@ -20,7 +20,7 @@ import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { ScrollView } from 'react-native';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
 
 
 

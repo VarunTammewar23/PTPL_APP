@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 
 import CreasingDropdown from './CreasingDropdown';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
 
 
 /* ---------- CONFIG ---------- */

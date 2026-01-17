@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, ActivityIndicator, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ThemeProvider } from './src/theme/ThemeProvider';
+import { ThemeProvider } from './src/ui/ThemeProvider';
 import { ConfigProvider } from './src/config/ConfigContext';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';

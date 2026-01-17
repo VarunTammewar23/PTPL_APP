@@ -17,11 +17,11 @@ import {
   TextInput,
 } from 'react-native';
 import ZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '../../ui/ThemeProvider';
 import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../theme/typography';  // Typography constants
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
 
 
 const PARAM_SR = [1, 2, 3, 4, 5, 6];

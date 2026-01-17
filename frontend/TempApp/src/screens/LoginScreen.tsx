@@ -80,9 +80,19 @@ export default function LoginScreen({ onLogin }: { onLogin: (code: string) => vo
           style={styles.input}
         />
 
-        <View style={styles.buttonWrap}>
-          <Button title={loading ? 'Checking...' : 'Login'} onPress={tryLogin} disabled={loading} />
-        </View>
+<View style={styles.buttonWrap}>
+  <TouchableOpacity
+    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+    onPress={tryLogin}
+    activeOpacity={0.8}
+    disabled={loading}
+  >
+    <Text style={styles.loginButtonText}>
+      {loading ? 'Checking...' : 'Login'}
+    </Text>
+  </TouchableOpacity>
+</View>
+
       </View>
     </KeyboardAwareScrollView>
   );
@@ -96,9 +106,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   settingsRow: { alignItems: 'flex-end', marginBottom: 12 },
-  settingsText: { color: '#007bff', fontSize: 14 },
+  settingsText: { color: '#007bff', fontSize: 18 },
   card: { marginBottom: 12 },
-  label: { fontSize: 18, marginBottom: 8 },
+  label: { fontSize: 22, marginBottom: 8 },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -106,6 +116,27 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 16,
     backgroundColor: '#fff',
+    minHeight: 48,
   },
   buttonWrap: { marginTop: 4 },
+
+  loginButton: {
+  backgroundColor: '#007bff',
+  paddingVertical: 6 ,      // height
+  borderRadius: 8,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+loginButtonDisabled: {
+  backgroundColor: '#9bbce5',
+},
+
+loginButtonText: {
+  color: '#fff',
+  fontSize: 20,             // text size
+  fontWeight: '600',
+  letterSpacing: 0.5,
+},
+
 });

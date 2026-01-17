@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // 👈 added FONT_WEIGHT
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../ui/typography';  // 👈 added FONT_WEIGHT
 
 
 interface BottomBarProps {

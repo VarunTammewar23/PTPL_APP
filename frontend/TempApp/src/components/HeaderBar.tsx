@@ -23,7 +23,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../theme/typography';  // Typography constants
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../ui/typography';  // Typography constants
 
 /* ============================================================
    DATA TYPES
