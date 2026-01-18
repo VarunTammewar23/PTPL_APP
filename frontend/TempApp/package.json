@@ -12,6 +12,7 @@
   "dependencies": {
     "@dudigital/react-native-zoomable-view": "^1.1.4",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-documents/picker": "^12.0.0",
     "@react-native-picker/picker": "^2.11.4",
     "@react-native/new-app-screen": "0.82.1",
     "@react-navigation/native": "^7.1.20",

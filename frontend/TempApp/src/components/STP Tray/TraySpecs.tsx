@@ -299,8 +299,9 @@ function TraySpecsInner(
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modalEdit}>
-
-            <Text style={styles.modalTitle}>Edit Angle</Text>
+              <Text style={styles.modalTitle}>
+                Edit Parameter No. :- {editingSr}
+              </Text>
             <TextInput
               style={styles.input}
               value={tempVal}

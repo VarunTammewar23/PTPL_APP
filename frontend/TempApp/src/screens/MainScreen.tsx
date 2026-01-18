@@ -27,6 +27,7 @@ import { ToastAndroid } from 'react-native';
 import * as XLSX from 'xlsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BackHandler } from 'react-native';
+import * as DocumentPicker from '@react-native-documents/picker';
 import BottomBar from '../components/BottomBar';
 import Folds from '../components/RPF/Folds';
 import Offset from '../components/RPF/Offset';
@@ -582,6 +583,53 @@ const openPanel = (name: string) => {
     } catch {}
   };
 
+  const pickWithNative = async (): Promise<string | null> => {
+  try {
+    const uri = await FilePickerModule.openFilePicker();
+    return uri;
+  } catch {
+    return null;
+  }
+};
+
+const pickWithDocumentPicker = async (): Promise<{ uri: string; name: string } | null> => {
+  try {
+    const res = await DocumentPicker.pick({
+      type: [
+        DocumentPicker.types.xlsx,
+        DocumentPicker.types.xls,
+      ],
+      allowMultiSelection: false,
+    });
+
+    if (!res || res.length === 0) return null;
+
+    const file = res[0];
+    return {
+      uri: file.uri,
+      name: file.name ?? '',
+    };
+  } catch (e: any) {
+  // User cancelled picker → just return null
+  if (e?.code === 'DOCUMENT_PICKER_CANCELED') return null;
+  return null;
+}
+};
+
+
+const readFileAsBase64 = async (uri: string): Promise<string> => {
+  if (uri.startsWith('content://')) {
+    const dest = `${RNFS.CachesDirectoryPath}/import.xlsx`;
+    await RNFS.copyFile(uri, dest);
+    return RNFS.readFile(dest, 'base64');
+  }
+
+  const path = uri.replace('file://', '');
+  return RNFS.readFile(path, 'base64');
+};
+
+
+
   const openPicker = async () => {
   try {
     if (!customerCode) {
@@ -589,12 +637,25 @@ const openPanel = (name: string) => {
       return;
     }
 
-    const uri = await FilePickerModule.openFilePicker();
-    const destPath = `${RNFS.CachesDirectoryPath}/import.xlsx`;
+    let uri: string | null = await pickWithNative();
+    let fileName = '';
 
-    await RNFS.copyFile(uri, destPath);
+    // 🔁 Fallback if native picker gives content:// or fails
+    if (!uri || uri.startsWith('content://')) {
+      const doc = await pickWithDocumentPicker();
+      if (!doc) return;
+      uri = doc.uri;
+      fileName = doc.name;
+    }
 
-    const base64 = await RNFS.readFile(destPath, 'base64');
+    if (!uri) {
+      Alert.alert('Import failed', 'No file selected');
+      return;
+    }
+
+
+    // Read Excel
+    const base64 = await readFileAsBase64(uri);
     const workbook = XLSX.read(base64, { type: 'base64' });
 
     const sheetName = workbook.SheetNames[0];
@@ -607,18 +668,29 @@ const openPanel = (name: string) => {
       return;
     }
 
+    // 🔑 Recipe name priority: FILE NAME → Excel → fallback
     const recipeName =
-      rows[0]?.recipe_name || `recipe_${Date.now()}`;
+      fileName.replace(/\.xlsx$/i, '') ||
+      rows[0]?.recipe_name ||
+      `recipe_${Date.now()}`;
 
-    const enrichedRows = rows.map(({ __rowNum__, ...r }: any) => ({
-      recipe_name: recipeName,
-      section: r.section ?? '',
-      parameter_no: Number(r.parameter_no),
-      parameter: r.parameter ?? '',
-      value_01: r.value_01 ?? '',
-      unit: r.unit ?? '',
-      customer_code: customerCode,
-    }));
+    // Build backend rows
+    const enrichedRows = rows
+      .map((r: any) => ({
+        recipe_name: recipeName,
+        section: r.section ?? '',
+        parameter_no: Number(r.parameter_no),
+        parameter: r.parameter ?? '',
+        value_01: r.value_01 ?? '',
+        unit: r.unit ?? '',
+        customer_code: customerCode,
+      }))
+      .filter(r => !isNaN(r.parameter_no));
+
+    if (!enrichedRows.length) {
+      Alert.alert('Invalid Excel', 'No valid parameter numbers found');
+      return;
+    }
 
     sendToBackend(enrichedRows);
 
@@ -627,6 +699,7 @@ const openPanel = (name: string) => {
     Alert.alert('Import failed', e.message || 'Unknown error');
   }
 };
+
 
 
   function getNextVersionName(baseName: string | null, allNames: string[]) {
@@ -1206,7 +1279,6 @@ if (showCreasing3) return "CREASING 3";
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
               />
             </View>
-
             <View style={{ flex: 1, display: showAllSpeed ? 'flex' : 'none' }}>
               <AllSpeed
                 ref={allSpeedRef}
