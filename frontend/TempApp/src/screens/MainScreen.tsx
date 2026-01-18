@@ -380,6 +380,42 @@ const onParamEdit = (p: any) => {
   setShowCreasing3(false);
 }
 
+const clearAllPanelTemp = () => {
+  [
+    machineRef,
+    foldsRef,
+    offsetRef,
+    glueRef,
+    suctionRef,
+    allSpeedRef,
+    sideLayRef,
+    blowerRef,
+    rollerRef,
+    foldingTrayRef,
+    foldSettingRef,
+    foldSetting2Ref,
+    gapSettingRef,
+    K1ARef,
+    K1BRef,
+    K1CRef,
+    K2ARef,
+    K2BRef,
+    K2CRef,
+    K3ARef,
+    K3BRef,
+    K3CRef,
+    stpTrayRef,
+    creasing1Ref,
+    creasing2Ref,
+    creasing3Ref,
+  ].forEach(ref => {
+    try {
+      ref?.current?.clearEdits?.();
+    } catch {}
+  });
+};
+
+
 
 const openPanel = (name: string) => {
   // 🔴 KNIFE ENABLE CHECK (keep this)
@@ -629,7 +665,6 @@ const readFileAsBase64 = async (uri: string): Promise<string> => {
 };
 
 
-
   const openPicker = async () => {
   try {
     if (!customerCode) {
@@ -735,9 +770,10 @@ const readFileAsBase64 = async (uri: string): Promise<string> => {
     return `${parent}_${next}`;
   }
 
-  const saveCurrentMachineData = async (
-  opts?: { mode?: 'save' | 'saveAs' }
-    ) => {
+    const saveCurrentMachineData = async (
+      opts?: { mode?: 'save' | 'saveAs' }
+    ): Promise<boolean> => {
+
         const mode = opts?.mode ?? 'saveAs';
 
     // Determine which panel is active and use its ref to collect params.
@@ -775,19 +811,6 @@ else if (showCreasing3) panelRef = creasing3Ref;
     else panelRef = machineRef; // fallback
 
 
-    // 1️⃣ Get changed params ONLY from active panel
-let changedParams: any[] = [];
-try {
-  const maybe = panelRef?.current?.getFinalParams;
-  if (maybe) {
-    const result = panelRef.current.getFinalParams();
-    changedParams = result instanceof Promise ? await result : result;
-  }
-} catch {
-  changedParams = [];
-}
-
-
 
 // 3️⃣ Merge ALL recipe params (1–300) with changes
 // 🔴 Merge full recipe (1–300) with ALL pending edits
@@ -802,7 +825,7 @@ const mergedParams = recipeParams.map((orig) => {
 if (mode === 'save') {
   if (selectedRecipeId === -1) {
     Alert.alert('No recipe selected');
-    return;
+    return false;
   }
 
   const rows = mergedParams.map((p: any) => ({
@@ -830,11 +853,11 @@ if (mode === 'save') {
 
     const res = await response.json();
 
-    if (res.success) if (res.success) {
+if (res.success) {
   // 1️⃣ clear global pending edits
   pendingEditsRef.current.clear();
 
-  // 2️⃣ 🔴 CLEAR PANEL-LOCAL EDIT STATES (THIS WAS MISSING)
+  // 2️⃣ clear panel-local edit states
   [
     machineRef,
     foldsRef,
@@ -860,13 +883,8 @@ if (mode === 'save') {
     K3CRef,
     stpTrayRef,
     creasing1Ref,
-creasing2Ref,
-creasing3Ref,
-
-
-
-
-
+    creasing2Ref,
+    creasing3Ref,
   ].forEach(r => {
     try {
       r?.current?.clearEdits?.();
@@ -878,19 +896,21 @@ creasing3Ref,
 
   // 4️⃣ refresh data from backend
   await fetchRecipeParams(selectedRecipeId);
+
+  // 🔴 VERY IMPORTANT (THIS IS STEP 1B)
+  return true;
 } else {
   Alert.alert('Error', res.message || 'Update failed');
+
+  // 🔴 VERY IMPORTANT
+  return false;
 }
-else {
-      Alert.alert('Error', res.message || 'Update failed');
-    }
   } catch (e: any) {
-    Alert.alert('Network error', e.message);
-  } finally {
+  Alert.alert('Network error', e.message);
+  return false;
+} finally {
     setSaving(false);
   }
-
-  return;
 }
 
 
@@ -930,51 +950,14 @@ console.log('FIRST ROW BEING SAVED:', rows[0]);
     }
 
     if (filteredRows.length === 0) {
-      return Alert.alert('No changes', 'There are no parameter changes to save');
+       Alert.alert('No changes', 'There are no parameter changes to save');
+      return false;
+
     }
 
     if (saving) return Alert.alert('Please wait', 'Save already in progress');
     setSaving(true);
 
-    const clearAllPanelTemp = () => {
-      [
-        machineRef,
-        foldsRef,
-        offsetRef,
-        glueRef,
-        suctionRef,
-        allSpeedRef,
-        sideLayRef,
-        blowerRef,
-        rollerRef,
-        foldingTrayRef,
-        foldSettingRef,
-        foldSetting2Ref,
-        gapSettingRef,
-        K1ARef,
-        K1BRef,
-        K1CRef,
-        K2ARef,
-        K2BRef,
-        K2CRef,
-        K3ARef,
-        K3BRef,
-        K3CRef,
-        stpTrayRef,
-        creasing1Ref,
-creasing2Ref,
-creasing3Ref,
-
-
-
-      ].forEach(r => {
-        try {
-          if (r?.current?.clearEdits) r.current.clearEdits();
-        } catch (e) {
-          // ignore
-        }
-      });
-    };
 
     try {
       const response = await fetch(`${getCurrentApiBase()}/api/upload-excel`, {
@@ -991,48 +974,48 @@ creasing3Ref,
       const found = (updated || []).find((r: any) => r.recipe_name === newRecipeName);
 
      if (res && res.success) {
-  // 🔴 CLEAR accumulated edits AFTER successful save
-  pendingEditsRef.current.clear();
+      // 🔴 CLEAR accumulated edits AFTER successful save
+      pendingEditsRef.current.clear();
 
-  Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
-  if (res.newRecipeId) setSelectedRecipeId(res.newRecipeId);
-  else if (found) setSelectedRecipeId(found.recipe_id);
+      Alert.alert("Saved", `Created new recipe: ${newRecipeName}`);
+      if (res.newRecipeId) setSelectedRecipeId(res.newRecipeId);
+      else if (found) setSelectedRecipeId(found.recipe_id);
 
-  clearAllPanelTemp();
-  setShowMachine(false);
-  setShowFolds(false);
-  setShowOffset(false);
-  setShowGlueTap(false);
-  setShowSuctionGap(false);
-  setShowAllSpeed(false);
-  setShowSideLay(false);
-  setShowBlowerSettings(false);
-  setShowRollerGap(false);
-  setShowFoldingTray(false);
-  setShowFoldSetting(false);
-  setShowFoldSetting2(false);
-  setShowGapSetting(false);
-  setShowK1A(false);
-  setShowK1B(false);
-  setShowK1C(false);
-  setShowK2A(false);
-  setShowK2B(false);
-  setShowK2C(false);
-  setShowK3A(false);
-  setShowK3B(false);
-  setShowK3C(false);
-  setShowSTPTray(false);
-  setShowCreasing1(false);
-setShowCreasing2(false);
-setShowCreasing3(false);
-
-
+      clearAllPanelTemp();
+      setShowMachine(false);
+      setShowFolds(false);
+      setShowOffset(false);
+      setShowGlueTap(false);
+      setShowSuctionGap(false);
+      setShowAllSpeed(false);
+      setShowSideLay(false);
+      setShowBlowerSettings(false);
+      setShowRollerGap(false);
+      setShowFoldingTray(false);
+      setShowFoldSetting(false);
+      setShowFoldSetting2(false);
+      setShowGapSetting(false);
+      setShowK1A(false);
+      setShowK1B(false);
+      setShowK1C(false);
+      setShowK2A(false);
+      setShowK2B(false);
+      setShowK2C(false);
+      setShowK3A(false);
+      setShowK3B(false);
+      setShowK3C(false);
+      setShowSTPTray(false);
+      setShowCreasing1(false);
+    setShowCreasing2(false);
+    setShowCreasing3(false);
 
 
 
-  setSaving(false);
-  return;
-}
+
+
+      setSaving(false);
+      return true;
+    }
 
 
       if (res && res.exists) {
@@ -1068,22 +1051,18 @@ setShowCreasing3(false);
           setShowCreasing2(false);
           setShowCreasing3(false);
 
-
-
-
-
           Alert.alert('Exists', `Recipe already exists. Opened ${newRecipeName}`);
         } else {
           Alert.alert('Duplicate', res.message || 'Recipe already exists');
         }
         setSaving(false);
-        return;
+        return false;
       }
 
       console.warn('upload-excel unexpected response', res);
       Alert.alert('Error', res?.message || 'Failed to save recipe');
       setSaving(false);
-      return;
+      return false;
     } catch (err: any) {
       // On network error, refresh list to detect any side-effect creations
       const updated = await fetchRecipes();
@@ -1129,9 +1108,11 @@ setShowCreasing3(false);
         Alert.alert('Network error', err?.message ?? 'Failed to save');
       }
       setSaving(false);
-      return;
+      return false;
     }
+       return false;
   };
+
 
 }
 
@@ -1184,6 +1165,96 @@ if (showCreasing3) return "CREASING 3";
 
     return null;
   }
+
+ const handleSaveAndExit = async (mode: 'save' | 'saveAs') => {
+  const success = await saveCurrentMachineData({ mode });
+
+  if (!success) return; // 🔴 STOP if save failed
+
+  Alert.alert(
+    "Exit",
+    "Changes saved successfully. Do you want to exit?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Exit",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.setItem('exit_intent', 'true');
+          BackHandler.exitApp();
+        },
+      },
+    ],
+    { cancelable: false }
+  );
+};
+
+
+
+const handleExitPress = () => {
+  const hasUnsavedChanges = pendingEditsRef.current.size > 0;
+
+  // 🟢 No unsaved changes → normal exit
+  if (!hasUnsavedChanges) {
+    Alert.alert("Exit", "Do you want to exit?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Exit",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.setItem('exit_intent', 'true');
+          BackHandler.exitApp();
+        },
+      },
+    ]);
+    return;
+  }
+
+  // 🔴 Unsaved changes exist
+    Alert.alert(
+    "Unsaved Changes",
+    "You have unsaved parameter changes. What would you like to do?",
+    [
+      { text: "Cancel", style: "cancel" },
+
+      {
+        text: "Discard",
+        style: "destructive",
+        onPress: async () => {
+          pendingEditsRef.current.clear();
+          clearAllPanelTemp();
+          await AsyncStorage.setItem('exit_intent', 'true');
+          BackHandler.exitApp();
+        },
+      },
+
+      {
+        text: "Save",
+        onPress: () => {
+          // 🔵 SECOND POPUP
+          Alert.alert(
+            "Save Options",
+            "How do you want to save?",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Save",
+                onPress: () => handleSaveAndExit('save'),
+              },
+              {
+                text: "Save As",
+                onPress: () => handleSaveAndExit('saveAs'),
+              },
+            ],
+            { cancelable: false }
+          );
+        },
+      },
+    ],
+    { cancelable: false }
+  );
+
+};
 
 
   return (
@@ -1727,19 +1798,8 @@ if (label === "CREASING") {
 
 
 
-      onExit={() =>
-        Alert.alert("Exit", "Do you want to exit?", [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Exit",
-            style: "destructive",
-            onPress: async () => {
-              await AsyncStorage.setItem('exit_intent', 'true');
-              BackHandler.exitApp();
-            }
-          }
-        ])
-      }
+onExit={handleExitPress}
+
 
       onSettings={() => navigation.navigate("Settings")}  // 👈 ADD THIS LINE
     />
