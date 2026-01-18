@@ -1211,21 +1211,18 @@ const handleExitPress = () => {
   }
 
   // 🔴 Unsaved changes exist
-  Alert.alert(
+    Alert.alert(
     "Unsaved Changes",
     "You have unsaved parameter changes. What would you like to do?",
     [
       { text: "Cancel", style: "cancel" },
+
       {
         text: "Discard",
         style: "destructive",
         onPress: async () => {
-          // 🔴 clear global edits
           pendingEditsRef.current.clear();
-
-          // 🔴 clear panel-local edits (THIS IS FIX 2)
           clearAllPanelTemp();
-
           await AsyncStorage.setItem('exit_intent', 'true');
           BackHandler.exitApp();
         },
@@ -1233,15 +1230,30 @@ const handleExitPress = () => {
 
       {
         text: "Save",
-        onPress: () => handleSaveAndExit('save'),
-      },
-      {
-        text: "Save As",
-        onPress: () => handleSaveAndExit('saveAs'),
+        onPress: () => {
+          // 🔵 SECOND POPUP
+          Alert.alert(
+            "Save Options",
+            "How do you want to save?",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Save",
+                onPress: () => handleSaveAndExit('save'),
+              },
+              {
+                text: "Save As",
+                onPress: () => handleSaveAndExit('saveAs'),
+              },
+            ],
+            { cancelable: false }
+          );
+        },
       },
     ],
     { cancelable: false }
   );
+
 };
 
 
