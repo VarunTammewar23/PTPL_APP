@@ -23,6 +23,8 @@ import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
 import { POPUP } from '../../ui/Popup';
+import { s, fs, clamp } from '../../ui/scale';
+
 
 
 
@@ -46,8 +48,9 @@ const SERIAL_POS = [
   { id: 6, x: 84.7, y: 52.5 },
 ];
 
-const BOX_W = 125,
-      BOX_H = 50;
+const BOX_W = clamp(s(125), 90, 140);
+const BOX_H = clamp(s(50), 38, 56);
+
 
 const PARAM_FONT_SIZES: Record<number, number> = {
   1: 26,
@@ -283,7 +286,7 @@ function MachinePanelInner(
   style={[
     styles.paramText,
     {
-      fontSize: PARAM_FONT_SIZES[sr] ?? 28, // 👈 per-parameter size
+fontSize: fs(PARAM_FONT_SIZES[sr] ?? 28)
     },
     dark && { color: '#fff' },
   ]}
@@ -564,7 +567,7 @@ const styles = StyleSheet.create({
   },
 
   rightButtons: {
-    flex: 0.15,
+    flex: clamp(0.15, 0.18, 0.25),
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingVertical: 10,
@@ -660,7 +663,7 @@ modalEdit: {
   backgroundColor: '#fff',
   padding: POPUP.EDIT.padding ?? 12,
   borderRadius: POPUP.EDIT.borderRadius ?? 10,
-  width: POPUP.EDIT.width,
+width: clamp(width * 0.9, 600, 1100),
   alignSelf: 'center',
 },
 

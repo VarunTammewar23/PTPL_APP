@@ -58,7 +58,6 @@ import CreasingScreen3 from '../components/Creasing/CreasingScreen3';
 
 
 const { FilePickerModule } = NativeModules;
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 interface MainScreenProps {
   customerCode: string;

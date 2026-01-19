@@ -24,6 +24,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../ui/typography';  // Typography constants
+import { s, fs, clamp } from '../ui/scale';
+import { ScrollView,useWindowDimensions  } from 'react-native';
+
+
 
 /* ============================================================
    DATA TYPES
@@ -91,7 +95,8 @@ export default function HeaderBar({
         onPress={() => handleSelect(item.recipe_id)}
         style={[styles.dropdownItem, isSelected && styles.dropdownItemSelected]}
       >
-        <Text style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
+        <Text allowFontScaling={false}
+style={[styles.dropdownItemText, isSelected && styles.dropdownItemTextSelected]}>
           {item.recipe_name}
         </Text>
       </Pressable>
@@ -114,33 +119,43 @@ export default function HeaderBar({
               - Recipe number display
               - Optional screen title badge
           */}
-          <View style={styles.leftGroup}>
+          <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.leftGroup}
+              >
+
             <Image
               source={require('../assets/company_logo.jpeg')}
               style={styles.logo}
               resizeMode="contain"
             />
 
-            <Text style={styles.label}>Select recipe:</Text>
+            <Text allowFontScaling={false}
+style={styles.label}>Select recipe:</Text>
 
             <TouchableOpacity style={styles.dropdownTrigger} onPress={openDropdown}>
-              <Text style={styles.dropdownText}>
+              <Text allowFontScaling={false}
+style={styles.dropdownText}>
                 {selectedRecipeName ?? 'Select recipe'} ▾
               </Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Recipe No:</Text>
-            <Text style={styles.inputBox}>
+            <Text allowFontScaling={false}
+style={styles.label}>Recipe No:</Text>
+            <Text allowFontScaling={false}
+style={styles.inputBox}>
               {recipeId !== -1 ? recipeId : '--'}
             </Text>
 
             {/* Screen title badge (shown only if provided) */}
             {screenTitle && (
             <View style={styles.screenBox}>
-                  <Text style={styles.screenText}>{screenTitle}</Text>
+                  <Text allowFontScaling={false}
+ style={styles.screenText}>{screenTitle}</Text>
               </View>
             )}
-          </View>
+          </ScrollView>
 
           {/* RIGHT GROUP
               Contains:
@@ -149,7 +164,8 @@ export default function HeaderBar({
           */}
           <View style={styles.rightGroup}>
             <TouchableOpacity style={[styles.commonBtn, styles.uploadBtn]} onPress={onUpload}>
-              <Text style={styles.btnText}>Import</Text>
+              <Text allowFontScaling={false}
+                style={styles.btnText}>Import</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -198,8 +214,8 @@ export default function HeaderBar({
    Each section below corresponds to a specific UI element
 ============================================================ */
 
-const BUTTON_WIDTH = 120;
-const BUTTON_HEIGHT = 45;
+const BUTTON_WIDTH = clamp(s(120), 90, 130);
+const BUTTON_HEIGHT = clamp(s(45), 36, 48);
 const FIELD_HEIGHT = 45;
 const FIELD_MIN_WIDTH = 150;
 
@@ -208,7 +224,7 @@ const styles = StyleSheet.create({
 wrapper: {
   width: '100%',
   backgroundColor: '#d6e4f0',
-  height: 65,
+height: clamp(s(65), 56, 72),
   elevation: 5,
   paddingHorizontal: 0,
 },
@@ -225,15 +241,17 @@ row1: {
   alignItems: 'center',
   justifyContent: 'space-between',
   width: '100%',
+    height: '100%',
+  paddingVertical: s(4)
 },
 
 /* ---------- LEFT SECTION (logo + recipe info) ---------- */
 leftGroup: {
   flexDirection: 'row',
   alignItems: 'center',
-  flexShrink: 1,
-  marginLeft: 0,
+  paddingRight: s(16),
 },
+
 
 /* ---------- RIGHT SECTION (buttons) ---------- */
 rightGroup: {
@@ -243,30 +261,30 @@ rightGroup: {
 
 /* ---------- COMPANY LOGO ---------- */
 logo: {
-  height: '100%',
-  width: undefined,
-  aspectRatio: 72 / 48,
+  width: clamp(s(120), 96, 140),
+  height: clamp(s(42), 34, 48),
   resizeMode: 'contain',
-  marginRight: 8,
+  marginRight: s(8),
 },
+
 
 /* ---------- RECIPE DROPDOWN FIELD ---------- */
 dropdownTrigger: {
   backgroundColor: '#fff',
-  height: FIELD_HEIGHT,
+height: clamp(s(FIELD_HEIGHT), 36, 46),
   minWidth: FIELD_MIN_WIDTH,
   paddingHorizontal: 10,
   borderRadius: 6,
   borderWidth: 1,
   borderColor: '#ddd',
   justifyContent: 'center',
-  marginRight: 20,
+  marginRight: s(12),
 },
 
 dropdownText: {
   color: '#000',
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.headerbar,
+fontSize: fs(FONT_SIZE.headerbar),
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
   includeFontPadding: false,
@@ -275,35 +293,35 @@ dropdownText: {
 /* ---------- LABEL TEXT (e.g., Select recipe, Recipe No) ---------- */
 label: {
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.headerbar,
+fontSize: fs(FONT_SIZE.headerbar),
   fontWeight: FONT_WEIGHT.bold,
   color: '#000',
   marginLeft: 5,
-  marginRight: 20,
+marginRight: s(12),
 },
 
 /* ---------- RECIPE NUMBER DISPLAY FIELD ---------- */
 inputBox: {
   backgroundColor: '#fff',
-  height: FIELD_HEIGHT,
+height: clamp(s(FIELD_HEIGHT), 36, 46),
   minWidth: FIELD_MIN_WIDTH,
   paddingHorizontal: 10,
   borderRadius: 6,
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.headerbar,
+fontSize: fs(FONT_SIZE.headerbar),
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
   color: '#000',
   justifyContent: 'center',
   textAlignVertical: 'center',
   marginLeft: 0,
-  marginRight: 20,
+marginRight: s(12),
 },
 
 /* ---------- COMMON BUTTON BASE STYLE ---------- */
 commonBtn: {
-  width: BUTTON_WIDTH,
-  height: BUTTON_HEIGHT,
+width: clamp(s(118), 92, 130),
+height: clamp(s(44), 36, 48),
   borderRadius: 6,
   justifyContent: 'center',
   alignItems: 'center',
@@ -315,7 +333,7 @@ commonBtn: {
 btnText: {
   color: '#ffffffff',
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.headerbar,
+fontSize: fs(FONT_SIZE.headerbar),
   fontWeight: FONT_WEIGHT.bold,
   textAlign: 'center',
 },
@@ -350,7 +368,7 @@ modalTitle: {
   paddingVertical: 10,
   paddingHorizontal: 8,
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.label,
+fontSize: fs(FONT_SIZE.label),
   fontWeight: FONT_WEIGHT.bold,
 },
 
@@ -360,7 +378,7 @@ dropdownItem: {
   paddingHorizontal: 12,
   borderBottomWidth: 1,
   borderBottomColor: '#eee',
-  marginRight: 20,
+marginRight: s(12),
   marginleft: 20,
 },
 
@@ -372,13 +390,13 @@ dropdownItemSelected: {
 /* ---------- DROPDOWN ITEM TEXT ---------- */
 dropdownItemText: {
   fontFamily: FONT_FAMILY.regular,
-  fontSize: FONT_SIZE.label,
+fontSize: fs(FONT_SIZE.label),
 },
 
 /* ---------- SELECTED DROPDOWN ITEM TEXT ---------- */
 dropdownItemTextSelected: {
   fontFamily: FONT_FAMILY.regular,
-  fontSize: FONT_SIZE.label,
+fontSize: fs(FONT_SIZE.label),
   fontWeight: FONT_WEIGHT.bold,
 },
 
@@ -389,7 +407,7 @@ screenBox: {
   paddingVertical: 6,
   borderRadius: 6,
   marginLeft: 10,
-  height: FIELD_HEIGHT,
+height: clamp(s(FIELD_HEIGHT), 36, 46),
   minWidth: FIELD_MIN_WIDTH,
   justifyContent: 'center',
   textAlignVertical: 'center',
@@ -399,7 +417,7 @@ screenBox: {
 screenText: {
   color: '#000000ff',
   fontFamily: FONT_FAMILY.bold,
-  fontSize: FONT_SIZE.headerbar,
+fontSize: fs(FONT_SIZE.headerbar),
   fontWeight: FONT_WEIGHT.bold,
 },
 

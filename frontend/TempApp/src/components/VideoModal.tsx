@@ -10,6 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import Video from 'react-native-video';
+import { s, clamp } from '../ui/scale';
+
 
 type Props = {
   visible: boolean;
@@ -72,7 +74,7 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    width: width * 0.9,
+width: clamp(width * 0.9, 600, 1100),
     backgroundColor: '#ffffffff',
     borderRadius: 10,
     overflow: 'hidden',
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
 
   video: {
     width: '95%',
-    height: 560,
+    height: clamp(s(560), 280, 560),
     backgroundColor: '#ffffffff',
     alignSelf: 'center',
   },

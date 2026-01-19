@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../ui/typography';  // 👈 added FONT_WEIGHT
+import { s, fs, clamp } from '../ui/scale';
 
 
 interface BottomBarProps {
@@ -136,8 +137,9 @@ const styles = StyleSheet.create({
   /* MAIN NAV BUTTONS */
   pillButton: {
     backgroundColor: '#e9e5f6',
-    width: BUTTON_WIDTH,
-    height: BUTTON_HEIGHT,
+width: clamp(s(115), 90, 120),
+height: clamp(s(50), 42, 54),
+
     borderRadius: 5,
     borderTopColor: '#7f8294ff',
     borderLeftColor: '#7f8294ff',
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
   pillText: {
     color: '#211f2e',
     fontFamily: FONT_FAMILY.regular,
-    fontSize: FONT_SIZE.button,
+    fontSize: fs(FONT_SIZE.button),
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
     textAlign: 'center',
     width: BUTTON_WIDTH - 10,
@@ -174,8 +176,9 @@ const styles = StyleSheet.create({
   /* SETTINGS BUTTON */
   settingsPill: {
     backgroundColor: '#e9e5f6',
-    width: BUTTON_WIDTH,
-    height: BUTTON_HEIGHT,
+width: clamp(s(115), 90, 120),
+height: clamp(s(50), 42, 54),
+
     borderRadius: 5,
     borderTopColor: '#7f8294ff',
     borderLeftColor: '#7f8294ff',
@@ -190,15 +193,16 @@ const styles = StyleSheet.create({
   settingsText: {
     color: '#211f2e',
     fontFamily: FONT_FAMILY.regular,
-    fontSize: FONT_SIZE.button,
+    fontSize: fs(FONT_SIZE.button),
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 
   /* EXIT BUTTON */
   exitPill: {
     backgroundColor: '#ffd0d6',
-    width: BUTTON_WIDTH,
-    height: BUTTON_HEIGHT,
+width: clamp(s(115), 90, 120),
+height: clamp(s(50), 42, 54),
+
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -213,7 +217,7 @@ const styles = StyleSheet.create({
   exitText: {
     color: '#6b0f1a',
     fontFamily: FONT_FAMILY.bold,
-    fontSize: FONT_SIZE.button,
+    fontSize: fs(FONT_SIZE.button),
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
   },
 
