@@ -1,34 +1,39 @@
 // src/ui/Popup.ts
 
+import { fs, s } from './scale';
+
 export const POPUP = {
   TABLE: {
-    width: 1000,
-    maxHeight: 600,
+    // ⚠️ width & height are intentionally NOT defined here
+    // They must be applied dynamically where screen size is known
 
-    titleFont: 18,
-    headerFont: 18,
-    bodyFont: 15,
-    closeFont: 18,
+    titleFont: fs(18),
+    headerFont: fs(18),
+    bodyFont: fs(15),
+    closeFont: fs(18),
   },
 
   EDIT: {
-    width: 600,
-    padding: 16,
-    borderRadius: 12,
+    // ⚠️ width is intentionally NOT defined here
+    // Component decides width based on screen size
 
-    titleFont: 20,
-    inputFont: 18,
+    padding: s(16),
+    borderRadius: s(12),
+
+    titleFont: fs(20),
+    inputFont: fs(18),
 
     button: {
-      fontSize: 18,
-      paddingV: 12,
-      paddingH: 20,
+      fontSize: fs(18),
+      paddingV: s(12),
+      paddingH: s(20),
     },
   },
 
   VIDEO: {
-    width: 900,
-    maxHeight: 600,
-    borderRadius: 12,
+    // ⚠️ width & height intentionally omitted
+    // Applied dynamically in VideoModal
+
+    borderRadius: s(12),
   },
 } as const;

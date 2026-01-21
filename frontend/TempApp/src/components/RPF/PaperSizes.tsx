@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   ImageBackground,
-  Dimensions,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -75,6 +74,7 @@ const PARAM_FONT_SIZES: Record<number, number> = {
 
 
 
+
   type Props = {
   recipeId: number;
   recipeName?: string;
@@ -127,11 +127,11 @@ function MachinePanelInner(
   const [natW, setNatW] = useState<number | null>(null);
   const [natH, setNatH] = useState<number | null>(null);
 
-  const { width, height } = useWindowDimensions();
-  const isPortrait = height > width;
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  const isPortrait = screenH > screenW;
 
-  const [contW, setContW] = useState(width);
-  const [contH, setContH] = useState(Math.round(height*.75));
+  const [contW, setContW] = useState(screenW);
+  const [contH, setContH] = useState(Math.round(screenH * 0.75));
 
   const [dispW, setDispW] = useState(contW);
   const [dispH, setDispH] = useState(contH);
@@ -233,10 +233,11 @@ function MachinePanelInner(
                 }}
               >
                 <ImageBackground
-                  source={imgSrc}
-                  style={{ width: 1300, height: 600 }}
-                  resizeMode="contain"
-                >
+  source={imgSrc}
+  style={{ width: dispW, height: dispH }}
+  resizeMode="contain"
+>
+
                   {loading && (
                     <View style={[styles.loading, { width: dispW, height: dispH }]}>
                       <ActivityIndicator size="large" />
@@ -318,8 +319,9 @@ fontSize: fs(PARAM_FONT_SIZES[sr] ?? 28)
         {
           left: cx,
           top: cy,
-          width: 50,
-          height: 30,
+width: clamp(s(50), 36, 56),
+height: clamp(s(30), 22, 34),
+
           transform: [
             { translateX: -BOX_W / 2 },
             { translateY: -BOX_H / 2 },
@@ -387,7 +389,12 @@ fontSize: fs(PARAM_FONT_SIZES[sr] ?? 28)
       {/* VALUE EDITOR */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modalEdit}>
+          <View
+                style={[
+                  styles.modalEdit,
+                  { width: clamp(screenW * 0.9, 600, 1100) },
+                ]}
+              >
               <Text style={styles.modalTitle}>
                 Edit Parameter No. :- {editingSr}
               </Text>
@@ -437,7 +444,15 @@ fontSize: fs(PARAM_FONT_SIZES[sr] ?? 28)
       {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
-    <View style={styles.modalTable}>
+<View
+  style={[
+    styles.modalTable,
+    {
+      width: clamp(screenW * 0.95, 600, 1100),
+      maxHeight: clamp(screenH * 0.85, 400, 700),
+    },
+  ]}
+>
 
 
       <View style={styles.popupHeaderRow}>
@@ -604,7 +619,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: FONT_SIZE.sidebar, 
+    fontSize: fs(FONT_SIZE.sidebar), 
     fontWeight: '700',
   },
 
@@ -640,7 +655,8 @@ const styles = StyleSheet.create({
   },
   serialText: {
     color: '#fff',
-    fontSize: 20,
+fontSize: fs(20),
+
     fontWeight: '700',
   },
 
@@ -654,8 +670,6 @@ modalTable: {
   backgroundColor: '#fff',
   padding: POPUP.TABLE.padding ?? 12,
   borderRadius: POPUP.TABLE.borderRadius ?? 10,
-  width: POPUP.TABLE.width,
-  maxHeight: POPUP.TABLE.maxHeight,
   alignSelf: 'center',
 },
 
@@ -663,13 +677,13 @@ modalEdit: {
   backgroundColor: '#fff',
   padding: POPUP.EDIT.padding ?? 12,
   borderRadius: POPUP.EDIT.borderRadius ?? 10,
-width: clamp(width * 0.9, 600, 1100),
   alignSelf: 'center',
 },
 
 
   modalTitle: {
-  fontSize: POPUP.TABLE.titleFont,
+  fontSize: fs(POPUP.TABLE.titleFont),
+
   fontWeight: '700',
   marginBottom: 10,
 },
@@ -680,7 +694,7 @@ width: clamp(width * 0.9, 600, 1100),
     borderColor: '#aaa',
     borderRadius: 6,
     padding: 8,
-    fontSize: POPUP.EDIT.inputFont,   // 👈 increase text size here
+    fontSize: fs(POPUP.EDIT.inputFont),   // 👈 increase text size here
 
   },
 
@@ -692,13 +706,13 @@ width: clamp(width * 0.9, 600, 1100),
   cancel: {
     marginRight: 20,
     color: '#666',
-    fontSize: 18,
+    fontSize: fs(18),
 
   },
   save: {
     color: '#007bff',
     fontWeight: '700',
-    fontSize: 18,
+    fontSize: fs(18),
   },
 
  
@@ -771,11 +785,11 @@ popupColBorder: {
 
 popupHeaderText: {
   fontWeight: '700',
-  fontSize: POPUP.TABLE.headerFont,
+  fontSize: fs(POPUP.TABLE.headerFont),
 },
 
 popupBodyText: {
-  fontSize: POPUP.TABLE.bodyFont,
+  fontSize: fs(POPUP.TABLE.bodyFont),
 },
 
 
@@ -802,7 +816,7 @@ popupCloseIcon: {
 },
 
 popupCloseText: {
-  fontSize: POPUP.TABLE.closeFont,
+  fontSize: fs(POPUP.TABLE.closeFont),
   fontWeight: '800',
   color: '#444',
   paddingLeft: 5,
