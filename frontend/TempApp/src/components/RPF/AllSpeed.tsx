@@ -166,6 +166,76 @@ function AllSpeedInner(
   const [tablePopup, setTablePopup] = useState(false);
   const [videoPopup, setVideoPopup] = useState(false);
 
+  // ✅ MEMOIZED PARAM BOXES (FOR SMOOTH PINCH ZOOM)
+const paramBoxes = useMemo(() => {
+  return PARAM_SR.map(sr => {
+    const pos = POSITIONS[sr];
+    const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+
+    let cx = (pos.x / 100) * IMG_W;
+    let cy = (pos.y / 100) * IMG_H;
+
+    cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
+    cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
+
+    return (
+      <TouchableOpacity
+        key={sr}
+        onPress={() => {
+          setEditingSr(sr);
+          setTempVal(String(val));
+        }}
+        style={[
+          styles.paramBox,
+          {
+            left: cx,
+            top: cy,
+            width: BOX_W,
+            height: BOX_H,
+            transform: [
+              { translateX: -BOX_W / 2 },
+              { translateY: -BOX_H / 2 },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.paramText}>{val}</Text>
+      </TouchableOpacity>
+    );
+  });
+}, [edited, values]);
+
+// ✅ MEMOIZED SERIAL NUMBERS (STATIC)
+const serialBoxes = useMemo(() => {
+  return SERIAL_POS.map(p => {
+    const cx = (p.x / 100) * IMG_W;
+    const cy = (p.y / 100) * IMG_H;
+
+    return (
+      <View
+        key={p.id}
+        pointerEvents="none"
+        style={[
+          styles.serialBox,
+          {
+            left: cx,
+            top: cy,
+            width: 50,
+            height: 30,
+            transform: [
+              { translateX: -25 },
+              { translateY: -15 },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.serialText}>{p.id}</Text>
+      </View>
+    );
+  });
+}, []);
+
+
   /* ---------- UI ---------- */
 
   return (
@@ -207,69 +277,13 @@ function AllSpeedInner(
                 )}
 
                 {/* PARAM BOXES */}
-                {PARAM_SR.map(sr => {
-                  const pos = POSITIONS[sr];
-                  const val = edited[sr] ?? values[sr]?.value_01 ?? '';
+                <View pointerEvents="box-none"> 
+                  {paramBoxes}
+                </View> 
 
-                  let cx = (pos.x / 100) * IMG_W;
-                  let cy = (pos.y / 100) * IMG_H;
-
-                  cx = Math.max(BOX_W / 2, Math.min(cx, IMG_W - BOX_W / 2));
-                  cy = Math.max(BOX_H / 2, Math.min(cy, IMG_H - BOX_H / 2));
-
-                  return (
-                    <TouchableOpacity
-                      key={sr}
-                      onPress={() => {
-                        setEditingSr(sr);
-                        setTempVal(String(val));
-                      }}
-                      style={[
-                        styles.paramBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: BOX_W,
-                          height: BOX_H,
-                          transform: [
-                            { translateX: -BOX_W / 2 },
-                            { translateY: -BOX_H / 2 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.paramText}>{val}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                {/* SERIAL NUMBERS */}
-                {SERIAL_POS.map(p => {
-                  const cx = (p.x / 100) * IMG_W;
-                  const cy = (p.y / 100) * IMG_H;
-
-                  return (
-                    <View
-                      key={p.id}
-                      pointerEvents="none"
-                      style={[
-                        styles.serialBox,
-                        {
-                          left: cx,
-                          top: cy,
-                          width: 50,
-                          height: 30,
-                          transform: [
-                            { translateX: -25 },
-                            { translateY: -15 },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={styles.serialText}>{p.id}</Text>
-                    </View>
-                  );
-                })}
+                <View pointerEvents="none">    
+                {serialBoxes}
+                </View>
               </ImageBackground>
             </View>
           </ZoomableView>

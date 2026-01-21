@@ -3711,7 +3711,7 @@
 ./frontend/TempApp/android/settings.gradle
 ./frontend/TempApp/app.json
 ./frontend/TempApp/App.tsx
-./frontend/TempApp/babel.config.js
+./frontend/TempApp/
 ./frontend/TempApp/Gemfile
 ./frontend/TempApp/index.js
 ./frontend/TempApp/ios
