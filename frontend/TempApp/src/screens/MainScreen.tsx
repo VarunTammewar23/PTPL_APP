@@ -177,20 +177,29 @@ useEffect(() => {
   const [customerName, setCustomerName] = useState<string | null>(null);
 
 useEffect(() => {
-  const subscription = AppState.addEventListener('change', state => {
+  const subscription = AppState.addEventListener('change', async (state) => {
     if (state === 'active') {
-      // 🔴 FORCE RESET TO HOME
-      setSelectedRecipeId(-1);
-      setActivePanel("HOME");
-      setActiveSubScreen(null);
-      closeAllPanels();
-      pendingEditsRef.current.clear();
-      setKnifeCountState(0);
+      const exitIntent = await AsyncStorage.getItem('exit_intent');
+
+      // 🔴 CASE 1: App opened AFTER EXIT → reset (keep current behavior)
+      if (exitIntent === 'true') {
+        await AsyncStorage.removeItem('exit_intent');
+
+        setSelectedRecipeId(-1);
+        setActivePanel("HOME");
+        setActiveSubScreen(null);
+        closeAllPanels();
+        pendingEditsRef.current.clear();
+        setKnifeCountState(0);
+      }
+
+      // 🟢 CASE 2: App resumed from background → DO NOTHING
     }
   });
 
   return () => subscription.remove();
 }, []);
+
 
 
 
