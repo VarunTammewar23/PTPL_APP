@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -39,11 +38,8 @@ const BottomBar: FC<BottomBarProps> = ({
 
   return (
     <View style={styles.bottomBarContainer}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.bottomBarScroll}
-      >
+      <View style={styles.bottomBarRow}>
+
         {labels.map((label, idx) => {
   const isDisabled = disabledLabels?.includes(label);
 
@@ -73,16 +69,18 @@ const isActive =
                     ]}
 
             >
-              <Text
-                  style={[
-                    styles.pillText,
-                    isActive && styles.pillTextActive,
-                    isDisabled && styles.pillTextDisabled,
-                  ]}
-                >
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.pillText,
+                isActive && styles.pillTextActive,
+                isDisabled && styles.pillTextDisabled,
+              ]}
+            >
+              {label}
+            </Text>
 
-                {label}
-              </Text>
             </TouchableOpacity>
           );
         })}
@@ -93,7 +91,7 @@ const isActive =
         {/* SETTINGS Button */}
         <TouchableOpacity activeOpacity={0.9} onPress={onSettings} style={styles.settingsPill}>
           <Icon name="settings" size={FONT_SIZE.button} color="#211f2e" style={{ marginRight: 3 }} />
-          <Text style={styles.settingsText}>SETTINGS</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.settingsText}>SETTINGS</Text>
         </TouchableOpacity>
 
         {/* EXIT Button */}
@@ -103,9 +101,9 @@ const isActive =
             style={styles.exitPill}
           >
           <Icon name="logout" size={FONT_SIZE.header} color="#6b0f1a" style={{ marginRight: 8 }} />
-          <Text style={styles.exitText}>EXIT</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.exitText}>EXIT</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -126,6 +124,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffffff',
     backgroundColor: '#ffffffff',
     paddingVertical: 4,
+    paddingHorizontal: 4,
+    width: '100%',
   },
 
   bottomBarScroll: {
@@ -134,12 +134,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
+  bottomBarRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  width: '100%',              // fill screen
+  flexWrap: 'wrap'     
+  },   // allow wrapping
+
+
   /* MAIN NAV BUTTONS */
   pillButton: {
     backgroundColor: '#e9e5f6',
-width: clamp(s(115), 90, 120),
-height: clamp(s(50), 42, 54),
-
+    width: clamp(s(115), 90, 120),
+    height: clamp(s(50), 42, 54),
     borderRadius: 5,
     borderTopColor: '#7f8294ff',
     borderLeftColor: '#7f8294ff',
@@ -150,6 +157,12 @@ height: clamp(s(50), 42, 54),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 1,
+    flexShrink: 1,   // allow compression
+    flexGrow: 1,          // fill available space        
+    flexBasis: 0,         // equal distribution
+    minWidth: 90,         // lower safety
+    maxWidth: 140,        // upper safety
+
   },
 
   pillButtonActive: {
@@ -166,7 +179,6 @@ height: clamp(s(50), 42, 54),
     fontSize: fs(FONT_SIZE.button),
     fontWeight: FONT_WEIGHT.bold,        // 👈 added
     textAlign: 'center',
-    width: BUTTON_WIDTH - 10,
   },
 
   pillTextActive: {
@@ -176,9 +188,9 @@ height: clamp(s(50), 42, 54),
   /* SETTINGS BUTTON */
   settingsPill: {
     backgroundColor: '#e9e5f6',
-width: clamp(s(115), 90, 120),
-height: clamp(s(50), 42, 54),
-
+    width: clamp(s(115), 90, 120),
+    height: clamp(s(50), 42, 54),
+    flexShrink: 1,
     borderRadius: 5,
     borderTopColor: '#7f8294ff',
     borderLeftColor: '#7f8294ff',
@@ -200,9 +212,9 @@ height: clamp(s(50), 42, 54),
   /* EXIT BUTTON */
   exitPill: {
     backgroundColor: '#ffd0d6',
-width: clamp(s(115), 90, 120),
-height: clamp(s(50), 42, 54),
-
+    width: clamp(s(115), 90, 120),
+    height: clamp(s(50), 42, 54),
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

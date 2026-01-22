@@ -55,6 +55,7 @@ import TraySpecs from '../components/STP Tray/TraySpecs';
 import CreasingScreen1 from '../components/Creasing/CreasingScreen1';
 import CreasingScreen2 from '../components/Creasing/CreasingScreen2';
 import CreasingScreen3 from '../components/Creasing/CreasingScreen3';
+import { PanelId, buildNavigationSequence, getNextPanel,} from '../functions/panelNavigator';
 
 
 const { FilePickerModule } = NativeModules;
@@ -81,6 +82,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const SCREEN_W = Dimensions.get('window').width;
 
   // 🔴 Holds unsaved changes across ALL panels
   const pendingEditsRef = useRef<Map<number, any>>(new Map());
@@ -89,6 +91,7 @@ export default function MainScreen({ customerCode }: MainScreenProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipeId, setSelectedRecipeId] = useState<number>(-1);
   const [recipeParams, setRecipeParams] = useState<RecipeParam[]>([]);
+  const [activePanelId, setActivePanelId] = useState<PanelId | null>(null);
 
 console.log(
   "PARAM TYPES:",
@@ -123,6 +126,10 @@ const isKnife1Enabled = knifeCount >= 1;
 const isKnife2Enabled = knifeCount >= 2;
 const isKnife3Enabled = knifeCount >= 3;
 
+const navigationSequence = React.useMemo(
+  () => buildNavigationSequence(knifeCount),
+  [knifeCount]
+);
 
 // 🔴 STEP 5 — AUTO CLOSE KNIFE SCREENS WHEN COUNT DROPS
 useEffect(() => {
@@ -281,38 +288,100 @@ function openSubScreen(panel: string, sub: string) {
   closeAllPanels();
 
   // RPF
-  if (panel === "RPF" && sub === "PAPER SIZES") return setShowMachine(true);
-  if (panel === "RPF" && sub === "NO OF FOLDS") return setShowFolds(true);
-  if (panel === "RPF" && sub === "OFFSET SETTINGS") return setShowOffset(true);
-  if (panel === "RPF" && sub === "GLUE/TAP QTY") return setShowGlueTap(true);
-  if (panel === "RPF" && sub === "SUCTION / GAP SET") return setShowSuctionGap(true);
-  if (panel === "RPF" && sub === "ALL SPEED") return setShowAllSpeed(true);
-  if (panel === "RPF" && sub === "SIDE LAY") return setShowSideLay(true);
-  if (panel === "RPF" && sub === "BLOWER SETTINGS") return setShowBlowerSettings(true);
-  if (panel === "RPF" && sub === "ROLLER GAP") return setShowRollerGap(true);
-  if (panel === "RPF" && sub === "FOLDING TRAY") return setShowFoldingTray(true);
+  if (panel === "RPF" && sub === "PAPER SIZES") {activatePanelById('PAPER_SIZES'); return;}
+  if (panel === "RPF" && sub === "NO OF FOLDS") {activatePanelById('NO_OF_FOLDS'); return;}
+  if (panel === "RPF" && sub === "OFFSET SETTINGS") return activatePanelById('OFFSET');
+  if (panel === "RPF" && sub === "GLUE/TAP QTY") return activatePanelById('GLUE_TAP');
+  if (panel === "RPF" && sub === "SUCTION / GAP SET") return activatePanelById('SUCTION_GAP');
+  if (panel === "RPF" && sub === "ALL SPEED") return activatePanelById('ROLL_SPEED');
+  if (panel === "RPF" && sub === "SIDE LAY") return activatePanelById('SIDE_LAY');
+  if (panel === "RPF" && sub === "BLOWER SETTINGS") return activatePanelById('BLOWER');
+  if (panel === "RPF" && sub === "ROLLER GAP") return activatePanelById('ROLLER_GAP');
+  if (panel === "RPF" && sub === "FOLDING TRAY") return activatePanelById('FOLDING_TRAY');
 
-  // RT ANGLE
-  if (panel === "RT ANGLE" && sub === "FOLD SETTING") return setShowFoldSetting(true);
-  if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return setShowFoldSetting2(true);
-  if (panel === "RT ANGLE" && sub === "GAP SETTING") return setShowGapSetting(true);
+// RT ANGLE
+if (panel === "RT ANGLE" && sub === "FOLD SETTING") return activatePanelById('RT_FOLD_1');
 
-  // KNIFE 1
-  if (panel === "KNIFE 1" && sub === "KNIFE K1 A") return setShowK1A(true);
-  if (panel === "KNIFE 1" && sub === "KNIFE K1 B") return setShowK1B(true);
-  if (panel === "KNIFE 1" && sub === "KNIFE K1 C") return setShowK1C(true);
+if (panel === "RT ANGLE" && sub === "FOLD SETTING 2") return activatePanelById('RT_FOLD_2');
 
-  // KNIFE 2
-  if (panel === "KNIFE 2" && sub === "KNIFE K2 A") return setShowK2A(true);
-  if (panel === "KNIFE 2" && sub === "KNIFE K2 B") return setShowK2B(true);
-  if (panel === "KNIFE 2" && sub === "KNIFE K2 C") return setShowK2C(true);
+if (panel === "RT ANGLE" && sub === "GAP SETTING") return activatePanelById('RT_GAP');
 
-  // KNIFE 3
-  if (panel === "KNIFE 3" && sub === "KNIFE K3 A") return setShowK3A(true);
-  if (panel === "KNIFE 3" && sub === "KNIFE K3 B") return setShowK3B(true);
-  if (panel === "KNIFE 3" && sub === "KNIFE K3 C") return setShowK3C(true);
+
+// KNIFE 1
+if (panel === "KNIFE 1" && sub === "KNIFE K1 A") return activatePanelById('K1A');
+
+if (panel === "KNIFE 1" && sub === "KNIFE K1 B") return activatePanelById('K1B');
+
+if (panel === "KNIFE 1" && sub === "KNIFE K1 C") return activatePanelById('K1C');
+
+// KNIFE 2
+if (panel === "KNIFE 2" && sub === "KNIFE K2 A") return activatePanelById('K2A');
+
+if (panel === "KNIFE 2" && sub === "KNIFE K2 B") return activatePanelById('K2B');
+
+if (panel === "KNIFE 2" && sub === "KNIFE K2 C") return activatePanelById('K2C');
+
+
+// KNIFE 3
+if (panel === "KNIFE 3" && sub === "KNIFE K3 A") return activatePanelById('K3A');
+
+if (panel === "KNIFE 3" && sub === "KNIFE K3 B") return activatePanelById('K3B');
+
+if (panel === "KNIFE 3" && sub === "KNIFE K3 C") return activatePanelById('K3C');
+
 }
 
+function activatePanelById(id: PanelId) {
+  closeAllPanels();
+  setActivePanelId(id);
+
+  switch (id) {
+    case 'PAPER_SIZES': setShowMachine(true); break;
+    case 'NO_OF_FOLDS': setShowFolds(true); break;
+    case 'OFFSET': setShowOffset(true); break;
+    case 'GLUE_TAP': setShowGlueTap(true); break;
+    case 'SUCTION_GAP': setShowSuctionGap(true); break;
+    case 'ROLL_SPEED': setShowAllSpeed(true); break;
+    case 'SIDE_LAY': setShowSideLay(true); break;
+    case 'BLOWER': setShowBlowerSettings(true); break;
+    case 'ROLLER_GAP': setShowRollerGap(true); break;
+    case 'FOLDING_TRAY': setShowFoldingTray(true); break;
+
+    case 'RT_FOLD_1': setShowFoldSetting(true); break;
+    case 'RT_FOLD_2': setShowFoldSetting2(true); break;
+    case 'RT_GAP': setShowGapSetting(true); break;
+
+    case 'K1A': setShowK1A(true); break;
+    case 'K1B': setShowK1B(true); break;
+    case 'K1C': setShowK1C(true); break;
+
+    case 'K2A': setShowK2A(true); break;
+    case 'K2B': setShowK2B(true); break;
+    case 'K2C': setShowK2C(true); break;
+
+    case 'K3A': setShowK3A(true); break;
+    case 'K3B': setShowK3B(true); break;
+    case 'K3C': setShowK3C(true); break;
+
+    case 'STP_TRAY': setShowSTPTray(true); break;
+
+    case 'CREASING':
+      if (knifeCount === 1) setShowCreasing1(true);
+      else if (knifeCount === 2) setShowCreasing2(true);
+      else if (knifeCount >= 3) setShowCreasing3(true);
+      break;
+  }
+}
+
+const goNext = () => {
+  const next = getNextPanel(navigationSequence, activePanelId, +1);
+  if (next) activatePanelById(next);
+};
+
+const goPrev = () => {
+  const prev = getNextPanel(navigationSequence, activePanelId, -1);
+  if (prev) activatePanelById(prev);
+};
 
 
 
@@ -421,6 +490,7 @@ const openPanel = (name: string) => {
   if (name === "KNIFE 1" && !isKnife1Enabled) return;
   if (name === "KNIFE 2" && !isKnife2Enabled) return;
   if (name === "KNIFE 3" && !isKnife3Enabled) return;
+
 
   const PANELS_WITH_SUBMENU = [
     "RPF",
@@ -736,7 +806,7 @@ const readFileAsBase64 = async (uri: string): Promise<string> => {
 
 
 
-  function getNextVersionName(baseName: string | null, allNames: string[]) {
+  function getNextRecipeVersion(baseName: string | null, allNames: string[]) {
     if (!baseName) return `recipe_${Date.now()}`;
 
     // Decide parent name for versioning:
@@ -915,7 +985,7 @@ if (res.success) {
 
 // 🔵 SAVE AS = create new recipe
 if (mode === 'saveAs') {
-  let newRecipeName = getNextVersionName(selectedRecipeName, recipes.map(r => r.recipe_name));
+  let newRecipeName = getNextRecipeVersion(selectedRecipeName, recipes.map(r => r.recipe_name));
   // 4️⃣ Build backend rows from FULL merged params
 const rows = mergedParams.map((p: any) => ({
   recipe_name: newRecipeName,
@@ -1299,6 +1369,8 @@ const handleExitPress = () => {
                 onSave={saveCurrentMachineData}   // 👈 ADD THIS LINE
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
 
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1311,6 +1383,8 @@ const handleExitPress = () => {
                 onClose={() => setShowFolds(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1323,6 +1397,8 @@ const handleExitPress = () => {
                 onClose={() => setShowOffset(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1335,6 +1411,8 @@ const handleExitPress = () => {
                 onClose={() => setShowGlueTap(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1347,6 +1425,8 @@ const handleExitPress = () => {
                 onClose={() => setShowSuctionGap(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
             <View style={{ flex: 1, display: showAllSpeed ? 'flex' : 'none' }}>
@@ -1358,6 +1438,8 @@ const handleExitPress = () => {
                 onClose={() => setShowAllSpeed(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1370,6 +1452,8 @@ const handleExitPress = () => {
                 onClose={() => setShowSideLay(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1382,6 +1466,8 @@ const handleExitPress = () => {
                 onClose={() => setShowBlowerSettings(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1395,6 +1481,8 @@ const handleExitPress = () => {
                 imageScale={2}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1407,6 +1495,8 @@ const handleExitPress = () => {
                 onClose={() => setShowFoldingTray(false)}
                 onSave={saveCurrentMachineData} //save
                 onParamEdit={onParamEdit}   // 🔴 THIS LINE
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1418,6 +1508,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1429,6 +1521,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1440,6 +1534,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1451,6 +1547,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1462,6 +1560,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1473,6 +1573,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1485,6 +1587,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1496,6 +1600,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1507,6 +1613,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1518,6 +1626,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1529,6 +1639,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1540,6 +1652,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
 
@@ -1551,6 +1665,8 @@ const handleExitPress = () => {
                 initialParams={recipeParams}
                 onSave={saveCurrentMachineData}
                 onParamEdit={onParamEdit}
+                onPrev={goPrev}
+                onNext={goNext}
               />
             </View>
             <View style={{ flex: 1, display: showCreasing1 ? 'flex' : 'none' }}>
@@ -1561,6 +1677,8 @@ const handleExitPress = () => {
     initialParams={recipeParams}
     onSave={saveCurrentMachineData}
     onParamEdit={onParamEdit}
+    onPrev={goPrev}
+    onNext={goNext}
   />
 </View>
 
@@ -1572,6 +1690,8 @@ const handleExitPress = () => {
     initialParams={recipeParams}
     onSave={saveCurrentMachineData}
     onParamEdit={onParamEdit}
+    onPrev={goPrev}
+    onNext={goNext}
   />
 </View>
 
@@ -1583,6 +1703,8 @@ const handleExitPress = () => {
     initialParams={recipeParams}
     onSave={saveCurrentMachineData}
     onParamEdit={onParamEdit}
+    onPrev={goPrev}
+    onNext={goNext}
   />
 </View>
 

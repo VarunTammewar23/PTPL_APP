@@ -75,16 +75,15 @@ const PARAM_FONT_SIZES: Record<number, number> = {
 
 
 
-  type Props = {
+type Props = {
   recipeId: number;
   recipeName?: string;
   imageUri?: string;
   onClose?: () => void;
   initialParams?: any[];
   pollMs?: number;
-  onSave?: (params: any[]) => void;
+  onSave?: (opts?: { mode?: 'save' | 'saveAs' }) => Promise<boolean> | void;
 
-  // 🔴 THIS IS THE NEW PART
   onParamEdit?: (param: {
     parameter_no: number;
     value_01: string | number;
@@ -92,7 +91,12 @@ const PARAM_FONT_SIZES: Record<number, number> = {
     parameter?: string;
     unit?: string;
   }) => void;
+
+  // ✅ THESE MUST BE TOP-LEVEL PROPS
+  onPrev?: () => void;
+  onNext?: () => void;
 };
+
 
 
 function MachinePanelInner(
@@ -103,10 +107,13 @@ function MachinePanelInner(
     initialParams,
     pollMs = 2000,
     onSave,
-    onParamEdit,        // 🔴 ADD THIS
-  }: any,
-  ref: any
+    onParamEdit,
+    onPrev,
+    onNext,
+  }: Props,
+  ref: React.Ref<any>
 ) {
+
 
   const { theme } = useTheme();
   const dark = theme === 'dark';
@@ -375,6 +382,20 @@ height: clamp(s(30), 22, 34),
           >
             <Text style={styles.btnText}>SAVE AS</Text>
           </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.btnGray}
+              onPress={() => onPrev?.()}
+            >
+              <Text style={styles.btnText}>◀ PREV</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.btnGray}
+              onPress={() => onNext?.()}
+            >
+              <Text style={styles.btnText}>NEXT ▶</Text>
+            </TouchableOpacity>
 
 
 
@@ -820,6 +841,15 @@ popupCloseText: {
   fontWeight: '800',
   color: '#444',
   paddingLeft: 5,
+},
+
+btnGray: {
+  backgroundColor: '#6c757d',
+  paddingVertical: 10,
+  paddingHorizontal: 8,
+  borderRadius: 6,
+  width: '90%',
+  marginTop: 10,
 },
 
 

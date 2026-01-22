@@ -39,7 +39,7 @@ const DROPDOWN_COUNT = 11; //number of dropdowns
 /* ---------- COMPONENT ---------- */
 
 function CreasingScreen1(
-  { onSave, onParamEdit , initialParams }: any,
+  { onSave, onParamEdit, initialParams, onPrev, onNext }: any,
   ref: any
 ) {
  const [values, setValues] = useState<(number | null)[]>(
@@ -243,6 +243,20 @@ const handleYNChange = (index: number, value: 0 | 1 | null) => {
         >
           <Text style={styles.btnText}>SAVE AS</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btnGray}
+          onPress={() => onPrev?.()}
+        >
+          <Text style={styles.btnText}>◀ PREV</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btnGray}
+          onPress={() => onNext?.()}
+        >
+          <Text style={styles.btnText}>NEXT ▶</Text>
+        </TouchableOpacity>
       </View>
 
     </View>
@@ -339,6 +353,14 @@ btnGreen: {
   borderRadius: 6,
   width: '90%',
   marginTop: 10,
+  },
+  btnGray: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    width: '90%',
+    marginTop: 10,
   },
   btnText: {
     color: '#fff',

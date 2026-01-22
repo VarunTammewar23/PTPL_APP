@@ -40,6 +40,8 @@ type Props = {
     parameter?: string;
     unit?: string;
   }) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
 };
 
 interface RecipeParam {
@@ -134,7 +136,7 @@ const IMG_H = 600;
 /* ---------- COMPONENT ---------- */
 
 function RollerGapInner(
-  { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, }: Props,
+  { recipeId, imageUri, initialParams, pollMs = 2000, onSave, onParamEdit, onPrev, onNext, }: Props,
   ref: any
 ) {
   const [params, setParams] = useState<RecipeParam[]>(initialParams ?? []);
@@ -348,13 +350,26 @@ useEffect(() => {
   <Text style={styles.btnText}>SAVE AS</Text>
 </TouchableOpacity>
 
+<TouchableOpacity
+  style={styles.btnGray}
+  onPress={() => onPrev?.()}
+>
+  <Text style={styles.btnText}>◀ PREV</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.btnGray}
+  onPress={() => onNext?.()}
+>
+  <Text style={styles.btnText}>NEXT ▶</Text>
+</TouchableOpacity>
         </View>
       </View>
 
       <VideoModal
-  visible={videoPopup}
-  onClose={() => setVideoPopup(false)}
-/>
+        visible={videoPopup}
+        onClose={() => setVideoPopup(false)}
+      />
 
 
       {/* EDIT MODAL */}
@@ -527,6 +542,15 @@ const styles = StyleSheet.create({
   btnGreen: {
     backgroundColor: '#28a745',
     paddingVertical: 10,
+    borderRadius: 6,
+    width: '90%',
+    marginTop: 10,
+  },
+
+  btnGray: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: 6,
     width: '90%',
     marginTop: 10,

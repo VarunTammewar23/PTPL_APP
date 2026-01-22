@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
 wrapper: {
   width: '100%',
   backgroundColor: '#d6e4f0',
-height: clamp(s(65), 56, 72),
+  height: clamp(s(65), 56, 72),
   elevation: 5,
   paddingHorizontal: 0,
 },
@@ -241,8 +241,7 @@ row1: {
   alignItems: 'center',
   justifyContent: 'space-between',
   width: '100%',
-    height: '100%',
-  paddingVertical: s(4)
+  height: '100%',
 },
 
 /* ---------- LEFT SECTION (logo + recipe info) ---------- */
@@ -261,11 +260,12 @@ rightGroup: {
 
 /* ---------- COMPANY LOGO ---------- */
 logo: {
-  width: clamp(s(120), 96, 140),
-  height: clamp(s(42), 34, 48),
+  height: '100%',          // ✅ fills most of header height
+  aspectRatio: 2,         // ✅ adjust to your logo shape
   resizeMode: 'contain',
   marginRight: s(8),
 },
+
 
 
 /* ---------- RECIPE DROPDOWN FIELD ---------- */
