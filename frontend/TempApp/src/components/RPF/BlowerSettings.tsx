@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useState,
   useImperativeHandle,
+  useRef,
 } from 'react';
 import {
   View,
@@ -21,6 +22,8 @@ import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
 import { POPUP } from '../../ui/Popup';
+
+
 
 
 
@@ -158,6 +161,16 @@ function BlowerSettingsInner(
 
   const [tablePopup, setTablePopup] = useState(false);
   const [videoPopup, setVideoPopup] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+  if (editingSr !== null) {
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }
+}, [editingSr]);
+
 
 
   /* ---------- UI ---------- */
@@ -325,6 +338,8 @@ function BlowerSettingsInner(
               value={tempVal}
               onChangeText={setTempVal}
               keyboardType="numeric"
+              autoFocus
+              selectTextOnFocus
             />
             <View style={styles.row}>
               <Text onPress={() => setEditingSr(null)} style={styles.cancel}>

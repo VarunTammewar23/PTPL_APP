@@ -424,6 +424,8 @@ height: clamp(s(30), 22, 34),
               value={tempVal}
               onChangeText={setTempVal}
               keyboardType="numeric"
+              autoFocus
+              selectTextOnFocus
             />
             <View style={styles.row}>
               <Text

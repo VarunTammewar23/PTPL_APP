@@ -331,9 +331,49 @@ if (panel === "KNIFE 3" && sub === "KNIFE K3 C") return activatePanelById('K3C')
 
 }
 
+function getBottomPanelFromPanelId(id: PanelId): string {
+  if (
+    [
+      'PAPER_SIZES',
+      'NO_OF_FOLDS',
+      'OFFSET',
+      'GLUE_TAP',
+      'SUCTION_GAP',
+      'ROLL_SPEED',
+      'SIDE_LAY',
+      'BLOWER',
+      'ROLLER_GAP',
+      'FOLDING_TRAY',
+    ].includes(id)
+  ) return 'RPF';
+
+  if (['RT_FOLD_1', 'RT_FOLD_2', 'RT_GAP'].includes(id)) {
+    return 'RT ANGLE';
+  }
+
+  if (['K1A', 'K1B', 'K1C'].includes(id)) return 'KNIFE 1';
+  if (['K2A', 'K2B', 'K2C'].includes(id)) return 'KNIFE 2';
+  if (['K3A', 'K3B', 'K3C'].includes(id)) return 'KNIFE 3';
+
+  if (id === 'STP_TRAY') return 'STP TRAY';
+  if (id === 'CREASING') return 'CREASING';
+
+  return 'HOME';
+}
+
+
 function activatePanelById(id: PanelId) {
   closeAllPanels();
+
   setActivePanelId(id);
+
+  // 🔵 Bottom bar (RPF / RT ANGLE / KNIFE)
+  const bottomPanel = getBottomPanelFromPanelId(id);
+  setActivePanel(bottomPanel);
+
+  // 🟣 Sub-screen highlight (Paper Sizes / Offset etc.)
+  const sub = getSubScreenFromPanelId(id);
+  setActiveSubScreen(sub);
 
   switch (id) {
     case 'PAPER_SIZES': setShowMachine(true); break;
@@ -354,24 +394,57 @@ function activatePanelById(id: PanelId) {
     case 'K1A': setShowK1A(true); break;
     case 'K1B': setShowK1B(true); break;
     case 'K1C': setShowK1C(true); break;
-
     case 'K2A': setShowK2A(true); break;
     case 'K2B': setShowK2B(true); break;
     case 'K2C': setShowK2C(true); break;
-
     case 'K3A': setShowK3A(true); break;
     case 'K3B': setShowK3B(true); break;
     case 'K3C': setShowK3C(true); break;
 
     case 'STP_TRAY': setShowSTPTray(true); break;
-
-    case 'CREASING':
-      if (knifeCount === 1) setShowCreasing1(true);
-      else if (knifeCount === 2) setShowCreasing2(true);
-      else if (knifeCount >= 3) setShowCreasing3(true);
-      break;
   }
 }
+
+
+function getSubScreenFromPanelId(id: PanelId): string | null {
+  switch (id) {
+    // RPF
+    case 'PAPER_SIZES': return 'PAPER SIZES';
+    case 'NO_OF_FOLDS': return 'NO OF FOLDS';
+    case 'OFFSET': return 'OFFSET SETTINGS';
+    case 'GLUE_TAP': return 'GLUE/TAP QTY';
+    case 'SUCTION_GAP': return 'SUCTION / GAP SET';
+    case 'ROLL_SPEED': return 'ALL SPEED';
+    case 'SIDE_LAY': return 'SIDE LAY';
+    case 'BLOWER': return 'BLOWER SETTINGS';
+    case 'ROLLER_GAP': return 'ROLLER GAP';
+    case 'FOLDING_TRAY': return 'FOLDING TRAY';
+
+    // RT ANGLE
+    case 'RT_FOLD_1': return 'FOLD SETTING';
+    case 'RT_FOLD_2': return 'FOLD SETTING 2';
+    case 'RT_GAP': return 'GAP SETTING';
+
+    // KNIFE 1
+    case 'K1A': return 'KNIFE K1 A';
+    case 'K1B': return 'KNIFE K1 B';
+    case 'K1C': return 'KNIFE K1 C';
+
+    // KNIFE 2
+    case 'K2A': return 'KNIFE K2 A';
+    case 'K2B': return 'KNIFE K2 B';
+    case 'K2C': return 'KNIFE K2 C';
+
+    // KNIFE 3
+    case 'K3A': return 'KNIFE K3 A';
+    case 'K3B': return 'KNIFE K3 B';
+    case 'K3C': return 'KNIFE K3 C';
+
+    default:
+      return null;
+  }
+}
+
 
 const goNext = () => {
   const next = getNextPanel(navigationSequence, activePanelId, +1);
@@ -1707,11 +1780,6 @@ const handleExitPress = () => {
     onNext={goNext}
   />
 </View>
-
-
-
-
-
 
 
             <View

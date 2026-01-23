@@ -88,6 +88,8 @@ export default function SettingsScreen({
         placeholder="http://192.168.1.42:5000"
         autoCapitalize="none"
         style={[styles.input, theme === 'dark' ? styles.inputDark : styles.inputLight]}
+        autoFocus
+        selectTextOnFocus
       />
 
       <View style={{ height: 12 }} />

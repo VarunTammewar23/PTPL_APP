@@ -338,6 +338,8 @@ function FoldsInner(
               value={tempVal}
               onChangeText={setTempVal}
               keyboardType="numeric"
+              autoFocus
+              selectTextOnFocus
             />
             <View style={styles.row}>
               <Text onPress={() => setEditingSr(null)} style={styles.cancel}>

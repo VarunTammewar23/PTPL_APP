@@ -78,6 +78,8 @@ export default function LoginScreen({ onLogin }: { onLogin: (code: string) => vo
             tryLogin();
           }}
           style={styles.input}
+          autoFocus
+          selectTextOnFocus
         />
 
 <View style={styles.buttonWrap}>

@@ -271,6 +271,8 @@ const handleYNChange = (index: number, value: 0 | 1 | null) => {
                 value={tempVal}
                 onChangeText={setTempVal}
                 keyboardType="numeric"
+                autoFocus
+                selectTextOnFocus
               />
 
               <View style={styles.row}>
