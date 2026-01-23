@@ -20,7 +20,14 @@ import { apiGet } from '../../api/api';
 import { useWindowDimensions } from 'react-native';
 import VideoModal from '../VideoModal';
 import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT } from '../../ui/typography';  // Typography constants
-import { POPUP } from '../../ui/Popup';
+import {
+  POPUP,
+  getEditPopupLayout,
+  getTablePopupLayout,
+  getVideoPopupLayout,
+} from '../../ui/Popup';
+
+
 
 
 type Props = {
@@ -103,6 +110,11 @@ function FoldsInner(
 
   const { width, height } = useWindowDimensions();
   const isPortrait = height > width;
+
+  const editPopupLayout = getEditPopupLayout(width, height);
+  const tablePopupLayout = getTablePopupLayout(width, height);
+  const videoPopupLayout = getVideoPopupLayout(width, height);
+
 
   const [contW, setContW] = useState(width);
   const [contH, setContH] = useState(Math.round(height * 0.75));
@@ -319,26 +331,51 @@ function FoldsInner(
         </View>
       </View>
 
-      <VideoModal
-  visible={videoPopup}
-  onClose={() => setVideoPopup(false)}
-/>
+        <VideoModal
+          visible={videoPopup}
+          onClose={() => setVideoPopup(false)}
+          layout={videoPopupLayout}
+        />
+
 
 
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modalEdit}>
+          <View
+            style={[
+              styles.modalEdit,
+              {
+                width: editPopupLayout.width,
+                padding: editPopupLayout.padding,
+              },
+            ]}
+          >
 
-              <Text style={styles.modalTitle}>
-                Edit Parameter No. :- {editingSr}
-              </Text>
+            <Text
+              style={[
+                styles.modalTitle,
+                { fontSize: editPopupLayout.titleFont },
+              ]}
+            >
+              Edit Parameter No. :- {editingSr}
+            </Text>
+
+
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                editPopupLayout.inputHeight && {
+                  height: editPopupLayout.inputHeight,
+                },
+                { fontSize: editPopupLayout.inputFont },
+              ]}
               value={tempVal}
               onChangeText={setTempVal}
               keyboardType="numeric"
             />
+
+
             <View style={styles.row}>
               <Text onPress={() => setEditingSr(null)} style={styles.cancel}>
                 Cancel
@@ -376,11 +413,28 @@ function FoldsInner(
       {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
-    <View style={styles.modalTable}>
+          <View
+            style={[
+              styles.modalTable,
+              {
+                width: tablePopupLayout.width,
+                maxHeight: tablePopupLayout.maxHeight,
+                padding: tablePopupLayout.padding,
+                borderRadius: tablePopupLayout.borderRadius,
+              },
+            ]}
+          >
 
       {/* HEADER ROW */}
       <View style={styles.popupHeaderRow}>
-        <Text style={styles.modalTitle}>Parameter Table</Text>
+          <Text
+            style={[
+              styles.modalTitle,
+              { fontSize: tablePopupLayout.titleFont },
+            ]}
+          >
+            Parameter Table
+          </Text>
 
         <TouchableOpacity
           onPress={() => setTablePopup(false)}
@@ -405,6 +459,7 @@ function FoldsInner(
                 col.flex && { flex: col.flex },
                 i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
                 styles.popupHeaderText,
+                { fontSize: tablePopupLayout.headerFont },
               ]}
             >
               {col.title}
@@ -433,6 +488,7 @@ function FoldsInner(
                     style={[
                       styles.popupCell,
                       styles.popupBodyText,
+                      { fontSize: tablePopupLayout.bodyFont },
                       col.width && { width: col.width },
                       col.flex && { flex: col.flex },
                       i !== POPUP_COLUMNS.length - 1 && styles.popupColBorder,
@@ -459,8 +515,15 @@ function FoldsInner(
 /* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  bodyRow: { flex: 1, flexDirection: 'row' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
+  },
+
+  bodyRow: { 
+    flex: 1, 
+    flexDirection: 'row' 
+  },
 
   leftArea: {
     flex: 0.85,
@@ -594,16 +657,11 @@ modalEdit: {
   backgroundColor: '#fff',
   padding: POPUP.EDIT.padding ?? 12,
   borderRadius: POPUP.EDIT.borderRadius ?? 10,
-  width: POPUP.EDIT.width,
   alignSelf: 'center',
 },
 
 modalTable: {
   backgroundColor: '#fff',
-  padding: POPUP.TABLE.padding ?? 12,
-  borderRadius: POPUP.TABLE.borderRadius ?? 10,
-  width: POPUP.TABLE.width,
-  maxHeight: POPUP.TABLE.maxHeight,
   alignSelf: 'center',
 },
 
@@ -641,12 +699,11 @@ popupColBorder: {
 
 popupHeaderText: {
   fontWeight: '700',
-  fontSize: POPUP.TABLE.headerFont,
 },
 
-popupBodyText: {
-  fontSize: POPUP.TABLE.bodyFont,
-},
+popupBodyText: {},
+
+
 
 popupHeaderRow: {
   flexDirection: 'row',

@@ -7,18 +7,28 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions,
 } from 'react-native';
 import Video from 'react-native-video';
 import { s, clamp } from '../ui/scale';
+import { POPUP } from '../ui/Popup';
+
 
 
 type Props = {
   visible: boolean;
   onClose: () => void;
+  layout: {
+    width: number;
+    height: number;
+    borderRadius: number;
+  };
 };
 
-export default function VideoModal({ visible, onClose }: Props) {
+export default function VideoModal({ visible, onClose, layout }: Props) {
+  if (!layout) {
+    return null;
+  }
+
   const [paused, setPaused] = useState(true);
 
   // Pause / play based on modal visibility
@@ -34,7 +44,16 @@ export default function VideoModal({ visible, onClose }: Props) {
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View
+          style={[
+            styles.container,
+            {
+              width: layout.width,
+              borderRadius: layout.borderRadius,
+            },
+          ]}
+        >
+
 
           {/* HEADER ROW – SAME AS TABLE POPUP */}
           <View style={styles.popupHeaderRow}>
@@ -47,7 +66,7 @@ export default function VideoModal({ visible, onClose }: Props) {
 
           <Video
             source={require('../assets/samplevideo.mp4')}
-            style={styles.video}
+            style={[styles.video, { height: layout.height }]}
             controls
             resizeMode="contain"
             paused={paused}
@@ -63,7 +82,7 @@ export default function VideoModal({ visible, onClose }: Props) {
   );
 }
 
-const { width } = Dimensions.get('window');
+
 
 const styles = StyleSheet.create({
   overlay: {
@@ -73,21 +92,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  container: {
-width: clamp(width * 0.9, 600, 1100),
-    backgroundColor: '#ffffffff',
-    borderRadius: 10,
-    overflow: 'hidden',
-    paddingBottom: 10,
-    paddingTop: 6,
-  },
+container: {
+  backgroundColor: '#ffffffff',
+  overflow: 'hidden',
+  paddingVertical: s(10),
+},
 
-  video: {
-    width: '95%',
-    height: clamp(s(560), 280, 560),
-    backgroundColor: '#ffffffff',
-    alignSelf: 'center',
-  },
+video: {
+  width: '90%',
+  backgroundColor: '#ffffffff',
+  alignSelf: 'center',
+},
+
 
   /* ===== TABLE-STYLE CLOSE BUTTON ===== */
 
@@ -103,7 +119,7 @@ width: clamp(width * 0.9, 600, 1100),
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingVertical: 0,
     marginRight: 13, 
   },
 
@@ -114,9 +130,9 @@ width: clamp(width * 0.9, 600, 1100),
     marginRight: 4,
   },
 
-  popupCloseText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#444',
-  },
+popupCloseText: {
+  fontSize: POPUP.TABLE.closeFont,
+  fontWeight: '800',
+  color: '#444',
+},
 });
