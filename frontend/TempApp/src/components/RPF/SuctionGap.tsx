@@ -378,7 +378,15 @@ function SuctionGapInner(
       {/* TABLE POPUP */}
 <Modal visible={tablePopup} transparent animationType="fade">
   <View style={styles.modalBg}>
-    <View style={styles.modalTable}>
+<View
+  style={[
+    styles.modalTable,
+    {
+      width: Math.min(width * 0.95, 1100),
+      maxHeight: Math.min(height * 0.85, 700),
+    },
+  ]}
+>
 
       {/* HEADER ROW */}
       <View style={styles.popupHeaderRow}>
