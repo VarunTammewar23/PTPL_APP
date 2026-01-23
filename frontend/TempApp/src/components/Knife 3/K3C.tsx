@@ -309,7 +309,14 @@ function K3CInner(
       {/* EDIT MODAL */}
       <Modal visible={editingSr !== null} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modalEdit}>
+          <View
+            style={[
+              styles.modalEdit,
+              {
+                width: Math.min(width * 0.8, 480), // 👈 CONTROLLED WIDTH
+              },
+            ]}
+          >
               <Text style={styles.modalTitle}>
                 Edit Parameter No. :- {editingSr}
               </Text>
