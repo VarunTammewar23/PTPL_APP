@@ -369,7 +369,15 @@ function GapSettingInner(
       {/* TABLE POPUP */}
       <Modal visible={tablePopup} transparent animationType="fade">
         <View style={styles.modalBg}>
-          <View style={styles.modalTable}>
+          <View
+  style={[
+    styles.modalTable,
+    {
+      width: clamp(width * 0.95, 600, 1100),
+      maxHeight: clamp(height * 0.85, 400, 700),
+    },
+  ]}
+>
             <View style={styles.popupHeaderRow}>
               <Text style={styles.modalTitle}>Parameter Table</Text>
               <TouchableOpacity onPress={() => setTablePopup(false)} style={styles.popupCloseBtn}>
