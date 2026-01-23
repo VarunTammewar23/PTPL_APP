@@ -413,7 +413,7 @@ height: clamp(s(30), 22, 34),
           <View
                 style={[
                   styles.modalEdit,
-                  { width: clamp(screenW * 0.9, 600, 1100) },
+                  { width: clamp(screenW * 0.85, 320, 520) },
                 ]}
               >
               <Text style={styles.modalTitle}>
@@ -569,64 +569,30 @@ height: clamp(s(30), 22, 34),
 /* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 0,
-    backgroundColor: '#ffffffff',
-    borderRadius: 8,
-    overflow: 'visible',
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111',
-  },
-  close: {
-    color: '#0066ff',
-    fontWeight: '700',
-    position: 'absolute',
-    right: 0,
-  },
-
+  container: { flex: 1, backgroundColor: '#fff' },
   bodyRow: { flex: 1, flexDirection: 'row' },
 
   leftArea: {
-    flex: .85,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    flex: 0.85,
+    backgroundColor: '#fff',
     overflow: 'hidden',
-    backgroundColor: '#ffffffff',
   },
 
   rightButtons: {
-    flex: clamp(0.15, 0.18, 0.25),
+    flex: 0.15,
     alignItems: 'center',
-    justifyContent: 'flex-start',
     paddingVertical: 10,
-    backgroundColor: '#ffffffff',
-    borderLeftWidth: 1,
-    borderLeftColor: '#ffffffff',
   },
 
   portraitButtons: {
     width: '100%',
-    borderLeftWidth: 0,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    marginTop: 6,
-    paddingVertical: 10,
+    borderColor: '#ccc',
   },
 
   btnBlue: {
     backgroundColor: '#007bff',
     paddingVertical: 10,
-    paddingHorizontal: 8,
     borderRadius: 6,
     width: '90%',
     marginTop: 10,
@@ -634,91 +600,65 @@ const styles = StyleSheet.create({
   btnGreen: {
     backgroundColor: '#28a745',
     paddingVertical: 10,
+    borderRadius: 6,
+    width: '90%',
+    marginTop: 10,
+  },
+  btnGray: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 10,
     paddingHorizontal: 8,
     borderRadius: 6,
     width: '90%',
     marginTop: 10,
   },
+  
   btnText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: fs(FONT_SIZE.sidebar), 
+    fontSize: FONT_SIZE.sidebar, 
     fontWeight: '700',
   },
 
-  loading: {
+  paramBox: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 6,
+    zIndex: 10,
   },
 
- paramBox: {
-  position: 'absolute',
-  justifyContent: 'center',
-  alignItems: 'center',
-  borderRadius: 6,
-  zIndex: 10,
-}
-,
-
-  paramText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#000',
-  },
+  paramText: { fontSize: 24, fontWeight: '700' },
 
   serialBox: {
     position: 'absolute',
     backgroundColor: '#000',
-    borderColor: '#fff',
-    borderWidth: 1.3,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 6,
   },
-  serialText: {
-    color: '#fff',
-fontSize: fs(20),
 
-    fontWeight: '700',
+  serialText: { color: '#fff', fontWeight: '700' },
+
+  loading: {
+    position: 'absolute',
+    top: '45%',
+    left: '45%',
   },
 
   modalBg: {
     flex: 1,
-    justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
     padding: 20,
   },
-modalTable: {
-  backgroundColor: '#fff',
-  padding: POPUP.TABLE.padding ?? 12,
-  borderRadius: POPUP.TABLE.borderRadius ?? 10,
-  alignSelf: 'center',
-},
-
-modalEdit: {
-  backgroundColor: '#fff',
-  padding: POPUP.EDIT.padding ?? 12,
-  borderRadius: POPUP.EDIT.borderRadius ?? 10,
-  alignSelf: 'center',
-},
-
-
-  modalTitle: {
-  fontSize: fs(POPUP.TABLE.titleFont),
-
-  fontWeight: '700',
-  marginBottom: 10,
-},
-
 
   input: {
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
     padding: 8,
-    fontSize: fs(POPUP.EDIT.inputFont),   // 👈 increase text size here
-
+    fontSize: POPUP.EDIT.inputFont, // ✅ global control
   },
 
   row: {
@@ -726,58 +666,62 @@ modalEdit: {
     justifyContent: 'flex-end',
     marginTop: 12,
   },
+
   cancel: {
     marginRight: 20,
     color: '#666',
-    fontSize: fs(18),
+    fontSize: 18,
 
   },
   save: {
     color: '#007bff',
     fontWeight: '700',
-    fontSize: fs(18),
+    fontSize: 18,
   },
 
- 
+   tblHead: {
+    flexDirection: 'row',
+    backgroundColor: '#e8e8f5',
+    padding: 6,
+  },
+  th: {
+    flex: 1,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+  tblRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  td: {
+    flex: 1,
+    textAlign: 'center',
+  },
 
-  tableWrapper: {
-  borderWidth: 1,
-  borderColor: '#cececeff',
-  borderRadius: 6,
-  overflow: 'hidden',
-  position: 'relative',
+modalEdit: {
+  backgroundColor: '#fff',
+  padding: POPUP.EDIT.padding ?? 12,
+  borderRadius: POPUP.EDIT.borderRadius ?? 10,
+  width: POPUP.EDIT.width,
+  alignSelf: 'center',
 },
 
-tblHead: {
-  flexDirection: 'row',
-  backgroundColor: '#e8e8f5',
-  paddingVertical: 6,
+modalTable: {
+  backgroundColor: '#fff',
+  padding: POPUP.TABLE.padding ?? 12,
+  borderRadius: POPUP.TABLE.borderRadius ?? 10,
+  width: POPUP.TABLE.width,
+  maxHeight: POPUP.TABLE.maxHeight,
+  alignSelf: 'center',
 },
 
-tblRow: {
-  flexDirection: 'row',
-  paddingVertical: 8,
-  borderTopWidth: 1,
-  borderColor: '#cececeff',
-},
 
-cell: {
-  paddingVertical: 8,
-  textAlign: 'center',
-},
-
-leftAlign: {
-  textAlign: 'left',
-  paddingLeft: 6,
-},
-
-colBorder: {
-  borderRightWidth: 1,
-  borderColor: '#cececeff',
-},
-
-headerText: {
+modalTitle: {
+  fontSize: POPUP.TABLE.titleFont,
   fontWeight: '700',
+  marginBottom: 10,
 },
 
 popupTable: {
@@ -793,7 +737,6 @@ popupRow: {
 
 popupHeader: {
   backgroundColor: '#f2f2f8',
-  borderTopWidth: 1,
 },
 
 popupCell: {
@@ -808,14 +751,12 @@ popupColBorder: {
 
 popupHeaderText: {
   fontWeight: '700',
-  fontSize: fs(POPUP.TABLE.headerFont),
+  fontSize: POPUP.TABLE.headerFont,
 },
 
 popupBodyText: {
-  fontSize: fs(POPUP.TABLE.bodyFont),
+  fontSize: POPUP.TABLE.bodyFont,
 },
-
-
 
 popupHeaderRow: {
   flexDirection: 'row',
@@ -839,21 +780,11 @@ popupCloseIcon: {
 },
 
 popupCloseText: {
-  fontSize: fs(POPUP.TABLE.closeFont),
+  fontSize: POPUP.TABLE.closeFont,
   fontWeight: '800',
   color: '#444',
   paddingLeft: 5,
 },
-
-btnGray: {
-  backgroundColor: '#6c757d',
-  paddingVertical: 10,
-  paddingHorizontal: 8,
-  borderRadius: 6,
-  width: '90%',
-  marginTop: 10,
-},
-
 
 });
 
